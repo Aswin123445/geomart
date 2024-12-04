@@ -1,0 +1,186 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Registration</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .form-control {
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+    <style>
+        body {
+          background-color: #f8f9fa;
+        }
+        .card {
+          border: none;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-control {
+          border: none;
+          border-bottom: 2px solid #ced4da;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .form-control:focus {
+          border-color: #3df577; /* Change the border color when focused */
+          box-shadow: none; /* Prevent the default blue shadow */
+        }
+        .form-control::placeholder {
+          color: #949292; /* Change placeholder text color */
+          opacity: 1; /* Make sure it's fully visible */
+        }
+        .input-group-text {
+          border: none;
+          border-bottom: 2px solid #ced4da;
+          background-color: transparent;
+        }
+        .btn-primary {
+          background-color: #DB4444;
+          border: none;
+          border-radius: 4px;
+          transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+          background-color: #b53737; /* Slightly darker shade for hover effect */
+        }
+        .card-header {
+          background-color: transparent;
+          border-bottom: none;
+        }
+        .card-footer {
+          background-color: transparent;
+        }
+        
+      </style>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mx-5">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold fs-3" href="#"  style="color: #DB4444;">GeoMaart</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse " >
+        <ul class="navbar-nav ms-auto ">
+          <li class="nav-item">
+            <a class="nav-link px-3" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3" href="#">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3" href="#">Contact</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col" style=" border-top: 1px solid black;">
+        </div>
+    </div>
+  </div>
+
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-xl-5 col-xxl-4 col-md-7">
+        <div class="card">
+          <div class="card-header text-start position-relative" style="height: 40px;">
+            <h4 class="fw-semibold position-absolute   top-50 start-30">Create an account</h4>
+            <div class="position-absolute fs-6  top-100 start-30" style="margin-top:13px;">Enter your details here</div>
+          </div>
+
+          <div class="card-body mt-5">
+            <form id="registrationForm">
+              <div class="mb-3">
+                <input type="email" class="form-control fs-6" id="email" name="email" placeholder="Enter your email" required >
+                <div class="invalid-feedback  " style="color: blue;">Please enter a valid email.</div>
+              </div>
+              <div class="mb-3">
+                <div class="input-group">
+                  <span class="input-group-text">+91</span>
+                  <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter your phone number" required pattern="[0-9]{10}">
+                </div>
+                <div class="invalid-feedback">Please enter a valid 10-digit phone number.</div>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
+                <div class="invalid-feedback">Password is required.</div>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                <div class="invalid-feedback">Passwords do not match.</div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Create Account</button>
+            </form>
+            <button type="submit" class="btn border w-100 mt-3">
+                <img src="{% static 'google.png' %}" alt="Logo"
+           alt="Google Logo" style="width: 20px; height: 20px; margin-right: 10px;">
+                Sign up with google
+            </button>
+          </div>
+  <!-- Footer -->
+  
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JavaScript Validation -->
+  <script>
+    document.getElementById('registrationForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent form from submitting by default
+
+      const email = document.getElementById('email');
+      const phone = document.getElementById('phone');
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirm_password');
+      let isValid = true;
+
+      // Email validation
+      if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+        email.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        email.classList.remove('is-invalid');
+      }
+      // Phone number validation
+      if (!phone.value || !/^[0-9]{10}$/.test(phone.value)) {
+        phone.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        phone.classList.remove('is-invalid');
+      }
+
+      // Password validation
+      if (!password.value) {
+        password.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        password.classList.remove('is-invalid');
+      }
+
+      // Confirm Password validation
+      if (confirmPassword.value !== password.value || !confirmPassword.value) {
+        confirmPassword.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        confirmPassword.classList.remove('is-invalid');
+      }
+
+      // If all fields are valid, submit the form
+      if (isValid) {
+        alert('Registration Successful!');
+        this.submit();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Python-related files
+*.pyc
+*.pyo
+__pycache__/
+*.sqlite3
+
+# Django secret key and local settings
+*.env
+
+# Virtual environment folder
+venv/
+env/
+
+# Static and media files (optional)
+staticfiles/
+media/
+
+# IDE/Editor-specific files
+.vscode/
+.idea/
+
+# Logs and other temporary files
+*.log
+*.pot
+*.mo
+*.swp
+*.swo
+.DS_Store
+
+# Test coverage files
+htmlcov/
+.coverage

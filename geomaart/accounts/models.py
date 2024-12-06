@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.utils.timezone import now
+from datetime import timedelta
 
 class UserManager(BaseUserManager):
     def create_user(self, email, name, phone_number=None, password=None, is_active=True, is_staff=False, is_superuser=False, is_delivery_boy=False):
@@ -62,11 +64,12 @@ class UserData(AbstractBaseUser, PermissionsMixin):
         validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")]
     )
     name = models.CharField(max_length=30)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)  # Implies admin privileges
     is_delivery_boy = models.BooleanField(default=False)
-
+    is_email_verified = models.BooleanField(default=False)
+    is_phone_number_verified = models.BooleanField(default=False)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -118,6 +121,5 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.address_type.capitalize()} Address of {self.user.name}"
-
 
 

@@ -42,7 +42,7 @@ def otp_verification(request):
         
         if not phone_number:
             messages.error(request, "Session expired. Please register again.")
-            return redirect('register')
+            return redirect('accounts:register')
         data = validate_otp(phone_number, otp_code)
         if data == True:
             user = UserData.objects.get(phone_number=phone_number)  # Fetch the user
@@ -52,7 +52,7 @@ def otp_verification(request):
             user.save()
             
             messages.success(request, "OTP verified successfully. You can now log in.")
-            return redirect(signin)
+            return redirect('accounts:signin')
         else:
             messages.error(request, f"{data}")
     

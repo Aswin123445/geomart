@@ -25,7 +25,25 @@
         margin-top:230px;
         height: 180px;
     }
-
+    .notification {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 16px; 
+    position: fixed; 
+    top: 10vh; 
+    right: 20px; 
+    width: 350px; 
+    border-radius: 5px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    z-index: 1000; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
   </style>
 </head>
 <body>
@@ -53,6 +71,14 @@
           </div>
         </div>
       </nav>
+      {% if messages %}
+      {% for message in messages %}
+      <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+         {{ message }}
+          <button class="close-btn" onclick="closeNotification()">X</button>
+      </div>
+      {% endfor %}
+      {% endif %}
       <div class="container-fluid">
         <div class="row">
             <div class="col" style=" border: .5px solid rgb(226, 224, 224); box-shadow: 0 -2px 4px rgba(158, 153, 153, 0.2);">
@@ -65,7 +91,7 @@
       <div class="card shadow mt-4">
         <div class="card-body text-center">
           <h3 class="card-title fw-semibold mb-4 heading">verify OTP</h3>
-          <p>Please enter the 6-character OTP sent to your phone.</p>
+          <p>Please enter the 6-character OTP sent to your phone {{phone}}</p>
           <form id="otpForm" method="post" action="{% url 'accounts:otp_verification' %}">
             {% csrf_token %}
             <div class="otp-container">
@@ -136,6 +162,14 @@
         e.preventDefault();  // Prevent submission if OTP is incomplete
     }  
   });
+  function closeNotification() {
+            document.getElementById("notification").style.display = "none";
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 4000 milliseconds = 4 seconds
+    });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>

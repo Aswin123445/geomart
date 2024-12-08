@@ -3,6 +3,7 @@ from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 import os
 
+
 def send_otp(phone_number):
     try :
        client = Client(os.environ['TWILIO_ACCOUNT_SID'], os.environ['TWILIO_AUTH_TOKEN'])
@@ -11,15 +12,15 @@ def send_otp(phone_number):
            to=phone_number,  
            channel='sms' ,
        )
-       print("otp send successfully")
+       return {'status':True,'message':"we have send a otp to you number"}
     except TwilioRestException as e:
-       print(f"Twilio error occurred: {e}")
-    except ConnectionError:
-       print("Network error occurred.")
-    except TimeoutError:
-       print("The request timed out.")
+       return {'status':False,'message':f"Twilio error occurred {e}"}
+    except ConnectionError as e:
+       return {'status':False,'message':f"Network error occurred. {e}"}
+    except TimeoutError as e:
+       return {'status':False,'message':f"The request timed out. {e}"}
     except Exception as e:
-       print(f"An unexpected error occurred: {e}")
+       return {'status':False,'message':f"An unexpected error occurred: {e}"}
 def validate_otp(phone_number, otp_code):
     try :
        client = Client(os.environ['TWILIO_ACCOUNT_SID'], os.environ['TWILIO_AUTH_TOKEN'])
@@ -36,7 +37,7 @@ def validate_otp(phone_number, otp_code):
            return "OTP verification failed Please try again"
     except TwilioRestException  as e :
         if e.status == 404:
-            return "Verification service not found. Check your VERIFY_SERVICE_SID."
+            return "something went wrong please try again"
         elif e.status == 400:
             return "Invalid OTP or request format."
         elif e.status == 429:

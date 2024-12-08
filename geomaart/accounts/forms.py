@@ -1,5 +1,6 @@
 
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 from django import forms
 from .models import UserData
@@ -11,15 +12,16 @@ class SignUpForm(UserCreationForm):
         required=True,
         validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Enter a valid phone number.")],
     )
-
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        print(email)
         user=UserData.objects.filter(email=email).first()
         if user:
             if user.is_phone_number_verified :
                raise forms.ValidationError("A user with this email already exists.")
             else :
                print('need to verify')
+        return email
 
     # def clean_phone_number(self):
     #     phone_number = self.cleaned_data.get('phone_number')
@@ -51,8 +53,13 @@ class SignUpForm(UserCreationForm):
     def save(self, commit=True):
         print('within save method')
         user = super().save(commit=False)
+        print(self.cleaned_data)
+        print(f'{user} user activated')
         user.name = self.cleaned_data['name']
         user.phone_number = self.cleaned_data['phone_number']
+        print(self.cleaned_data['name'])
+        print(self.cleaned_data['email'])
+        user.email = self.cleaned_data['email']
         user.is_active = False
         if commit:
             user.save()
@@ -61,6 +68,24 @@ class SignUpForm(UserCreationForm):
     class Meta:
         model = UserData
         fields = [ 'name', 'password1', 'password2']
+        
+        
+#forgot passord form
+class ForgotPassword(forms.Form):
+    print("helo")
+    phone_number = forms.CharField(
+       required=True,
+       validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Enter a valid phone number.")],
+    )
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        phone_number = ''.join(phone_number.split())
+        # Ensure phone number starts with +91
+        if not phone_number.startswith('+91'):
+            phone_number = '+91' + phone_number
+        return phone_number
+    
+
 
 #there are many errors to fix in this area
 class SignInForm(forms.Form):
@@ -97,4 +122,24 @@ class SignInForm(forms.Form):
             raise forms.ValidationError("Invalid login credentials.")
         if not user.is_active:
             raise forms.ValidationError("This account is inactive.")
+        return cleaned_data
+    
+class FogotPasswordForm(forms.Form):
+    password1 = forms.CharField(widget=forms.PasswordInput)
+    password2 = forms.CharField(widget=forms.PasswordInput)
+    
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1')
+        try:
+            validate_password(password1)  # Apply Django's password validation
+        except forms.ValidationError as e:
+            raise forms.ValidationError(e.messages)  # Pass validation errors to the form
+        return password1
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match. Please try again.")
         return cleaned_data

@@ -9,7 +9,7 @@ def send_otp(phone_number):
        verify = client.verify.services(os.environ['TWILIO_VERIFY_SERVICE_SID'])
        verify.verifications.create(
            to=phone_number,  
-           channel='sms'  
+           channel='sms' ,
        )
        print("otp send successfully")
     except TwilioRestException as e:
@@ -32,6 +32,7 @@ def validate_otp(phone_number, otp_code):
        if verification_check.status == "approved" :
            return True
        else :
+           print(verification_check.status)
            return "OTP verification failed Please try again"
     except TwilioRestException  as e :
         if e.status == 404:

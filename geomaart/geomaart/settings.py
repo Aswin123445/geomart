@@ -62,6 +62,42 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 ]
 
+#allouth audhentication backend
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by email
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+#allaouth social provider setting
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+#allauth configuration
+
+
+# Django allauth config
+SITE_ID = 1
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+
+
+
+
 ROOT_URLCONF = 'geomaart.urls'
 
 TEMPLATES = [
@@ -87,16 +123,16 @@ WSGI_APPLICATION = 'geomaart.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # settings.py
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'geomart',    
-        'USER': 'aswingeo',   
-        'PASSWORD': 'geo@123',     
-        'HOST': 'localhost',             
-        'PORT': '5432',                 
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'geomart',    
+#         'USER': 'aswingeo',   
+#         'PASSWORD': 'geo@123',     
+#         'HOST': 'localhost',             
+#         'PORT': '5432',                 
+#     }
+# }
 
 
 

@@ -4,6 +4,7 @@ from django.core.validators import RegexValidator
 from django.conf import settings
 from django.utils.timezone import now
 from datetime import timedelta
+from allauth.account.signals import user_logged_in
 
 class UserManager(BaseUserManager):
     def create_user(self, email, name, phone_number=None, password=None, is_active=True, is_staff=False, is_superuser=False, is_delivery_boy=False):

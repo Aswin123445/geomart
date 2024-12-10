@@ -126,10 +126,12 @@
               
               <div class="divider">or</div>
               
-              <button type="button" class="btn border w-100">
-                <img src="{% static 'google.png' %}" alt="Google Logo" style="width: 20px; height: 20px; margin-right: 10px;">
-                Sign In with Google
-              </button>
+              <a href="/accounts/google/login/">
+                <button type="button" class="btn border w-100">
+                  <img src="{% static 'google.png' %}" alt="Google Logo" style="width: 20px; height: 20px; margin-right: 10px;">
+                  Sign In with Google
+                </button>
+              </a>
             </form>
             <div class="text-end ">
               <a href="{% url 'accounts:forgot_password' %}" class="link-to-login fw-semibold ">Forgot password?</a>

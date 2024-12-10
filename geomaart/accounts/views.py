@@ -5,6 +5,7 @@ from django.contrib import messages
 from .utils import send_otp,validate_otp
 from .models import UserData
 from django.contrib.auth import authenticate,login,logout
+from allauth.socialaccount.providers.oauth2.views import OAuth2LoginView
 import os
 
 # Create your views here.
@@ -97,7 +98,8 @@ def signin(request):
     return render(request,'accounts/signin.html',context)
 
 def signout(request):
-    if 'user' in request.session :
+    print('helo')
+    if 'user'  in request.session or '_auth_user_id' in request.session:
         logout(request)
         messages.success(request,'successfully signed out')
     return redirect('home:homepage')
@@ -155,6 +157,8 @@ def forget_password_form(request):
             l = list(form.errors.values())
             messages.error(request,l[0][0])
     return render(request,'accounts/forgot_password_form.html')
+
+
             
                 
                 

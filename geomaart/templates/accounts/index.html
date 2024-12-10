@@ -162,11 +162,13 @@
               </div>
               <button type="submit" class="btn btn-primary w-100">Create Account</button>
             </form>
-            <button type="submit" class="btn border w-100 mt-3">
-              <img src="{% static 'google.png' %}" alt="Logo"
-         alt="Google Logo" style="width: 20px; height: 20px; margin-right: 10px;">
-              Sign up with google
-          </button>
+            <a href="/accounts/google/login">
+              <button type="submit" class="btn border w-100 mt-3">
+                <img src="{% static 'google.png' %}" alt="Logo"
+           alt="Google Logo" style="width: 20px; height: 20px; margin-right: 10px;">
+                Sign up with google
+            </button>
+            </a>
             <div class="text-end text-center" style="font-size: .9rem; margin-top : 4px;">already have an account?<a href="{% url 'accounts:signin' %}" class="link-to-login" style="margin-left: 6px;">signin</a></div>
           </div>
         </div>

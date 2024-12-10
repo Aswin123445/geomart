@@ -6,10 +6,4 @@ class AccountsConfig(AppConfig):
     name = 'accounts'
 # In your app's apps.py
 
-class AccountsConfig(AppConfig):
-    name = 'accounts'
-
-    def ready(self):
-        import accounts.signals  # Make sure to import signals here
-
 

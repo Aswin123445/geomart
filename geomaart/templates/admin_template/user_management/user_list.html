@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin User Management</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .navbar {
+            border-bottom: 2px solid #ccc;
+        }
+        .page-link:focus{
+          outline: none;
+          box-shadow: none;
+        }
+        .page-item{
+           color: red;
+        }
+        .page-item.active .page-link {
+           background-color: #dc3545; 
+           color: #fff; 
+        }
+        .page-item .page-link {
+            color: black; 
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" style="margin-left: 30px;" href="#">GeoMaart Admin Panel</a>
+           
+            <div class=" " id="">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#"> 
+                          <i class="bi bi-house-door"></i> Dashboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>User Management</h2>
+            <button class="btn btn-danger">Add User</button>
+        </div>
+        <!-- User Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in user_data %}
+                    <tr>
+                        <td>{{user.id}}</td>
+                        <td>{{user.name}}</td>
+                        <td>{{user.email}}</td>
+                        <td>{{user.phone_number}}</td>
+                        <td>
+                            {% if  user.is_staff %}
+                              ADMIN
+                            {% elif user.is_delivery_boy %}
+                              DELIVARY PARTNER
+                            {% else %}
+                              USER
+                            {% endif %}
+
+                        </td>
+                        <td><span class="badge bg-success">
+                            {% if user.is_active %}
+                               ACTIVE
+                            {% else %}
+                               INACTIVE
+                            {% endif %}
+                        </span></td>
+                        <td>
+                            <button class="btn btn-warning btn-sm">Edit</button>
+                            <button class="btn  btn-sm" style="background-color: rgb(246, 125, 85);">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+<!-- Pagination Controls -->
+<nav>
+  <ul class="pagination justify-content-center">
+      <li class="page-item " >
+          {% if user_data.has_previous  %}
+            <a class="page-link" href="?page={{user_data.previous_page_number}}"  aria-disabled="true">Previous</a>
+          {% else %}
+            <a class="page-link" href="?page={{user_data.next_page_number}}"  aria-disabled="true">>>>>></a>
+          {% endif %}
+      </li>
+
+      {% for i in user_data.paginator.page_range %} 
+        <li class="page-item {% if user_data.number == i %} active {% endif %}">
+            <a class="page-link" href="?page={{i}}">{{i}}</a>
+        </li>
+      {% endfor %}
+      <li class="page-item">
+        {% if user_data.has_next %}
+          <a class="page-link" href="?page={{user_data.next_page_number}}" aria-label="Next">
+              Next
+          </a>
+        {% else %}
+           <a class="page-link" href="?page={{user_data.previous_page_number}}" aria-label="Next">
+              <<<<<
+           </a>
+        {% endif %}
+      </li>
+  </ul>
+</nav>
+
+<script>
+document.querySelectorAll('.page-link').forEach(link => {
+  link.addEventListener('click', function(e) {
+      e.preventDefault();  // Prevents default behavior
+      
+      document.querySelectorAll('.page-item').forEach(item => {
+          item.classList.remove('active');  // Remove active class from all
+      });
+
+      this.parentElement.classList.add('active');  // Add active class to clicked
+
+      // Navigate to the href link
+      window.location.href = this.getAttribute('href');
+  });
+});
+</script>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

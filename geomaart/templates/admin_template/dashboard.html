@@ -31,9 +31,9 @@
           transition: background-color 0.2s, color 0.2s;
       }
       .sidebar a.active:hover {
-    background-color: #e9ecef; /* Adjust this to your desired hover background color */
-    color: #343a40; /* Adjust this to your desired hover text color */
-}
+         background-color: #e9ecef; /* Adjust this to your desired hover background color */
+         color: #343a40; /* Adjust this to your desired hover text color */
+      }
       .sidebar a.active,
       .sidebar a:hover {
           background-color: white;
@@ -63,6 +63,7 @@
       }
       nav.navbar {
           z-index: 1040;
+
       }
       .main-content {
           margin-left: 250px;
@@ -82,28 +83,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   </head>
   
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #343a40; position: fixed; top: 0; width: 100%; z-index: 1040; border-bottom: 1px solid #e9ecef;">
     <div class="container-fluid">
-      <!-- Brand Logo -->
-      <a class="navbar-brand fw-semibold fs-3" href="#" style=" margin-left: 50px;">
-        GeoMaart Admin Log
-      </a>
-      <!-- Toggle Button for Mobile View -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <!-- Navbar Content -->
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto"> <!-- Align items to the right -->
-          <li class="nav-item">
-            <a class="nav-link fw-semibold" href="#" style="margin-right: 50px; color: black;">
-              <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-          </li>
-        </ul>
-      </div>
+        <!-- Brand Logo -->
+        <a class="navbar-brand fw-bold fs-4" href="#" style="margin-left: 50px; color: aliceblue;">
+            GEOMAART ADMIN DASHBOARD
+        </a>
+        <!-- Toggle Button for Mobile View -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto"> <!-- Align items to the right -->
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold" href="{% url 'custom_admin:logout' %}" style="margin-right: 50px; color: black;color: aliceblue;">
+                        <i class="fas fa-sign-out-alt" ></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-  </nav>
+</nav>
+
   
 
 
@@ -129,7 +131,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'custom_admin:user_list' %}">
                     <i class="bi bi-people"></i> Manage Users
                 </a>
             </li>
@@ -163,7 +165,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" style="margin-top: 50px;">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h1 class="h2">Welcome, Admin!</h1>
             <div class="btn-toolbar mb-2 mb-md-0">
@@ -220,13 +222,13 @@
                     <tr>
                         <td>1</td>
                         <td>Added Product</td>
-                        <td>"New Smartphone" added to Electronics</td>
+                        <td>"Chenda" added to Art</td>
                         <td>2 hours ago</td>
                     </tr>
                     <tr>
                         <td>2</td>
                         <td>Updated Stock</td>
-                        <td>Stock updated for "Wireless Headphones"</td>
+                        <td>Stock updated for "Art"</td>
                         <td>4 hours ago</td>
                     </tr>
                     <tr>

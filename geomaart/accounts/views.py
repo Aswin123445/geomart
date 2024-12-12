@@ -76,6 +76,7 @@ def otp_verification(request):
 
 def signin(request):
     if 'user' in request.session:
+        print(request.session.get('user'))
         return redirect('home:homepage')
     context = {'error':False}
     if request.method == "POST":

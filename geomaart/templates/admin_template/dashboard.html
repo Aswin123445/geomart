@@ -65,6 +65,25 @@
           z-index: 1040;
 
       }
+      .notification {
+           background-color: #4CAF50; 
+           color: white; 
+           padding: 16px; 
+           position: fixed; 
+           top: 10vh; 
+           right: 20px; 
+           width: 350px; 
+           border-radius: 5px; 
+           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+           z-index: 1000; 
+           display: flex; 
+           justify-content: space-between; 
+           align-items: center;
+        }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
       .main-content {
           margin-left: 250px;
           padding: 20px;
@@ -106,7 +125,14 @@
     </div>
 </nav>
 
-  
+{% if messages %}
+{% for message in messages %}
+<div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+   {{ message }}
+    <button class="close-btn" onclick="closeNotification()">X</button>
+</div>
+{% endfor %}
+{% endif %}
 
 
 <div class="container-fluid">
@@ -117,6 +143,7 @@
 </div>
 
 <body>
+
     <div class="sidebar" id="sidebar">
         <h3 class="text-center py-4">Admin Panel</h3>
         <ul class="nav flex-column">
@@ -258,6 +285,14 @@
             sidebar.classList.remove('show');
             sidebarBackdrop.classList.remove('show');
         });
+        function closeNotification() {
+            document.getElementById("notification").style.display = "none";
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 4000 milliseconds = 4 seconds
+    });
     </script>
 </body>
 </html>

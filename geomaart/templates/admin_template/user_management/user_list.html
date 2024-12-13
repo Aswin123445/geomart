@@ -27,6 +27,25 @@
         .page-item .page-link {
             color: black; 
         }
+        .notification {
+           background-color: #4CAF50; 
+           color: white; 
+           padding: 16px; 
+           position: fixed; 
+           top: 10vh; 
+           right: 20px; 
+           width: 350px; 
+           border-radius: 5px; 
+           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+           z-index: 1000; 
+           display: flex; 
+           justify-content: space-between; 
+           align-items: center;
+        }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
     </style>
 </head>
 <body>
@@ -38,7 +57,7 @@
             <div class=" " id="">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#"> 
+                        <a class="nav-link active" aria-current="page" href="{% url 'custom_admin:dashboard' %}"> 
                           <i class="bi bi-house-door"></i> Dashboard
                         </a>
                     </li>
@@ -46,11 +65,20 @@
             </div>
         </div>
     </nav>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+       {{ message }}
+        <button class="close-btn" onclick="closeNotification()">X</button>
+    </div>
+    {% endfor %}
+    {% endif %}
     <!-- Page Content -->
-    <div class="container my-5">
+    <div class="container my-5 ">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>User Management</h2>
-            <button class="btn btn-danger">Add User</button>
+            <a href="{% url 'custom_admin:add_user' %}"><button class="btn btn-danger">Add User</button></a>
         </div>
         <!-- User Table -->
         <div class="table-responsive">
@@ -91,7 +119,7 @@
                             {% endif %}
                         </span></td>
                         <td>
-                            <button class="btn btn-warning btn-sm me-4">Edit</button>
+                            <a href="{% url 'custom_admin:edit_user' user.id %}"><button  class="btn btn-warning btn-sm me-4">Edit</button></a>
                             <button class="btn  btn-sm delete-user-btn" data-user-id="{{user.id}}" style="background-color: rgb(246, 125, 85);">Delete</button>
                         </td>
                     </tr>
@@ -166,6 +194,34 @@
         <div id="toastBody" class="toast-body"></div>
     </div>
   </div>
+</div>
+<footer class="footer bg-black text-white " style="margin-top: 25vh;" >
+    <div class="container-fluid text-center">
+        <div class="row pt-2">
+            <div class="col-md-4 mb-3">
+                <h5 class="fw-bold">GeoMaart</h5>
+                <p>Your one-stop shop for unique local products.</p>
+            </div>
+            <div class="col-md-4 mb-3">
+                <h5 class="fw-bold">Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-white text-decoration-none">Home</a></li>
+                    <li><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                    <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                    <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5 class="fw-bold">Follow Us</h5>
+                <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
+                <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
+            </div>
+        </div>
+        <hr class="bg-white">
+        <p class="mb-0">&copy; 2024 GeoMaart. All Rights Reserved.</p>
+    </div>
+</footer>
 <script>    
     document.addEventListener("DOMContentLoaded", function(){
         const modal = new bootstrap.Modal(document.getElementById("deleteUserModal"));
@@ -224,6 +280,14 @@
           // Navigate to the href link
           window.location.href = this.getAttribute('href');
       });
+    });
+    function closeNotification() {
+            document.getElementById("notification").style.display = "none";
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 4000 milliseconds = 4 seconds
     });
 </script>
 

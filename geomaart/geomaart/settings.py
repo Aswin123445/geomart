@@ -100,7 +100,7 @@ LOGIN_REDIRECT_URL = '/'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
 
 
-
+LOGIN_URL = '/account/signin/' 
 
 
 

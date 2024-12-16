@@ -113,9 +113,3 @@ def add_user(request):
                         handle_form_errors(request,form)
 
         return render(request,'admin_template/user_management/add_user.html')
-
-
-
-
-
-

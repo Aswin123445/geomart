@@ -35,7 +35,7 @@ class SignUpForm(UserCreationForm):
         phone_number = self.cleaned_data.get('phone_number')
         # Ensure phone number starts with +91
         if not phone_number.startswith('+91'):
-            phone_number = f'+91 + {phone_number}'
+            phone_number = f'+91{phone_number}'
 
         # Query the UserData model for the phone number
         user = UserData.objects.filter(phone_number=phone_number).first()
@@ -51,10 +51,8 @@ class SignUpForm(UserCreationForm):
 
 
     def save(self, commit=True):
-        print('within save method')
         user = super().save(commit=False)
         print(self.cleaned_data)
-        print(f'{user} user activated')
         user.name = self.cleaned_data['name']
         user.phone_number = self.cleaned_data['phone_number']
         print(self.cleaned_data['name'])

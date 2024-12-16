@@ -4,7 +4,7 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-
+from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
 class UserDataUpdation(forms.Form):
     name = forms.CharField(
         max_length=150,
@@ -170,6 +170,27 @@ class AdminUserAddForm(forms.Form):
             raise ValidationError("This email is already registered. Please use a different email address.")
         
         return email
+
+class categoryValidation(forms.Form) :
+    categoryName = forms.CharField(
+        required=True,
+        min_length=3,
+        strip=True,
+        error_messages={
+            'min_length':'minium 5 characteres is requerid'
+        },
+        validators=[category_name_validations_check]
+    )
+    categoryId = forms.IntegerField(min_value=0,validators=[category_id_valid_check],required= False)
+    categoryDescription = forms.CharField(
+        required=True,
+        min_length=5,
+        max_length=400,
+        validators=[category_description_empty_check]
+    )
+    categoryStatus=forms.IntegerField(min_value=1,max_value=3)
+    
+    
     
 
     

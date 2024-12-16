@@ -27,7 +27,7 @@ def register(request):
             if 'is_forgot_otp_send' in request.session :
                 del request.session['is_forgot_otp_send']
             request.session['phone_number'] = user.phone_number
-            messages.warning(f'{data}')
+            messages.warning(request,f'{data}')
             context['phone']=user.phone_number
             return render(request , 'accounts/otp_verification.html',context)
         else:

@@ -234,7 +234,6 @@
                 modal.show();
             });
         });
-
         confirmDelete.addEventListener('click',() =>{
             modal.hide()
             const url = "{% url 'custom_admin:delete_user' 0 %}".replace('0',selectedUserId)

@@ -23,6 +23,25 @@
         .is-invalid + .invalid-feedback {
             display: block;
         }
+        .notification {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 16px; 
+    position: fixed; 
+    top: 10vh; 
+    right: 20px; 
+    width: 350px; 
+    border-radius: 5px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    z-index: 1000; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
     </style>
 </head>
 <body>
@@ -39,19 +58,27 @@
             </ul>
         </div>
     </nav>
-
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+       {{ message }}
+        <button class="close-btn" onclick="closeNotification()">X</button>
+    </div>
+    {% endfor %}
+    {% endif %}
     <!-- Edit Category Form -->
     <div class="container my-4">
         <div class="row justify-content-center">
             <div class="col-md-6 shadow p-4 rounded bg-white">
                 <h2 class="mb-4">Edit Category</h2>
                 <form id="editCategoryForm" method="POST" onsubmit="return validateEditCategoryForm()">
+                    {% csrf_token %}
                     <!-- Hidden input to pass the category ID -->
-                    <input type="hidden" id="categoryId" name="categoryId" value="{{ category.id }}">
+                    <input type="hidden" id="categoryId" name="categoryId" value="{{category.id}}">
 
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Category Name</label>
-                        <input type="text" class="form-control" id="categoryName" name="categoryName" value="{{ category.name }}" placeholder="Enter category name" required>
+                        <input type="text" value="{{category.name}}" class="form-control" id="categoryName" name="categoryName" placeholder="Enter category name" required>
                         <div class="invalid-feedback">Category name is required and cannot be just spaces.</div>
                     </div>
 
@@ -64,9 +91,9 @@
                     <div class="mb-3">
                         <label for="categoryStatus" class="form-label">Status</label>
                         <select class="form-select" id="categoryStatus" name="categoryStatus" required>
-                            <option value="active" {% if category.status == 'active' %}selected{% endif %}>Active</option>
-                            <option value="inactive" {% if category.status == 'inactive' %}selected{% endif %}>Inactive</option>
-                            <option value="coming_soon" {% if category.status == 'coming_soon' %}selected{% endif %}>Coming Soon</option>
+                            <option value="1" {% if category.status == 1 %}selected{% endif %}>Active</option>
+                            <option value="3" {% if category.status == 3 %}selected{% endif %}>Inactive</option>
+                            <option value="2" {% if category.status == 2 %}selected{% endif %}>Coming Soon</option>
                         </select>
                         <div class="invalid-feedback">Please select a status.</div>
                     </div>
@@ -154,6 +181,17 @@
 
             return isValid;  // Return false to prevent form submission if invalid
         }
+        document.querySelector('.edit-icon').addEventListener('click', function() {
+            document.getElementById('userImage').click();
+        });
+        function closeNotification() {
+            document.getElementById("notification").style.display = "none";
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 4000 milliseconds = 4 seconds
+    });
     </script>
 </body>
 </html>

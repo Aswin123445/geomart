@@ -47,6 +47,7 @@
                 <h2 class="mb-4">Add Category</h2>
                 <form id="addCategoryForm" method="POST" onsubmit="return validateAddCategoryForm()">
                     <!-- Category Name -->
+                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Category Name</label>
                         <input type="text" class="form-control" id="categoryName" name="categoryName" placeholder="Enter category name" required>
@@ -65,9 +66,9 @@
                         <label for="categoryStatus" class="form-label">Status</label>
                         <select class="form-select" id="categoryStatus" name="categoryStatus" required>
                             <option value="">Select Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="coming_soon">Coming Soon</option>
+                            <option value="1">Active</option>
+                            <option value="3">Inactive</option>
+                            <option value="2">Coming Soon</option>
                         </select>
                         <div class="invalid-feedback">Please select a status.</div>
                     </div>
@@ -80,7 +81,6 @@
             </div>
         </div>
     </div>
-
     <!-- Footer -->
     <footer class="footer bg-black text-white" style="margin-top: 10vh;">
         <div class="container-fluid text-center">

@@ -13,5 +13,6 @@ urlpatterns = [
     path('category_delete/<int:id>',views.category_delete,name='category_delete'),
     path('category_edit/<int:id>',views.category_edit,name='category_edit'),
     path('new_category/',views.new_category,name='new_category'),
-    path('search_category/',views.search_category,name='search_category')
+    path('search_category/',views.search_category,name='search_category'),
+    path('category_search_result/<int:id>',views.category_search_result,name='category_search_result')
 ]

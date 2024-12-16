@@ -44,7 +44,7 @@
        color: white;
     }
     .list-group-item{
-        height: 4vh;
+        height: 5vh;
     }
 
     @media (max-width: 700px) {
@@ -321,8 +321,14 @@
                     if (data.results.length > 0) {
                         data.results.forEach(result => {
                             const listItem = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.style.textDecoration='none'
+                            link.style.color='black'
+                            link.href = `/admin_log/category_search_result/${result.name[0]}`; 
+                            link.textContent = result.name[1];
                             listItem.classList.add('list-group-item');
-                            listItem.textContent = result.name;
+                            listItem.appendChild(link);
+                            // listItem.textContent = result.name[1];
                             resultList.appendChild(listItem);
                         });
                     } else {

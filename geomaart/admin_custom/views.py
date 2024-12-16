@@ -126,6 +126,13 @@ def category_list(request):
        return render(request,'admin_template/category_management/category_list.html',context)
    
 @login_required
+def category_search_result(request,id):
+    data =Category.objects.filter(id=id)
+    paginator= Paginator(data,5)
+    page_obj=paginator.get_page(1)
+    return render(request,'admin_template/category_management/category_list.html',{'category_details':page_obj})
+    
+@login_required
 def category_delete(request,id):
     if request.method == 'POST' :
         try :
@@ -186,5 +193,5 @@ def search_category(request):
                 else:
                         names_set = Category.objects.none()
                         print('something bad happend here')
-                datas=[{'name':category.name} for category in names_set]
+                datas=[{'name':[category.id,category.name]} for category in names_set]
                 return JsonResponse({'results':datas})

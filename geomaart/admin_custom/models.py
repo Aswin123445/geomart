@@ -38,4 +38,4 @@ class Location(models.Model):
             self.slug = slugify(self.district)
     def __str__(self):
         return self.district
-            
+      

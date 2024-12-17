@@ -158,6 +158,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'custom_admin:location_list' %}">
+                    <i class="bi bi-geo-alt"></i> Manage Location
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="#">
                     <i class="bi bi-box"></i> Manage Products
                 </a>
@@ -290,7 +295,7 @@
             sidebar.classList.remove('show');
             sidebarBackdrop.classList.remove('show');
         });
-        function closeNotification() {
+    function closeNotification() {
             document.getElementById("notification").style.display = "none";
     }
     document.querySelectorAll('.notification').forEach(notification => {

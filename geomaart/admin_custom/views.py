@@ -3,13 +3,13 @@ from django.contrib.auth import logout as log
 from django.contrib.auth.decorators import login_required
 from .utils import prevent_cache_view,handle_form_errors,update_user_data
 from accounts.models import UserData
-from admin_custom.models import Category
+from admin_custom.models import Category,Location
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .forms import UserDataUpdation
 from django.contrib import messages
-from .forms import AdminUserAddForm
+from .forms import AdminUserAddForm,LocationValidation
 from .forms import categoryValidation
 
 # Create your views here.
@@ -30,6 +30,7 @@ def logout(request):
 
     return response
 
+#user management logic
 @login_required
 def user_list(request):
     current_page_number=request.GET.get('page',1)
@@ -115,22 +116,22 @@ def add_user(request):
 
     return render(request,'admin_template/user_management/add_user.html')
 
+
+#category management logic
 @login_required
-def category_list(request):
+def category_list(request,id = None):
     if 'user' in request.session :
        current_page_number=request.GET.get('page',1)
-       all_user = Category.objects.all()
-       paginator = Paginator(all_user,2)
+       if  id is None :
+          all_category = Category.objects.all()
+          paginator = Paginator(all_category,2)
+       else :
+          results = Category.objects.filter(id = id)
+          paginator = Paginator(results,3) 
        page_obj=paginator.get_page(current_page_number)
        context = {'category_details':page_obj}
-       return render(request,'admin_template/category_management/category_list.html',context)
+    return render(request,'admin_template/category_management/category_list.html',context)
    
-@login_required
-def category_search_result(request,id):
-    data =Category.objects.filter(id=id)
-    paginator= Paginator(data,5)
-    page_obj=paginator.get_page(1)
-    return render(request,'admin_template/category_management/category_list.html',{'category_details':page_obj})
     
 @login_required
 def category_delete(request,id):
@@ -186,6 +187,7 @@ def new_category(request):
             messages.error(request,error_message[0][0])
     return render(request,'admin_template/category_management/add_category.html')
 
+@login_required
 def search_category(request):
         if request.method == 'GET':
                 if query := request.GET.get('query', ''):
@@ -194,4 +196,78 @@ def search_category(request):
                         names_set = Category.objects.none()
                         print('something bad happend here')
                 datas=[{'name':[category.id,category.name]} for category in names_set]
+                return JsonResponse({'results':datas})
+            
+#location management logic
+@login_required
+def location_list(request,id=None):
+    if 'user' in request.session :
+       current_page_number=request.GET.get('page',1)
+       if id is None :
+           all_location = Location.objects.all()
+           paginator = Paginator(all_location,3)
+       else :
+           results = Location.objects.filter(id = id)
+           paginator = Paginator(results,3)
+       page_obj=paginator.get_page(current_page_number)
+       context = {'location_details':page_obj}
+
+    return render(request,'admin_template/location_management/location_list.html',context)
+
+def location_delete(request,id):
+    if request.method == 'POST' :
+        try :
+            location = Location.objects.get(id = id)
+            name= location.district
+            location.delete()
+            print('category deleted ')
+            return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
+        except Location.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Location not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+def location_edit(request,name ):
+    error = False
+    data = Location.objects.filter(slug=name).first()
+    print(f'data printed outside method {data}')
+    if request.method == 'POST' :
+        forms = LocationValidation(request.POST)
+        if forms.is_valid() :
+            data.district = forms.cleaned_data['district']
+            data.description = forms.cleaned_data['description']
+            data.save()
+            messages.success(request,'datas updated successfully')
+            return redirect('custom_admin:location_list')
+        else :
+            messages.error(request,list(forms.errors.values())[0])
+    context = {'location':data,'error':error}
+    return render(request,'admin_template/location_management/update_location.html',context)
+
+@login_required
+def new_location(request):
+    if request.method =='POST':
+        forms = LocationValidation(request.POST)
+        if forms.is_valid():
+            data= Location(
+                district=forms.cleaned_data['district'],
+                description=forms.cleaned_data['description']
+                )
+            data.save()
+            messages.success(request,'Location data saved to database')
+            print('data saved successfully to the data base')
+            return redirect('custom_admin:location_list')
+        else :
+            error_message=list(forms.errors.values())
+            messages.error(request,error_message[0][0])
+            
+    return render(request,'admin_template/location_management/add_location.html')
+
+def search_location(request):
+        if request.method == 'GET':
+                if query := request.GET.get('query', ''):
+                        names_set = Location.objects.filter(district__icontains = query)
+                else:
+                        names_set = Category.objects.none()
+                        print('something bad happend here')
+                datas=[{'name':[location.id,location.district]} for location in names_set]
                 return JsonResponse({'results':datas})

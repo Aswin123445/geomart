@@ -26,5 +26,3 @@ def update_user_data(user, cleaned_data):
     # Update active status
     user.is_active = cleaned_data['is_active']
     user.save()
-    
-

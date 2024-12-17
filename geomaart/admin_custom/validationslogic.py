@@ -13,4 +13,8 @@ def category_name_validations_check(value):
       raise ValidationError("cannot contain empty values in this field")
     if len(value.strip()) <3 :
         raise ValidationError("must containe name maximum length of 3")
-    
+def location_name_validations_check(value):
+    if len(value.strip()) == 0 :
+      raise ValidationError("cannot contain empty values in this field")
+    if len(value.strip()) <3 :
+        raise ValidationError("must containe name maximum length of 3")

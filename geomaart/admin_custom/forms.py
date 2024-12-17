@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
+from .validationslogic import location_name_validations_check
 class UserDataUpdation(forms.Form):
     name = forms.CharField(
         max_length=150,
@@ -190,9 +191,19 @@ class categoryValidation(forms.Form) :
     )
     categoryStatus=forms.IntegerField(min_value=1,max_value=3)
     
-    
-    
-
-    
-
-
+#forms to add new loations to the list
+class LocationValidation(forms.Form):
+    district=forms.CharField(
+        max_length=100,
+        min_length=3,strip=True,
+        required=True,
+        validators=[location_name_validations_check],
+        error_messages={'min_length':'this is too small try increasing the length'}
+    )
+    description=forms.CharField(
+        max_length=500,
+        min_length=3,
+        required=True,
+        validators=[location_name_validations_check],
+        error_messages={'max_length':'this exceeded the maximum limit','min_length':'try increasing the length'}
+    )

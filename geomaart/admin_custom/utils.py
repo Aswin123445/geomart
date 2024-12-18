@@ -1,4 +1,6 @@
 from django.contrib import messages
+
+from admin_custom.models import Category, Location, Product, ProductImage,CulturalBackground
 def prevent_cache_view(request):
     # Add cache headers to prevent caching of authenticated views
     request['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -26,3 +28,26 @@ def update_user_data(user, cleaned_data):
     # Update active status
     user.is_active = cleaned_data['is_active']
     user.save()
+    
+def creating_product_instance(forms, request, list_temp_image):
+        product_instance = Product(
+            name=forms.cleaned_data['name'],
+            description=forms.cleaned_data['description'],
+            price=forms.cleaned_data['price'],
+            stock=forms.cleaned_data['stock'],
+            is_featured='isfeatured' in request.POST,
+            is_active='isactive' in request.POST,
+            category=Category.objects.get(
+                id=forms.cleaned_data['category']),
+            location=Location.objects.get(
+                id=forms.cleaned_data['location']),
+        )
+        product_instance.save()
+        print(list_temp_image)
+        for image in list_temp_image :
+            ProductImage.objects.create(
+                product = product_instance,
+                image = image
+            )
+        product_history = CulturalBackground(product = product_instance ,description = forms.cleaned_data['culturalbackground'])
+        product_history.save()

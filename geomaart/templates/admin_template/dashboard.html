@@ -65,21 +65,21 @@
           z-index: 1040;
 
       }
-      .notification {
-           background-color: #4CAF50; 
-           color: white; 
-           padding: 16px; 
-           position: fixed; 
-           top: 10vh; 
-           right: 20px; 
-           width: 350px; 
-           border-radius: 5px; 
-           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
-           z-index: 1000; 
-           display: flex; 
-           justify-content: space-between; 
-           align-items: center;
-        }
+    .notification {
+       background-color: #4CAF50; 
+       color: white; 
+       padding: 16px; 
+       position: fixed; 
+       top: 10vh; 
+       right: 20px; 
+       width: 350px; 
+       border-radius: 5px; 
+       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+       z-index: 1000; 
+       display: flex; 
+       justify-content: space-between; 
+       align-items: center;
+    }
     .error-notification {
        background-color: red;
        color: white;
@@ -163,7 +163,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url 'custom_admin:product_listing' %}">
                     <i class="bi bi-box"></i> Manage Products
                 </a>
             </li>
@@ -281,7 +281,7 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <!-- <script>
         const sidebar = document.getElementById('sidebar');
         const sidebarBackdrop = document.getElementById('sidebar-backdrop');
         const toggleSidebar = document.getElementById('toggle-sidebar');
@@ -295,14 +295,47 @@
             sidebar.classList.remove('show');
             sidebarBackdrop.classList.remove('show');
         });
-    function closeNotification() {
+        function closeNotification() {
             document.getElementById("notification").style.display = "none";
     }
     document.querySelectorAll('.notification').forEach(notification => {
        setTimeout(() => {
           notification.style.display = "none";
-       }, 5000); // 4000 milliseconds = 4 seconds
+       }, 5000); // 5000 milliseconds = 4 seconds
     });
+    </script> -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+    const toggleSidebar = document.getElementById('toggle-sidebar');
+
+    // Sidebar toggle
+    toggleSidebar.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+        sidebarBackdrop.classList.toggle('show');
+    });
+
+    sidebarBackdrop.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        sidebarBackdrop.classList.remove('show');
+    });
+
+    // Close Notification
+    document.querySelectorAll('.notification .close-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            button.parentElement.style.display = 'none';
+        });
+    });
+
+    // Auto-hide Notification
+    document.querySelectorAll('.notification').forEach(notification => {
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 5000);
+    });
+});
+
     </script>
 </body>
 </html>

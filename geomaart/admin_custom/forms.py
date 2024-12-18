@@ -5,7 +5,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
-from .validationslogic import location_name_validations_check
+from .validationslogic import location_name_validations_check,product_integer_value_negative_check
+from .validationslogic import location_valid_check,category_valid_check
 class UserDataUpdation(forms.Form):
     name = forms.CharField(
         max_length=150,
@@ -207,3 +208,84 @@ class LocationValidation(forms.Form):
         validators=[location_name_validations_check],
         error_messages={'max_length':'this exceeded the maximum limit','min_length':'try increasing the length'}
     )
+    
+#product model validations
+class ProductValidation(forms.Form):
+    name = forms.CharField(
+        min_length=3,
+        max_length=40,
+        required=True,
+        validators=[category_name_validations_check],
+        error_messages={'required':'this field is required',}
+    )
+    description = forms.CharField(
+        min_length=3,
+        max_length=2000,
+        required=True,
+        validators=[category_name_validations_check],
+        error_messages={'required':'this field is required',}
+    )
+    price = forms.IntegerField(
+        min_value=5,
+        required=True,
+        validators=[product_integer_value_negative_check],
+        error_messages={'required':'this field is required','min_value':'price must be 5 or more than 5'}
+    )
+    stock = forms.IntegerField(
+        min_value=1,
+        required=True,
+        validators=[product_integer_value_negative_check],
+        error_messages={'required':'this field is required','min_value':'stock must contain more than 0'}
+    )
+    location = forms.IntegerField(
+        min_value=0,
+        required=True,
+        validators=[location_valid_check],
+        error_messages={'invalid': 'please select a category'}
+    )
+    category = forms.IntegerField(
+        min_value=0,
+        required=True,
+        validators=[category_valid_check],
+        error_messages={'invalid': 'please select a location'}
+        
+    )
+    culturalbackground= forms.CharField(
+        required = True,
+        min_length= 20,
+    )
+# class FileCheckerForm(forms.Form):
+#     productImages = forms.FileField(
+#         required=True,
+#     )
+    
+#     def clean_productImages(self):
+#         uploaded_files = self.files.getlist('productImages')  # Access uploaded files
+#         if not uploaded_files:
+#             raise ValidationError("At least one image must be uploaded.")
+
+#         # Validation parameters
+#         ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
+#         ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png']
+#         MAX_FILE_SIZE = 2 * 1024 * 1024
+#         MAX_FILES = 3
+
+#         if len(uploaded_files) > MAX_FILES:
+#             raise ValidationError(f"You can upload a maximum of {MAX_FILES} images.")
+
+#         for file in uploaded_files:
+#             # Validate file extension
+#             if file.name.split('.')[-1].lower() not in ALLOWED_EXTENSIONS:
+#                 raise ValidationError(f"File {file.name} has an invalid extension.")
+
+#             # Validate file size
+#             if file.size > MAX_FILE_SIZE:
+#                 raise ValidationError(f"File {file.name} exceeds the maximum size of 2 MB.")
+
+#             # Validate MIME type
+#             if file.content_type not in ALLOWED_MIME_TYPES:
+#                 raise ValidationError(f"File {file.name} has an invalid MIME type.")
+
+#         return uploaded_files
+    
+        

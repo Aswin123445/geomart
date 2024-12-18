@@ -27,4 +27,10 @@ urlpatterns = [
     path('location_edit/<slug:name>',views.location_edit,name='location_edit'),
     path('new_location/',views.new_location,name='new_location'),
     path('search_location/',views.search_location,name='search_location'),
+    
+    
+    #product management section
+    path('product_listing/',views.product_listing,name='product_listing'),
+    path('addproduct/',views.addproduct,name='addproduct'),
+
 ]

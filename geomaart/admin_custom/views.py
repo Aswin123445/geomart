@@ -1,16 +1,17 @@
 from django.shortcuts import render,redirect
 from django.contrib.auth import logout as log
 from django.contrib.auth.decorators import login_required
-from .utils import prevent_cache_view,handle_form_errors,update_user_data
+from .utils import creating_product_instance, prevent_cache_view,handle_form_errors,update_user_data
 from accounts.models import UserData
-from admin_custom.models import Category,Location
+from admin_custom.models import Category,Location,Product
+from admin_custom.models import CulturalBackground
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .forms import UserDataUpdation
 from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation
-from .forms import categoryValidation
+from .forms import categoryValidation,ProductValidation
 
 # Create your views here.
 
@@ -31,6 +32,8 @@ def logout(request):
     return response
 
 #user management logic
+
+
 @login_required
 def user_list(request):
     current_page_number=request.GET.get('page',1)
@@ -118,6 +121,9 @@ def add_user(request):
 
 
 #category management logic
+
+
+
 @login_required
 def category_list(request,id = None):
     if 'user' in request.session :
@@ -131,8 +137,6 @@ def category_list(request,id = None):
        page_obj=paginator.get_page(current_page_number)
        context = {'category_details':page_obj}
     return render(request,'admin_template/category_management/category_list.html',context)
-   
-    
 @login_required
 def category_delete(request,id):
     if request.method == 'POST' :
@@ -199,6 +203,10 @@ def search_category(request):
                 return JsonResponse({'results':datas})
             
 #location management logic
+
+
+
+
 @login_required
 def location_list(request,id=None):
     if 'user' in request.session :
@@ -214,6 +222,7 @@ def location_list(request,id=None):
 
     return render(request,'admin_template/location_management/location_list.html',context)
 
+@login_required
 def location_delete(request,id):
     if request.method == 'POST' :
         try :
@@ -271,3 +280,31 @@ def search_location(request):
                         print('something bad happend here')
                 datas=[{'name':[location.id,location.district]} for location in names_set]
                 return JsonResponse({'results':datas})
+            
+            
+
+
+
+
+def product_listing(request):
+    return render(request,'admin_template/product_management/product_list.html')
+@login_required
+def addproduct(request): 
+    all_category = Category.objects.all()
+    all_location = Location.objects.all()
+    if request.method == 'POST':
+        print(request.POST['culturalbackground'])
+        forms = ProductValidation(request.POST)
+        list_temp_image =request.FILES.getlist('productImages')
+        if forms.is_valid():
+            print(f'{forms.cleaned_data} called in the view ')
+            creating_product_instance(forms, request, list_temp_image)
+            messages.success(request,'added new product')
+            return redirect('custom_admin:product_listing')   
+        else:
+            error_message=list(forms.errors.values())
+            messages.error(request,error_message[0][0])
+    context={'category':all_category,'location':all_location}
+    return render(request,'admin_template/product_management/add_product.html',context)
+
+

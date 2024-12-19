@@ -247,12 +247,13 @@ class ProductValidation(forms.Form):
         min_value=0,
         required=True,
         validators=[category_valid_check],
-        error_messages={'invalid': 'please select a location'}
+        error_messages={'invalid': 'please select a category'}
         
     )
     culturalbackground= forms.CharField(
         required = True,
         min_length= 20,
+        strip= True
     )
 # class FileCheckerForm(forms.Form):
 #     productImages = forms.FileField(

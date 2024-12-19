@@ -30,6 +30,23 @@
        background-color: red;
        color: white;
     }
+    .pagination {
+            margin-top: 20px;
+        }
+        .page-link:focus{
+          outline: none;
+          box-shadow: none;
+        }
+        .page-item{
+           color: red;
+        }
+        .page-item.active .page-link {
+           background-color: #dc3545; 
+           color: #fff; 
+        }
+        .page-item .page-link {
+            color: black; 
+        }
 </style>
 <!-- Navigation Bar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -56,19 +73,26 @@
 {% endif %}
 <!-- Container for Product Listing -->
 <div class="container mt-5">
-
     <!-- Page Title -->
     <div class="d-flex justify-content-between mb-3">
         <h2>Product Listing</h2>
         <!-- Search Bar -->
         <form class="d-flex" role="search">
-            <input class="form-control me-2" type="search" placeholder="Search products..." aria-label="Search">
+            <input class="form-control me-2" id="searchInput" type="search" placeholder="Search products..." aria-label="Search">
         </form>
          <!-- Add Product Button -->
           <a href="{% url 'custom_admin:addproduct' %}" class="btn btn-danger me-2" style="height: 5vh; font-size: .8rem;padding-top: 8px; margin-left: 7vw;">
             <i class="bi bi-plus-lg"></i> Add Product
           </a>
-
+    </div>
+    <div id="searchResultContainer" class="container mt-3" style="display: none; position: absolute; top: 135px; left: 42%; width: 30%; z-index: 10;">
+        <div class="card">
+            <div class="card-body ca">
+                <ul id="searchResultsList" class="list-group list-group-flush">
+                    <!-- Search results will be appended here dynamically -->
+                </ul>
+            </div>
+        </div>
     </div>
 
     <!-- Bulk Actions -->
@@ -88,6 +112,7 @@
                 </th>
                 <th scope="col">Product Name</th>
                 <th scope="col">Category</th>
+                <th scope="col">Location</th>
                 <th scope="col">Price</th>
                 <th scope="col">Stock</th>
                 <th scope="col">Actions</th>
@@ -95,54 +120,93 @@
         </thead>
         <tbody>
             <!-- Example Product Row -->
-            <tr>
+            {% for product in product_details %}
+            <tr id="product-row-{{product.id}}">
                 <td>
                     <input type="checkbox" class="selectProduct">
                 </td>
-                <td>Product 1</td>
-                <td>Category A</td>
-                <td>$100</td>
-                <td>50</td>
+                <td>{{product.name}}</td>
+                <td>{{product.category.name}}</td>
+                <td>{{product.location.district}}</td>
+                <td>{{product.price}}</td>
+                <td>{{product.stock}}</td>
                 <td>
-                    <a href="#" class="btn btn-info btn-sm">View</a>
-                    <a href="#" class="btn btn-warning btn-sm">Edit</a>
-                    <a href="#" class="btn btn-danger btn-sm">Delete</a>
-                    <button class="btn btn-success btn-sm">Mark as Featured</button>
+                    <a href="{% url 'custom_admin:product_details' product.slug %}" class="btn btn-info btn-sm">View</a>
+                    <a href="{% url 'custom_admin:edit_product' product.slug %}" class="btn btn-warning btn-sm">Edit</a>
+                    <a  class="btn btn-danger btn-sm delete-product-btn" data-product-id="{{product.id}}">Delete</a>
+                    <button class="btn {% if product.is_featured%}btn-success {% else %} btn-danger {%endif%} btn-sm ">
+                        {% if product.is_featured %} Remove Feature {% else %} Add Feature {% endif %}
+                    </button>
                 </td>
             </tr>
-            <!-- Repeat rows as necessary for more products -->
-            <tr>
-                <td>
-                    <input type="checkbox" class="selectProduct">
-                </td>
-                <td>Product 2</td>
-                <td>Category B</td>
-                <td>$150</td>
-                <td>20</td>
-                <td>
-                    <a href="#" class="btn btn-info btn-sm">View</a>
-                    <a href="#" class="btn btn-warning btn-sm">Edit</a>
-                    <a href="#" class="btn btn-danger btn-sm">Delete</a>
-                    <button class="btn btn-success btn-sm">Mark as Featured</button>
-                </td>
-            </tr>
+            {% endfor %}
+
             <!-- Add more rows as needed -->
         </tbody>
     </table>
-
     <!-- Pagination -->
-    <nav aria-label="Page navigation">
+    <nav>
         <ul class="pagination justify-content-center">
-            <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+            <li class="page-item " >
+                {% if product_details.has_previous  %}
+                  <a class="page-link" href="?page={{product_details.previous_page_number}}"  aria-disabled="true">Previous</a>
+                {% else %}
+                  {% if product_details.has_next %}
+                  <a class="page-link" href="?page={{product_details.next_page_number}}"  aria-disabled="true">>>>>></a>
+                  {% endif %}
+                {% endif %}
+            </li>
+      
+            {% for i in product_details.paginator.page_range %} 
+              <li class="page-item {% if product_details.number == i %} active {% endif %}">
+                  <a class="page-link" href="?page={{i}}">{{i}}</a>
+              </li>
+            {% endfor %}
+            <li class="page-item">
+              {% if product_details.has_next %}
+                <a class="page-link" href="?page={{product_details.next_page_number}}" aria-label="Next">
+                    Next
+                </a>
+              {% else %}
+                  {% if product_details.has_previous %}
+                    <a class="page-link" href="?page={{product_details.previous_page_number}}" aria-label="Next">
+                      <<<<<
+                    </a>
+                  {% endif %}
+              {% endif %}
+            </li>
         </ul>
-    </nav>
+      </nav>
+      <div style="display: flex; justify-content: center; margin-top: -8px;">{{product_details}}</div>
 
 </div>
-
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-labelledby="deleteProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProductModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this Category?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055" data-bs-delay="5000">
+    <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong id="toastTitle" class="me-auto"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div id="toastBody" class="toast-body"></div>
+    </div>
+  </div>
+</div>
 <!-- Footer -->
 <footer class="footer bg-black text-white" style="margin-top: 25vh;">
     <div class="container-fluid text-center">
@@ -190,6 +254,100 @@
           notification.style.display = "none";
        }, 5000); // 5000 milliseconds = 4 seconds
     });
+
+    // funtion for soft delete
+    document.addEventListener("DOMContentLoaded", function(){
+        const modal = new bootstrap.Modal(document.getElementById("deleteProductModal"));
+        const productDeletButtons = document.querySelectorAll(".delete-product-btn");
+        const confirmDelete = document.getElementById("confirmDeleteBtn");
+        let selectedProductId = null;
+        productDeletButtons.forEach(button =>{
+            button.addEventListener("click",()=>{
+                selectedProductId = button.dataset.productId;
+                modal.show();
+            });
+        });
+
+        confirmDelete.addEventListener('click',() =>{
+            modal.hide()
+            const url = "{% url 'custom_admin:delete_product' 0 %}".replace('0',selectedProductId)
+            fetch(url,{
+                method: "POST",
+                headers:{
+                     "X-CSRFToken": "{{ csrf_token }}"
+                }
+            })
+            .then(response => response.json())
+               .then( data => {
+                  const toast = new bootstrap.Toast(document.getElementById("toastNotification"),{ autohide: true, delay: 5000 });
+                  const toastTitle = document.getElementById("toastTitle");
+                  const toastBody = document.getElementById("toastBody");
+                  if(data.success){
+                    document.getElementById(`product-row-${selectedProductId}`).remove();
+                    toastTitle.textContent = "Success";
+                    toastTitle.classList.add("text-success");
+                    toastBody.textContent = data.message;
+                    toast.show()
+                  } else {
+                    toastTitle.textContent = "Error";
+                    toastTitle.classList.add("text-danger");
+                    toastBody.textContent = data.message;
+                    toast.show(); 
+                  }
+               });
+            });
+        });
+    
+    // search feature
+    document.getElementById('searchInput').addEventListener('input', function () {
+        console.log("heolo")
+        let debounceTimer;
+        debounceTimer = setTimeout(() => {
+            fetchResult(this.value)
+        }, 200);
+    });
+
+    const fetchResult = (query) => {
+        const resultContainer = document.getElementById('searchResultContainer');
+        const resultList = document.getElementById('searchResultsList');
+        
+        if (query.trim().length < 3) {
+            resultContainer.style.display = 'none';
+            return;
+        } else {
+            const queryUrl = "{% url 'custom_admin:search_product' %}?query=" + encodeURIComponent(query);
+            fetch(queryUrl)  // Replace with your actual API URL
+                .then(response => response.json())
+                .then(data => {
+                    resultList.innerHTML = '';  // Clear previous results
+
+                    if (data.results.length > 0) {
+                        data.results.forEach(result => {
+                            const listItem = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.style.textDecoration='none'
+                            link.style.color='black'
+                            link.href = `${result.name[0]}`; 
+                            link.textContent = result.name[1];
+                            listItem.classList.add('list-group-item');
+                            listItem.appendChild(link);
+                            // listItem.textContent = result.name[1];
+                            resultList.appendChild(listItem);
+                        });
+                    } else {
+                        const noResultItem = document.createElement('li');
+                        noResultItem.classList.add('list-group-item');
+                        noResultItem.textContent = 'No matching data found';  // Corrected typo
+                        resultList.appendChild(noResultItem);
+                    }
+
+                    resultContainer.style.display = 'block';  // Show the result container
+                })
+                .catch(error => {
+                    console.error('Error fetching search result', error);
+                });
+        }
+    };
 </script>
 
 </body>

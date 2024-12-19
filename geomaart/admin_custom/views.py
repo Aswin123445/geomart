@@ -280,14 +280,23 @@ def search_location(request):
                         print('something bad happend here')
                 datas=[{'name':[location.id,location.district]} for location in names_set]
                 return JsonResponse({'results':datas})
-            
-            
 
 
 
 
-def product_listing(request):
-    return render(request,'admin_template/product_management/product_list.html')
+@login_required
+def product_listing(request,slug=None):
+       print("helo")
+       current_page_number=request.GET.get('page',1)
+       if slug is None :
+           all_location = Product.objects.select_related('category','location')
+           paginator = Paginator(all_location,3)
+       else :
+           results = Product.objects.filter(slug = slug)
+           paginator = Paginator(results,3)
+       page_obj=paginator.get_page(current_page_number)
+       context = {'product_details':page_obj}
+       return render(request,'admin_template/product_management/product_list.html',context)
 @login_required
 def addproduct(request): 
     all_category = Category.objects.all()
@@ -307,4 +316,69 @@ def addproduct(request):
     context={'category':all_category,'location':all_location}
     return render(request,'admin_template/product_management/add_product.html',context)
 
+@login_required
+def delete_product(request,id):
+    if request.method == 'POST' :
+        try :
+            product = Product.objects.get(id = id)
+            name = product.name
+            product.delete()
+            print('category deleted ')
+            return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
+        except Location.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Location not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+@login_required
+def edit_product(request,name):
+    error = False
+    category = Category.objects.all()
+    location=Location.objects.all()
+    data = Product.objects.select_related('location','category','cultural_background').get(slug = name)
+    # image_url = [image.image.url for image in data.images.all()]
+    # print(image_url)
+    # for image in data1.images.all():
+    #    print(image.image.url)
+    if request.method == 'POST' :
+        error = False
+        print(request.POST['location'])
+        forms = ProductValidation(request.POST)
+        if forms.is_valid() :
+            print(forms.cleaned_data)
+            product = Product.objects.get(slug = name)
+            product.name = forms.cleaned_data['name']
+            product.description = forms.cleaned_data['description']
+            product.price = forms.cleaned_data['price']
+            product.stock = forms.cleaned_data['stock']
+            product.category = Category.objects.get(id=forms.cleaned_data['category'])
+            product.location = Location.objects.get(id=forms.cleaned_data['location'])
+            product.is_active = int(request.POST['active']) == 1 
+            product.is_featured = int(request.POST['feature']) == 1 
+            product.cultural_background.description = forms.cleaned_data['culturalbackground']
+            product.save()
+            messages.success(request,'product data updated successfully successfully')
+            return redirect('custom_admin:product_listing')
+        else :
+            messages.error(request,list(forms.errors.values())[0]) 
+            error = True
+    context = {'product':data,'error':error,'data_category':category,'data_location':location}
+    return render(request,'admin_template/product_management/product_update.html',context)
+
+@login_required
+def search_product(request):
+        if request.method == 'GET':
+                if query := request.GET.get('query', ''):
+                        names_set = Product.objects.filter(name__icontains = query)
+                else:
+                        names_set = Product.objects.none()
+                        print('something bad happend here')
+                datas=[{'name':[product_data.slug,product_data.name]} for product_data in names_set]
+                return JsonResponse({'results':datas})
+            
+@login_required
+def product_details(request,slug):
+    data = Product.objects.select_related('category','location','cultural_background').get(slug = slug)
+    image_url = [ image.image.url for image in data.images.all()]
+    context={'product':data,'image_url':image_url}
+    return render(request,'admin_template/product_management/product_details.html',context)
 

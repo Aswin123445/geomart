@@ -3,58 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Detail/Edit</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons for the navbar -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        /* Centering the form and limiting the width */
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 30px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background-color: #f9f9f9;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Added shadow */
-        }
-        .form-label {
-            font-weight: bold;
-        }
-        .form-check-label {
-            font-weight: normal;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .btn {
-            width: 45%;
-            margin: 10px;
-        }
-        .btn-secondary {
-            width: 45%;
-            margin-left: 10px;
-        }
-        .mb-3 {
-            margin-bottom: 1.5rem;
-        }
-        footer {
-            margin-top: 25vh;
-            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1); /* Added shadow to footer */
-        }
-        nav.navbar {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Added shadow to navbar */
-        }
-    </style>
+    <title>Admin - Product Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
 </head>
+<style>
+    .img-style{
+       height: 200px;
+       width: 200px;
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       flex-wrap: wrap;
+    }
+</style>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" style="margin-left: 30px;" href="#">GeoMaart Admin Panel</a>
-            <div class="ms-auto">
+            <div class="ms-auto" id="">
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="{% url 'custom_admin:dashboard' %}">
@@ -65,93 +33,96 @@
             </div>
         </div>
     </nav>
+    <!-- Main Content -->
+    <div class="container mt-4">
+<!-- Product Details Section -->
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <h4>Product Details</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Left Section -->
+            <div class="col-md-6">
+                <h5 id="productName">{{product.name}}
+                    <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                       onclick="enableEdit('productName')"></i>
+                </h5>
+                <p id="productDescription">{{product.description}}
+                    <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                       onclick="enableEdit('productDescription')"></i>
+                </p>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <strong>Price:</strong> <span id="priceValue">{{product.price}}</span>
+                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                           onclick="enableEdit('priceValue')"></i>
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Stock:</strong> <span id="stockValue">{{product.stock}} units</span>
+                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                           onclick="enableEdit('stockValue')"></i>
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Category:</strong> <span id="categoryValue">{{product.category.name}}</span>
+                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                           onclick="enableEdit('categoryValue')"></i>
+                    </li>
+                </ul>
+            </div>
+            <!-- Right Section -->
+            <div class="col-md-6 pt-5 mt-4">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <strong>Location:</strong> <span id="locationValue">{{product.location.district}}</span>
+                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                           onclick="enableEdit('locationValue')"></i>
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Status:</strong> <span id="statusValue">{% if product.is_active %} product is live{% else %} product not visible{% endif %}</span>
+                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
+                           onclick="enableEdit('statusValue')"></i>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <div class="container mt-5 form-container shadow mb-5">
-        <h2 class="text-center">Product Detail/Edit</h2>
-        <form>
-            <!-- Product Name -->
-            <div class="mb-3">
-                <label for="productName" class="form-label">Product Name</label>
-                <input type="text" class="form-control" id="productName" placeholder="Enter product name" required>
+        <!-- Product Images Section -->
+        <div class="card mb-4" style="height: 50vh;">
+            <div class="card-header bg-danger text-white">
+                <h4>Product Images</h4>
             </div>
-            
-            <!-- Product Description -->
-            <div class="mb-3">
-                <label for="productDescription" class="form-label">Description</label>
-                <textarea class="form-control" id="productDescription" rows="3" placeholder="Enter product description" required></textarea>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Image 1 -->
+                     {% for image in image_url %}
+                    <div class="col-md-4 text-center ">
+                        <div class="ima img-style">
+                            <img src="{{image}}" alt="Product Image 1" class="img-thumbnail  mb-2" height="20vh">
+                            <button class="btn btn-sm btn-success w-100" onclick="updateImage(1)">Update Image</button>
+                            <input type="file" class="form-control mt-2 d-none" id="imageInput1" onchange="previewImage(1)">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            
-            <!-- Product Price -->
-            <div class="mb-3">
-                <label for="productPrice" class="form-label">Price</label>
-                <input type="number" class="form-control" id="productPrice" placeholder="Enter product price" required>
-            </div>
+        </div>
 
-            <!-- Product Stock -->
-            <div class="mb-3">
-                <label for="productStock" class="form-label">Stock</label>
-                <input type="number" class="form-control" id="productStock" placeholder="Enter product stock" required>
+        <!-- Cultural Background Section -->
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4>Cultural Background</h4>
             </div>
-
-            <!-- Product Category -->
-            <div class="mb-3">
-                <label for="productCategory" class="form-label">Category</label>
-                <select class="form-select" id="productCategory" required>
-                    <option selected>Select Category</option>
-                    <option value="electronics">Electronics</option>
-                    <option value="fashion">Fashion</option>
-                    <option value="home">Home</option>
-                    <option value="sports">Sports</option>
-                </select>
+            <div class="card-body">
+                <p id="culturalBackground">{{product.cultural_background.description}}</p>
             </div>
-
-            <!-- Product Location -->
-            <div class="mb-3">
-                <label for="productLocation" class="form-label">Location</label>
-                <input type="text" class="form-control" id="productLocation" placeholder="Enter product location" required>
-            </div>
-            <!-- photo selecting -->
-            <div class="mb-3">
-                <label for="productImages" class="form-label">Product Images</label>
-                <input class="form-control" type="file" id="productImages" name="productImages" multiple onchange="previewImages()" accept="image/*">
-                <div id="imagePreview" class="mt-3"></div>
-                <small class="text-muted">You can upload a maximum of 3 images.</small>
-            </div>
-
-            <!-- Active Status -->
-            <div class="mb-3">
-                <label for="productStatus" class="form-label">Status</label>
-                <select class="form-select" id="productStatus" required>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-
-            <!-- Featured Status -->
-            <div class="mb-3">
-                <label for="productFeatured" class="form-label">Featured</label>
-                <select class="form-select" id="productFeatured" required>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                </select>
-            </div>
-
-            <!-- Cultural Background -->
-            <div class="mb-3">
-                <label for="culturalBackground" class="form-label">Cultural Background</label>
-                <textarea class="form-control" id="culturalBackground" rows="3" placeholder="Describe the cultural background of the product" required></textarea>
-            </div>
-
-            <!-- Buttons -->
-            <div class="text-center">
-                <button type="submit" class="btn btn-danger">Save Changes</button>
-                <button type="reset" class="btn btn-secondary">Cancel</button>
-            </div>
-        </form>
+        </div>
     </div>
 
     <!-- Footer -->
-    <footer class="footer bg-black text-white" style="margin-top: -4px;">
+    <footer class="footer bg-black text-white" style="margin-top: 10vh;">
         <div class="container-fluid text-center">
             <div class="row pt-2">
                 <div class="col-md-4 mb-3">
@@ -178,34 +149,30 @@
             <p class="mb-0">&copy; 2024 GeoMaart. All Rights Reserved.</p>
         </div>
     </footer>
+
+    <!-- Scripts -->
     <script>
-function previewImages() {
-    const preview = document.getElementById('imagePreview');
-    const files = document.getElementById('productImages').files;
-    // Clear the preview area if it exceeds 3 images
-    if (files.length > 3) {
-        alert("You can only upload a maximum of 3 images.");
-        return; // Stop further processing
-    }
+        function updateImage(imageId) {
+            const input = document.getElementById(`imageInput${imageId}`);
+            input.click();
+        }
 
-    // Loop through the selected files and create image previews
-    Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.classList.add('img-thumbnail', 'm-2');
-            img.style.width = '100px'; // Adjust the image size as needed
-            preview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-    });
-}
+        function previewImage(imageId) {
+            const input = document.getElementById(`imageInput${imageId}`);
+            const file = input.files[0];
+            const reader = new FileReader();
 
+            reader.onload = function (e) {
+                const imgElement = document.querySelectorAll('.img-thumbnail')[imageId - 1];
+                imgElement.src = e.target.result;
+            };
 
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
     </script>
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

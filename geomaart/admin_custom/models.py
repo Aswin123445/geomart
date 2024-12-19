@@ -59,6 +59,7 @@ class Product(models.Model):
         # Automatically generate a slug from the product name
         if not self.slug:
             self.slug = slugify(self.name)
+        print('product saved')
         super(Product, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -69,6 +70,8 @@ class Product(models.Model):
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='product_images/')
+    def __str__(self):
+        return f'product path is {self.image.name}' if self.image else 'nothing here'
     
 class CulturalBackground(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="cultural_background")

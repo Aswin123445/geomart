@@ -31,6 +31,10 @@ urlpatterns = [
     
     #product management section
     path('product_listing/',views.product_listing,name='product_listing'),
+    path('product_listing/<slug:slug>',views.product_listing,name='product_listing_with_name'),
     path('addproduct/',views.addproduct,name='addproduct'),
-
+    path('delete_product/<int:id>/',views.delete_product,name='delete_product'),
+    path('edit_product/<slug:name>/',views.edit_product,name='edit_product'),
+    path('search_product/',views.search_product,name='search_product'),
+    path('product_details/<slug:slug>',views.product_details,name='product_details')
 ]

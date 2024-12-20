@@ -43,7 +43,7 @@
         color: white;
     }
     .product-section {
-        min-height: 300px; /* Reduced height */
+        min-height: 300px; 
     }
 </style>
 <body>
@@ -51,7 +51,6 @@
         <div class="container-fluid">
             <!-- Brand Name -->
             <a class="navbar-brand fw-bold fs-3" href="#" style="color: #DB4444;">GeoMaart</a>
-    
             <!-- Toggler for Mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -73,8 +72,7 @@
     
                 <!-- Search Bar in the Middle -->
                 <form class="d-flex mx-auto w-50">
-                    <input class="form-control me-2" type="search" placeholder="Search for products" aria-label="Search">
-                    <button class="btn btn-outline-light" type="submit">Search</button>
+                    <input class="form-control me-2" type="search" id="searchInput" placeholder="Search for products" aria-label="Search">
                 </form>
     
                 <!-- Right Aligned Links -->
@@ -94,6 +92,15 @@
             </div>
         </div>
     </nav>
+    <div id="searchResultContainer" class="container mt-3" style="display: none; position: absolute; top: 38px; left: 37%; width: 30%; z-index: 10;">
+        <div class="card">
+            <div class="card-body ca">
+                <ul id="searchResultsList" class="list-group list-group-flush">
+                    <!-- Search results will be appended here dynamically -->
+                </ul>
+            </div>
+        </div>
+    </div>
     
     {% if messages %}
     {% for message in messages %}
@@ -103,13 +110,11 @@
     </div>
     {% endfor %}
     {% endif %}
-
-    <!-- Carousel -->
 <!-- Carousel -->
 <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel" style="max-height: 400px; overflow: hidden;">
     <div class="carousel-inner">
         <div class="carousel-item active">
-            <img src="https://via.placeholder.com/1500x400" class="d-block w-100" alt="Product 1" style="object-fit: cover; height: 300px; width: 70%;">
+            <img src="https://via.placeholder.com/1500x300" class="d-block w-100" alt="Product 1" style="object-fit: cover; height: 300px; width: 70%;">
             <div class="carousel-caption d-none d-md-block">
                 <h5>Summer Collection</h5>
                 <p>Explore the latest trends!</p>
@@ -138,104 +143,42 @@
     </button>
 </div>
 
-
-   <!-- cateogry section -->
 <!-- Category Section -->
 <div class="container my-5">
     <h2 class="text-center mb-4">Shop by Category</h2>
-    <div class="row text-center">
-        <div class="col-6 col-md-2">
-            <a href="/categories/bags" class="text-decoration-none text-dark">
-                <div class="category-item p-3 border rounded shadow">
-                    <i class="bi bi-bag fs-1 text-primary"></i>
-                    <span class="d-block mt-2 fw-bold">Bags</span>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-2">
-            <a href="/categories/phones" class="text-decoration-none text-dark">
-                <div class="category-item p-3 border rounded shadow">
-                    <i class="bi bi-phone fs-1 text-success"></i>
-                    <span class="d-block mt-2 fw-bold">Phones</span>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-2">
-            <a href="/categories/laptops" class="text-decoration-none text-dark">
-                <div class="category-item p-3 border rounded shadow">
-                    <i class="bi bi-laptop fs-1 text-danger"></i>
-                    <span class="d-block mt-2 fw-bold">Laptops</span>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-2 mt-3 mt-md-0">
-            <a href="/categories/watches" class="text-decoration-none text-dark">
-                <div class="category-item p-3 border rounded shadow">
-                    <i class="bi bi-watch fs-1 text-warning"></i>
-                    <span class="d-block mt-2 fw-bold">Watches</span>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-2 mt-3 mt-md-0">
-            <a href="/categories/headphones" class="text-decoration-none text-dark">
-                <div class="category-item p-3 border rounded shadow">
-                    <i class="bi bi-headphones fs-1 text-info"></i>
-                    <span class="d-block mt-2 fw-bold">Headphones</span>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-2 mt-3 mt-md-0">
-            <a href="/categories/clothing" class="text-decoration-none text-dark">
-                <div class="category-item p-3 border rounded shadow">
-                    <i class="bi bi-tshirt fs-1 text-secondary"></i>
-                    <span class="d-block mt-2 fw-bold">Clothing</span>
-                </div>
-            </a>
+    <div class="category-slider">
+        <div class="d-flex justify-content-center"> 
+            {% for cat in category %}
+            <div class="col-6 col-md-2 flex-shrink-0 me-3">
+                <a href="{% url 'home:product_listing' cat.slug %}" class="text-decoration-none text-dark">
+                    <div class="category-item p-3 border rounded shadow">
+                        <i class="bi bi-bag fs-1 text-primary"></i>
+                        <span class="d-block mt-2 fw-bold text-center">{{cat.name}}</span>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
-
-
-
-
 <!-- Featured Products Section -->
 <div class="container my-5 product-section">
     <h2 class="text-center mb-4">Featured Products</h2>
     <div class="row">
+        {% for pro in product %}
         <div class="col-md-4">
             <div class="card">
-                <img src="https://via.placeholder.com/300" class="card-img-top" alt="Product 1" style="height: 200px; object-fit: cover;">
+                <img src="{{pro.prefetched_images.0.image.url}}" class="card-img-top" alt="Product 1" style="height: 200px; object-fit: cover;">
                 <div class="card-body">
-                    <h5 class="card-title">Product 1</h5>
-                    <p class="card-text">High-quality and trendy design.</p>
+                    <h5 class="card-title">{{pro.name}}</h5>
+                    <p class="card-text">{{ pro.description|slice:":30" }}...</p>  
                     <a href="#" class="btn btn-danger" style="width: 100%; font-weight: bold;">Buy Now</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <img src="https://via.placeholder.com/300" class="card-img-top" alt="Product 2" style="height: 200px; object-fit: cover;">
-                <div class="card-body">
-                    <h5 class="card-title">Product 2</h5>
-                    <p class="card-text">Limited-time offers available.</p>
-                    <a href="#" class="btn btn-danger" style="width: 100%; font-weight: bold;">Buy Now</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <img src="https://via.placeholder.com/300" class="card-img-top" alt="Product 3" style="height: 200px; object-fit: cover;">
-                <div class="card-body">
-                    <h5 class="card-title">Product 3</h5>
-                    <p class="card-text">Exclusive and premium quality.</p>
-                    <a href="#" class="btn btn-danger" style="width: 100%; font-weight: bold;">Buy Now</a>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
-</div>
-
-
+    </div>
     <!-- Recommended Products Section -->
     <div class="container my-5 product-section">
         <h2 class="text-center mb-4">Recommended Products</h2>
@@ -272,7 +215,6 @@
             </div>
         </div>
     </div>
-
 <!-- Trending Products Section -->
 <div class="container my-5 product-section">
     <h2 class="text-center mb-4">Trending Products</h2>
@@ -351,6 +293,57 @@
                 notification.style.display = "none";
             }, 5000); // 4000 milliseconds = 4 seconds
         });
+
+            // search feature
+    document.getElementById('searchInput').addEventListener('input', function () {
+        console.log("heolo")
+        let debounceTimer;
+        debounceTimer = setTimeout(() => {
+            fetchResult(this.value)
+        }, 200);
+    });
+
+    const fetchResult = (query) => {
+        const resultContainer = document.getElementById('searchResultContainer');
+        const resultList = document.getElementById('searchResultsList');
+        
+        if (query.trim().length < 3) {
+            resultContainer.style.display = 'none';
+            return;
+        } else {
+            const queryUrl = "{% url 'home:home_user_search' %}?query=" + encodeURIComponent(query);
+            fetch(queryUrl)  // Replace with your actual API URL
+                .then(response => response.json())
+                .then(data => {
+                    resultList.innerHTML = '';  // Clear previous results
+
+                    if (data.results.length > 0) {
+                        data.results.forEach(result => {
+                            const listItem = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.style.textDecoration='none'
+                            link.style.color='black'
+                            link.href = `${result.name[0]}`; 
+                            link.textContent = result.name[1];
+                            listItem.classList.add('list-group-item');
+                            listItem.appendChild(link);
+                            // listItem.textContent = result.name[1];
+                            resultList.appendChild(listItem);
+                        });
+                    } else {
+                        const noResultItem = document.createElement('li');
+                        noResultItem.classList.add('list-group-item');
+                        noResultItem.textContent = 'No matching data found';  // Corrected typo
+                        resultList.appendChild(noResultItem);
+                    }
+
+                    resultContainer.style.display = 'block';  // Show the result container
+                })
+                .catch(error => {
+                    console.error('Error fetching search result', error);
+                });
+        }
+    };
     </script>
 </body>
 </html>

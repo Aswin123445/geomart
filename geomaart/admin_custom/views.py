@@ -209,16 +209,15 @@ def search_category(request):
 
 @login_required
 def location_list(request,id=None):
-    if 'user' in request.session :
-       current_page_number=request.GET.get('page',1)
-       if id is None :
-           all_location = Location.objects.all()
-           paginator = Paginator(all_location,3)
-       else :
-           results = Location.objects.filter(id = id)
-           paginator = Paginator(results,3)
-       page_obj=paginator.get_page(current_page_number)
-       context = {'location_details':page_obj}
+    current_page_number=request.GET.get('page',1)
+    if id is None :
+        all_location = Location.objects.all()
+        paginator = Paginator(all_location,3)
+    else :
+        results = Location.objects.filter(id = id)
+        paginator = Paginator(results,3)
+    page_obj=paginator.get_page(current_page_number)
+    context = {'location_details':page_obj}
 
     return render(request,'admin_template/location_management/location_list.html',context)
 
@@ -381,4 +380,3 @@ def product_details(request,slug):
     image_url = [ image.image.url for image in data.images.all()]
     context={'product':data,'image_url':image_url}
     return render(request,'admin_template/product_management/product_details.html',context)
-

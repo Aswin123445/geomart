@@ -6,11 +6,14 @@ from .utils import send_otp,validate_otp
 from .models import UserData
 from django.contrib.auth import authenticate,login,logout
 from allauth.socialaccount.providers.oauth2.views import OAuth2LoginView
+from django.views.decorators.cache import never_cache
 import os
+from django.core.cache import cache
 
 # Create your views here.
+@never_cache
 def register(request):
-    if 'user' in request.session :
+    if request.user.is_authenticated:
         return redirect('home:homepage')
     context={'error' : False}
     if request.method == "POST":
@@ -37,7 +40,7 @@ def register(request):
             messages.error(request,l[0][0])
             context={'error' : True}
     return render(request, 'accounts/index.html',context)
-
+@never_cache
 def otp_verification(request):
     context={'error':False}
     if 'phone_number' not in request.session :
@@ -73,10 +76,9 @@ def otp_verification(request):
             messages.error(request, f'{data}')
     
     return render(request, 'accounts/otp_verification.html',context)
-
+@never_cache
 def signin(request):
-    if 'user' in request.session:
-        print(request.session.get('user'))
+    if request.user.is_authenticated:
         return redirect('home:homepage')
     context = {'error':False}
     if request.method == "POST":
@@ -89,6 +91,8 @@ def signin(request):
                 request.session['user']=user.id
                 notification_message=f'helo {user.name} let\'s explore Geomaart '
                 messages.success(request , notification_message )
+
+
                 return redirect('home:homepage')
             else :
                 messages.error(request,'please check your credentials')
@@ -99,12 +103,12 @@ def signin(request):
     return render(request,'accounts/signin.html',context)
 
 def signout(request):
-    print('helo')
-    if 'user'  in request.session or '_auth_user_id' in request.session:
+    if request.user.is_authenticated or '_auth_user_id' in request.session:
         logout(request)
+
         messages.success(request,'successfully signed out')
     return redirect('home:homepage')
-
+@never_cache
 def forgot_password(request):
     context={'error':False}
     if request.method == 'POST' :
@@ -131,6 +135,7 @@ def forgot_password(request):
             context['error']=True
     return render(request,'accounts/forgot_password.html',context)
 
+@never_cache
 def forget_password_form(request):
     if 'is_forgot_password' not in request.session :
         return redirect('home:homepage')
@@ -141,12 +146,10 @@ def forget_password_form(request):
         print(form)
         if form.is_valid():
             try:
-                print('helo')
                 user = UserData.objects.get(phone_number=phone_number)  
                 user.set_password(form.cleaned_data['password1'])
                 user.save()
                 messages.success(request, "Password reset successfully.")
-                print('password resetted sucessfully')
                 del request.session['is_forgot_password']
                 return redirect('accounts:signin') 
             except UserData.DoesNotExist:

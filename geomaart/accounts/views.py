@@ -91,11 +91,9 @@ def signin(request):
                 request.session['user']=user.id
                 notification_message=f'helo {user.name} let\'s explore Geomaart '
                 messages.success(request , notification_message )
-
-
                 return redirect('home:homepage')
             else :
-                messages.error(request,'please check your credentials')
+                messages.error(request,'incorrect password or mailid please check and try again')
         else :
             error_list = list(form.errors.values())
             messages.error(request,error_list[0][0])
@@ -105,7 +103,6 @@ def signin(request):
 def signout(request):
     if request.user.is_authenticated or '_auth_user_id' in request.session:
         logout(request)
-
         messages.success(request,'successfully signed out')
     return redirect('home:homepage')
 @never_cache
@@ -161,10 +158,3 @@ def forget_password_form(request):
             l = list(form.errors.values())
             messages.error(request,l[0][0])
     return render(request,'accounts/forgot_password_form.html')
-
-
-            
-                
-                
-        
-

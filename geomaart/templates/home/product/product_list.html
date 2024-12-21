@@ -94,19 +94,21 @@
         <!-- Product Grid -->
         <div id="product-list" class="row justify-content-center row-cols-1 row-cols-md-3 g-4">
             {% for product in product_list %}
-            <div class="col " data-category="{{ product.category.name }}" data-location="{{ product.location }}">
-                <div class="card shadow-sm" style="min-height: 380px;">
-                    <div class="position-relative" style="height: 200px; overflow: hidden;">
-                        <img src="{{ images|get_item:product.id }}" class="card-img-top h-100 object-fit-cover" alt="Product">
-                        <span class="badge bg-success position-absolute top-0 start-0 m-2">{{ product.name }}</span>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title text-truncate" title="{{ product.category.name }}">{{ product.category.name }}</h5>
-                        <p class="card-text text-muted" title="{{ product.description }}">{{ product.description|slice:":100" }}...</p>
-                        <p class="text-muted fw-bold">Price: {{ product.price }}</p>
+            <a href="{% url 'home:product_details' product.slug %}" style="text-decoration: none;">
+                <div class="col " data-category="{{ product.category.name }}" data-location="{{ product.location }}">
+                    <div class="card shadow-sm" style="min-height: 380px;">
+                        <div class="position-relative" style="height: 200px; overflow: hidden;">
+                            <img src="{{ images|get_item:product.id }}" class="card-img-top h-100 object-fit-cover" alt="Product">
+                            <span class="badge bg-success position-absolute top-0 start-0 m-2">{{ product.name }}</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate" title="{{ product.category.name }}">{{ product.category.name }}</h5>
+                            <p class="card-text text-muted" title="{{ product.description }}">{{ product.description|slice:":100" }}...</p>
+                            <p class="text-muted fw-bold">Price: {{ product.price }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
     </div>

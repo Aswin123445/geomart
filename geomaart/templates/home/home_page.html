@@ -272,7 +272,7 @@
                 </div>
                 <div class="col-md-4">
                     <h5 class="fw-bold">Follow Us</h5>
-                    <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-facebook "></i></a>
                     <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
                     <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
                 </div>
@@ -323,7 +323,7 @@
                             const link = document.createElement('a');
                             link.style.textDecoration='none'
                             link.style.color='black'
-                            link.href = `${result.name[0]}`; 
+                            link.href = `product_details/${result.name[0]}`; 
                             link.textContent = result.name[1];
                             listItem.classList.add('list-group-item');
                             listItem.appendChild(link);

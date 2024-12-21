@@ -46,3 +46,11 @@ def product_listing(request,name=None):
     location = Location.objects.all()
     context = {'product_list':page_obj,'category_name':category.name,'location':location ,'images':product_images}
     return render(request,'home/product/product_list.html',context)
+
+def product_details(request,slug):
+    product = Product.objects.get(slug = slug)
+    print(product.name)
+    product_images = [p.image.url for p in  product.images.all()]
+    print(product_images)
+    context = {'product':product,'product_images':product_images}
+    return render(request,'home/product/product_details.html',context)

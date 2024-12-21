@@ -12,12 +12,18 @@ from .forms import UserDataUpdation
 from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation
 from .forms import categoryValidation,ProductValidation
+from django.views.decorators.cache import never_cache
+
 
 # Create your views here.
 
 @login_required
 def dashboard(request):
-        response = render(request,'admin_template/dashboard.html')
+        context ={
+            'product_count':Product.objects.count(),
+            'total_user': UserData.objects.exclude(is_staff = True).count()
+        }
+        response = render(request,'admin_template/dashboard.html',context)
         return prevent_cache_view(response)
 @login_required
 def logout(request):
@@ -125,6 +131,7 @@ def add_user(request):
 
 
 @login_required
+@never_cache
 def category_list(request,id = None):
     if 'user' in request.session :
        current_page_number=request.GET.get('page',1)
@@ -151,6 +158,7 @@ def category_delete(request,id):
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
 @login_required
+@never_cache
 def category_edit(request,id) :
     error = False
     category = Category.objects.filter(id=id).first()
@@ -172,6 +180,7 @@ def category_edit(request,id) :
     return render(request,'admin_template/category_management/edit_category.html',context={'category':category,'error':error})
 
 @login_required
+@never_cache
 def new_category(request):
     if request.method == 'POST' :
         form = categoryValidation(request.POST)
@@ -207,6 +216,7 @@ def search_category(request):
 
 
 
+@never_cache
 @login_required
 def location_list(request,id=None):
     current_page_number=request.GET.get('page',1)
@@ -233,7 +243,7 @@ def location_delete(request,id):
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
-
+@never_cache
 def location_edit(request,name ):
     error = False
     data = Location.objects.filter(slug=name).first()
@@ -250,7 +260,7 @@ def location_edit(request,name ):
             messages.error(request,list(forms.errors.values())[0])
     context = {'location':data,'error':error}
     return render(request,'admin_template/location_management/update_location.html',context)
-
+@never_cache
 @login_required
 def new_location(request):
     if request.method =='POST':
@@ -284,6 +294,7 @@ def search_location(request):
 
 
 @login_required
+@never_cache
 def product_listing(request,slug=None):
        print("helo")
        current_page_number=request.GET.get('page',1)
@@ -297,6 +308,7 @@ def product_listing(request,slug=None):
        context = {'product_details':page_obj}
        return render(request,'admin_template/product_management/product_list.html',context)
 @login_required
+@never_cache
 def addproduct(request): 
     all_category = Category.objects.all()
     all_location = Location.objects.all()
@@ -329,6 +341,7 @@ def delete_product(request,id):
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
 @login_required
+@never_cache
 def edit_product(request,name):
     error = False
     category = Category.objects.all()

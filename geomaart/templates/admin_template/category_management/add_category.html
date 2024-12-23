@@ -23,6 +23,25 @@
         .is-invalid + .invalid-feedback {
             display: block;
         }
+        .notification {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 16px; 
+    position: fixed; 
+    top: 10vh; 
+    right: 20px; 
+    width: 350px; 
+    border-radius: 5px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    z-index: 1000; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
     </style>
 </head>
 <body>
@@ -39,7 +58,14 @@
             </ul>
         </div>
     </nav>
-
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+       {{ message }}
+        <button class="close-btn" onclick="closeNotification()">X</button>
+    </div>
+    {% endfor %}
+    {% endif %}
     <!-- Add Category Form -->
     <div class="container my-4">
         <div class="row justify-content-center">
@@ -115,6 +141,15 @@
 
     <!-- Custom JS for form validation -->
     <script>
+        function closeNotification() {
+          document.getElementById("notification").style.display = "none";
+        }
+        document.querySelectorAll('.notification').forEach(notification => {
+          setTimeout(() => {
+            notification.style.display = "none";
+          }, 5000
+          ); // 5000 milliseconds = 4 seconds
+        });
         function validateAddCategoryForm() {
             // Get form elements
             const categoryName = document.getElementById("categoryName");

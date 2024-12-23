@@ -19,7 +19,7 @@ from django.views.decorators.cache import never_cache
 
 @login_required
 def dashboard(request):
-        context ={
+        context = {
             'product_count':Product.objects.count(),
             'total_user': UserData.objects.exclude(is_staff = True).count()
         }

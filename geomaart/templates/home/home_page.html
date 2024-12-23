@@ -114,7 +114,7 @@
 <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel" style="max-height: 400px; overflow: hidden;">
     <div class="carousel-inner">
         <div class="carousel-item active">
-            <img src="https://via.placeholder.com/1500x300" class="d-block w-100" alt="Product 1" style="object-fit: cover; height: 300px; width: 70%;">
+            <img src="https://via.placeholder.com/1500x400" class="d-block w-100" alt="Product 1" style="object-fit: cover; height: 300px; width: 70%;">
             <div class="carousel-caption d-none d-md-block">
                 <h5>Summer Collection</h5>
                 <p>Explore the latest trends!</p>
@@ -164,15 +164,15 @@
 <!-- Featured Products Section -->
 <div class="container my-5 product-section">
     <h2 class="text-center mb-4">Featured Products</h2>
-    <div class="row">
+    <div class="row flex-nowrap overflow-auto">
         {% for pro in product %}
-        <div class="col-md-4">
+        <div class="col-md-4 mb-4">
             <div class="card">
                 <img src="{{pro.prefetched_images.0.image.url}}" class="card-img-top" alt="Product 1" style="height: 200px; object-fit: cover;">
                 <div class="card-body">
                     <h5 class="card-title">{{pro.name}}</h5>
                     <p class="card-text">{{ pro.description|slice:":30" }}...</p>  
-                    <a href="#" class="btn btn-danger" style="width: 100%; font-weight: bold;">Buy Now</a>
+                    <a href="/product_details/{{pro.slug}}" class="btn btn-danger" style="width: 100%; font-weight: bold;">Buy Now</a>
                 </div>
             </div>
         </div>
@@ -296,7 +296,6 @@
 
             // search feature
     document.getElementById('searchInput').addEventListener('input', function () {
-        console.log("heolo")
         let debounceTimer;
         debounceTimer = setTimeout(() => {
             fetchResult(this.value)

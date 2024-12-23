@@ -19,7 +19,6 @@ def register(request):
     if request.method == "POST":
         form=SignUpForm(request.POST)
         if form.is_valid():
-            print('form is valid')
             if 'otp_verification' not  in form.cleaned_data :
                user=form.save()
             else :
@@ -49,7 +48,6 @@ def otp_verification(request):
     if request.method == "POST":
         otp_code = request.POST.get('otp')
         phone_number = request.session.get('phone_number')
-        
         if not phone_number :
             messages.error(request, "Session expired. Please register again.")
             return redirect('accounts:register')
@@ -62,8 +60,7 @@ def otp_verification(request):
                 messages.warning(request,'Enter new password ')
                 context['error'] = True
                 return render(request,'accounts/forgot_password_form.html',context)
-            else :   
-                print("normal ") 
+            else : 
                 user = UserData.objects.get(phone_number=phone_number)  # Fetch the user
                 user.is_active = True  # Activate user after successful OTP verification
                 user.is_phone_number_verified = True

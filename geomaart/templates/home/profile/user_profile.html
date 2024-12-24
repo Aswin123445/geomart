@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+</head>
+<style>
+        .notification {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 16px; 
+    position: fixed; 
+    top: 10vh; 
+    right: 20px; 
+    width: 350px; 
+    border-radius: 5px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    z-index: 1000; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
+</style>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <!-- Brand Name -->
+            <a class="navbar-brand fw-bold fs-3" href="#" style="color: #DB4444;">GeoMaart</a>
+            <!-- Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- Left Aligned Links -->
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="#">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="#">Contact</a>
+                    </li>
+                </ul>
+    
+                <!-- Search Bar in the Middle -->
+                <form class="d-flex mx-auto w-50">
+                    <input class="form-control me-2" type="search" id="searchInput" placeholder="Search for products" aria-label="Search">
+                </form>
+    
+                <!-- Right Aligned Links -->
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <!-- Dropdown for Account -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle px-3 d-flex align-items-center" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-2"></i>Account
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="">
+                                        <i class="bi bi-person me-2"></i>Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'accounts:signout' %}">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <!-- Sign in Button for Non-Authenticated Users -->
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="{% url 'accounts:signin' %}">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Sign in
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+       {{ message }}
+        <button class="close-btn" onclick="closeNotification()">X</button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    <div class="container py-1">
+
+<!-- Profile Card -->
+<div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <!-- Header -->
+        <div class="card-header text-center py-4 bg-danger text-white">
+            <h2 class="mb-0"><i class="bi bi-person-circle"></i> User Profile</h2>
+        </div>
+        <!-- Body -->
+        <div class="card-body">
+            <!-- Profile Picture and Name -->
+            <div class="text-center mb-4">
+                    <img src="https://via.placeholder.com/120" alt="User Avatar" class="rounded-circle shadow-sm mb-3">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <h3 class="mb-0 " id="userNumber" style="margin-left: 30px;">{{userdetails.name}}</h3>
+
+            <!-- Small Button with Pencil Icon -->
+            <button type="button" class="btn " data-bs-toggle="modal" data-bs-target="#myModal_name">
+                <i class="bi bi-pencil"></i>
+            </button>
+
+                    </div>
+            </div>
+            <!-- Information Sections -->
+            <div class="row gy-4">
+                <!-- Email -->
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light shadow-sm d-flex align-items-center justify-content-between">
+                        {% if userdetails.is_email_verified %}
+                        <div>
+                            <h6 class="mb-1">Email</h6>
+                            <p class="text-muted mb-0">{{userdetails.email}} <span class="badge bg-success">Verified</span></p>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-pencil"></i> Edit</button>
+                        {% else %}
+                        <div>
+                            <h6 class="mb-1">Email</h6>
+                            <p class="text-muted mb-0">{{userdetails.email}} <span class="badge bg-warning">verify email</span></p>
+                        </div>
+                        <a href="{% url 'home:email_verification' %}"><button class="btn btn-outline-danger btn-sm"><i class="bi bi-pencil"></i> verify</button></a>
+                        {% endif %}
+                    </div>
+                      
+                </div>
+                <!-- Mobile -->
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light shadow-sm d-flex align-items-center justify-content-between">
+                        <div>
+
+                            <h6 class="mb-1">Mobile</h6>
+                            <p class="text-muted mb-0">
+                                {% if userdetails.phone_number == None%}
+                                  Add phone number
+                                {% elif userdetails.is_phone_number_verified == True %}
+                                {{userdetails.phone_number}}
+                                 <span class="badge bg-success">
+                                     Verified
+                                 </span>
+                                {% else %}
+                                {{userdetails.phone_number}}
+
+                                <span class="badge bg-warning">
+                                    verify
+                                </span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% if userdetails.phone_number == None%}
+                          <button id="add_phone_number_click" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i> Add</button>
+                        {% else %}
+                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-pencil"></i> Edit</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Date of Birth -->
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light shadow-sm d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="mb-1">Date of Birth</h6>
+                            <p class="text-muted mb-0">{{userdetails.profile.date_of_birth}}</p>
+                        </div>
+
+                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#myModal_date"><i class="bi bi-pencil"></i> Edit</button>
+                    </div>
+                </div>
+                <!-- Bio -->
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light shadow-sm d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="mb-1">Bio</h6>
+                            <p class="text-muted mb-0">{{userdetails.profile.bio}}</p>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#myModal_bio"><i class="bi bi-pencil"></i> Edit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+    </div>
+</div>
+
+
+<!-- Address Section -->
+<div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <!-- Header -->
+        <div class="card-header text-center py-4 bg-danger text-white">
+            <h2 class="mb-0"><i class="bi bi-house-door"></i> Addresses</h2>
+        </div>
+        <!-- Body -->
+        <div class="card-body">
+            <div class="row">
+                <!-- Address 1 -->
+                {% for ad in address %}
+                <div class="col-md-6 mb-4" id="address-row-{{ad.id}}">
+                    <div class="p-4 border rounded-4 shadow-lg bg-light position-relative" style="min-height: 38vh;">
+                        <!-- Star Icon for Primary Address -->
+                        {% if ad.is_primary %}
+                        <div class="position-absolute top-0 end-0 p-3">
+                            <i class="bi bi-star-fill text-warning" style="font-size: 1.5rem;" title="Primary Address"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Address Details -->
+                        <h4 class="text-primary mb-3">{{ ad.get_address_type_display }}</h4>
+                        <p class="text-muted">
+                            <strong class="text-dark">Street Address:</strong> {{ ad.street_address }}<br>
+                            <strong class="text-dark">City:</strong> {{ ad.city }}<br>
+                            <strong class="text-dark">State:</strong> {{ ad.state }}<br>
+                            <strong class="text-dark">Postal Code:</strong> {{ ad.postal_code }}<br>
+                            <strong class="text-dark">Country:</strong> {{ ad.country }}
+                        </p>
+                        
+                        <!-- Set Primary Button (if applicable) -->
+                        {% if not ad.is_primary %}
+                        <a href="{% url 'home:set_primary_address' ad.id %}" style="text-decoration: none;">
+                            <button class="btn btn-outline-success btn-sm rounded-pill px-4 py-2 d-flex align-items-center">
+                                <i class="bi bi-star-fill me-2"></i> Set as Primary
+                            </button>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Edit and Delete Buttons -->
+                        <div class="position-absolute bottom-0 end-0 p-3 d-flex gap-2">
+                            <a href="{% url 'home:edit_address' ad.id %}" style="text-decoration: none;">
+                                <button class="btn btn-warning btn-sm  px-4 py-2 d-flex align-items-center">
+                                    <i class="bi bi-pencil-fill me-2"></i> Edit
+                                </button>
+                            </a>
+                            <button class="btn btn-sm btn-danger delete-address-btn d-flex align-items-center" data-user-id="{{ad.id}}">
+                                <i class="bi bi-trash me-2"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+        <!-- Footer -->
+        <div class="card-footer text-center bg-light py-3">
+            <a href="{% url 'home:new_address' %}"><button class="btn btn-success px-4"><i class="bi bi-plus-circle"></i> Add New Address</button></a>
+        </div>
+    </div>
+</div>
+</div>
+<!-- Modal add verify phonenumber -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add Phone Number</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form to add phone number -->
+                <form id="phoneForm" method="post">
+                    {%csrf_token%}
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="savePhoneNumber">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- edit user_name -->
+<div class="modal fade" id="myModal_name" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">change  name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form to add phone number -->
+                <form id="nameForm" method="post">
+                    {%csrf_token%}
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">update name</label>
+                        <input type="text" class="form-control" id="userName" name="userName" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="saveName">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- edit date_of_birth -->
+<div class="modal fade" id="myModal_date" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">enter dob</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form to add phone number -->
+                <form id="nameForm" method="post">
+                    {%csrf_token%}
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="text" class="form-control" id="dob" name="dob" placeholder="MM/DD/YYYY">
+                      </div>
+                    <button type="submit" class="btn btn-primary" id="saveDate">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- edit bio -->
+<div class="modal fade" id="myModal_bio" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Enter bio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form to add phone number -->
+                <form id="nameForm" method="post">
+                    {%csrf_token%}
+                    <div class="form-group">
+                        <label for="dob">Bio</label>
+                        <textarea class="form-control" name="bio" id="productDescription" rows="3" placeholder="tell us about yourself" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="saveDate">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Trigger button to open modal -->
+
+    <!-- Footer -->
+    <footer class="footer bg-black text-white" style="margin-top: 10vh;">
+        <div class="container-fluid text-center">
+            <div class="row pt-2">
+                <div class="col-md-4 mb-3">
+                    <h5 class="fw-bold">GeoMaart</h5>
+                    <p>Your one-stop shop for unique local products.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5 class="fw-bold">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Home</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="fw-bold">Follow Us</h5>
+                    <a href="#" class="text-white me-3"><i class="bi bi-facebook "></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <p class="mb-0">&copy; 2024 GeoMaart. All Rights Reserved.</p>
+        </div>
+    </footer> 
+    <div class="modal fade" id="deleteAddressModal" tabindex="-1" aria-labelledby="deleteAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAddressModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this Address?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055" data-bs-delay="5000">
+        <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong id="toastTitle" class="me-auto"></strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div id="toastBody" class="toast-body"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $('#dob').datepicker({
+              format: 'mm/dd/yyyy',  
+              startDate: '-100y',
+              endDate: '0d',
+              autoclose: true 
+            });
+        });
+        function closeNotification() {
+            document.getElementById("notification").style.display = "none";
+        }
+        document.querySelectorAll('.notification').forEach(notification => {
+            setTimeout(() => {
+               notification.style.display = "none";
+            }, 5000); // 5000 milliseconds = 4 seconds
+        });
+
+        document.addEventListener("DOMContentLoaded", function(){
+        const modal = new bootstrap.Modal(document.getElementById("deleteAddressModal"));
+        const addressDeleteButton = document.querySelectorAll(".delete-address-btn");
+        const confirmDelete = document.getElementById("confirmDeleteBtn");
+        let selectedAddressId = null;
+        addressDeleteButton.forEach(button =>{
+            button.addEventListener("click",()=>{
+                selectedAddressId = button.dataset.userId;
+                modal.show();
+            });
+        });
+
+        confirmDelete.addEventListener('click',() =>{
+            modal.hide()
+            const url = "{% url 'home:delete_address' 0 %}".replace('0',selectedAddressId)
+            fetch(url,{
+                method: "POST",
+                headers:{
+                     "X-CSRFToken": "{{ csrf_token }}"
+                }
+            })
+            .then(response => response.json())
+               .then( data => {
+                  const toast = new bootstrap.Toast(document.getElementById("toastNotification"),{ autohide: true, delay: 5000 });
+                  const toastTitle = document.getElementById("toastTitle");
+                  const toastBody = document.getElementById("toastBody");
+                  if(data.success){
+                    document.getElementById(`address-row-${selectedAddressId}`).remove();
+                    toastTitle.textContent = "Success";
+                    toastTitle.classList.add("text-success");
+                    toastBody.textContent = data.message;
+                    toast.show()
+                  } else {
+                    toastTitle.textContent = "Error";
+                    toastTitle.classList.add("text-danger");
+                    toastBody.textContent = data.message;
+                    toast.show(); 
+                  }
+               });
+            });
+        });
+    </script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

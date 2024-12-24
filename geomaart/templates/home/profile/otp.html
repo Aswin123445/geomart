@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP Verification</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .otp-container {
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .notification {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 16px; 
+    position: fixed; 
+    top: 10vh; 
+    right: 20px; 
+    width: 350px; 
+    border-radius: 5px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    z-index: 1000; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
+  </style>
+</head>
+<body>
+  {% if messages %}
+  {% for message in messages %}
+  <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+     {{ message }}
+      <button class="close-btn" onclick="closeNotification()">X</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+  <div class="otp-container">
+    <h3 class="text-center">Enter OTP</h3>
+    <form method="POST">
+        {% csrf_token %}
+      <!-- Hidden field for phone number -->
+      <input type="hidden" name="number" value={{number}}>  <!-- Replace with dynamic value -->
+      <div class="form-group">
+        <label for="otp">OTP</label>
+        <input type="text" id="otp" name="otp" class="form-control" maxlength="6" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Verify OTP</button>
+    </form>
+    <div class="text-center mt-3">
+      <a href="#">Resend OTP</a>
+    </div>
+  </div>
+<script>
+      function closeNotification() {
+            document.getElementById("notification").style.display = "none";
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 5000 milliseconds = 4 seconds
+    });
+</script>
+  <!-- Bootstrap JS, Popper.js, and jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

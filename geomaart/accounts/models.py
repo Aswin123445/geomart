@@ -48,7 +48,7 @@ class UserManager(BaseUserManager):
             is_delivery_boy=True,
         )
 
-class UserData(AbstractBaseUser, PermissionsMixin):
+class UserData(AbstractBaseUser):
     """Custom User model."""
     email = models.EmailField(
         max_length=255,
@@ -93,17 +93,17 @@ class Profile(models.Model):
     bio = models.TextField(null=True, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
-    social_links = models.JSONField(null=True, blank=True)  # Example: {"twitter": "link", "linkedin": "link"}
 
     def __str__(self):
         return f"Profile of {self.user.name}"
+    
+        
 
 class Address(models.Model):
     ADDRESS_TYPES = [
-        ('home', 'Home'),
-        ('work', 'Work'),
-        ('billing', 'Billing'),
-        ('shipping', 'Shipping'),
+        (1, 'Home'),
+        (2, 'Work'),
+        (3, 'temporary')
     ]
 
     user = models.ForeignKey(
@@ -111,7 +111,7 @@ class Address(models.Model):
         on_delete=models.CASCADE,
         related_name='addresses'
     )
-    address_type = models.CharField(max_length=20, choices=ADDRESS_TYPES, default='home')
+    address_type = models.IntegerField(choices=ADDRESS_TYPES, default=1)
     street_address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
@@ -121,6 +121,6 @@ class Address(models.Model):
 
 
     def __str__(self):
-        return f"{self.address_type.capitalize()} Address of {self.user.name}"
+        return f"{self.country.capitalize()} Address of {self.user.name}"
 
 

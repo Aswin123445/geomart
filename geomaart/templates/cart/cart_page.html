@@ -218,11 +218,9 @@
     {% endif %}
     <div class="container mt-5">
         <h2 class="text-center mb-4">Your Shopping Cart</h2>
-
         <!-- Cart Items -->
         {% if cartitem %}
         {% for cart in cartitem %}
-
         <div class="cart-item " id="address-row-{{cart.id}}">
             <img src="{{cart.product.images.first.image.url}}" alt="Product 1">
             <div class="cart-item-details d-flex flex-column justify-content-between">
@@ -257,7 +255,7 @@
             <h4>Cart Summary</h4>
             <p >Total Items: <span id="total-cart-item"> {{cartitem.count}}</span> </p>
             <p class="subtotal">Subtotal: <span class="subtotal-value"  id="total_price">{{sub_toal}}</span></p>
-            <button class="btn btn-custom">Proceed to Checkout</button>
+            <a href="{% url 'cart:checkout' cartitem.0.cart.id %}"><button class="btn btn-custom">Proceed to Checkout</button></a>
         </div>
     </div>
     <footer class="footer bg-dark text-white py-4">

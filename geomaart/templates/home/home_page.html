@@ -75,9 +75,15 @@
                 <form class="d-flex mx-auto w-50">
                     <input class="form-control me-2" type="search" id="searchInput" placeholder="Search for products" aria-label="Search">
                 </form>
-    
+                
                 <!-- Right Aligned Links -->
                 <ul class="navbar-nav ms-auto">
+                    <!-- Cart Icon -->
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'cart:cart_page' %}">
+                            <i class="bi bi-cart me-2"></i>Cart
+                        </a>
+                    </li>
                     {% if user.is_authenticated %}
                         <!-- Dropdown for Account -->
                         <li class="nav-item dropdown">
@@ -109,6 +115,7 @@
             </div>
         </div>
     </nav>
+    
     
     <div id="searchResultContainer" class="container mt-3" style="display: none; position: absolute; top: 38px; left: 37%; width: 30%; z-index: 10;">
         <div class="card">

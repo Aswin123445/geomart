@@ -1,13 +1,15 @@
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.shortcuts import redirect,render
-from .models import Cart,CartItem
+from .models import Cart,CartItem,Order,OrderItem,ShippingAddress,Payment
 from admin_custom.models import Product
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from .forms import CartItemForm
 from accounts.models import Address
+from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 # Create your views here.
 @login_required
@@ -47,6 +49,10 @@ def product_to_cart(request, slug):
     return redirect('home:product_details',slug)
 @login_required
 def cart_page(request):
+    cart=Cart.objects.filter(user = request.user).first() 
+    if not cart :
+        print('your cart is empty ')
+        return render(request,'cart/cart_page.html',{'cartitem':None,'sub_toal':0,'user_cart':None})
     if request.method == 'POST' :
         form = CartItemForm(request.POST)
         if form.is_valid() :
@@ -59,9 +65,11 @@ def cart_page(request):
               cart_item.save()
               messages.success(request,'quantity changed successfully')
               return redirect('cart:cart_page')
+           else :
+               messages.error(request,' sorry requested quntity exeeded stock')
+               return redirect('cart:cart_page')
         else :
             messages.error(request,list(form.errors.values())[0][0])
-    cart=Cart.objects.get(user = request.user) 
     for car in cart.items.all() :
         if car.product.is_active == False or car.product.stock < 1 :
             car.delete()
@@ -84,6 +92,7 @@ def delete_cart_item(request,id):
 
 
 #checkout page 
+@login_required
 def checkout(request , id):
     cart = Cart.objects.get(id = id)
     if not cart.user.is_phone_number_verified :
@@ -95,3 +104,65 @@ def checkout(request , id):
     address =  Address.objects.filter(user = request.user)
     context = {'address':address ,'total_sum':total_sum,'cart_item':cart_item}
     return render(request,'checkout/checkout.html',context)
+
+@login_required
+def placeorder(request, id):
+    if request.method == 'POST':
+        cart = get_object_or_404(Cart, id=id)
+        try:
+            with transaction.atomic():
+                # Calculate total
+                total = sum(cart.items.all().values_list('total_price', flat=True))
+
+                # Create Order
+                new_order = Order.objects.create(
+                    user=request.user,
+                    total_amount=total
+                )
+
+                # Create Order Items
+                for ca in cart.items.all():
+                    OrderItem.objects.create(
+                        order=new_order,
+                        product=ca.product,
+                        quantity=ca.quantity,
+                        price=ca.total_price
+                    )
+                    ca.product.stock -= ca.quantity
+                    ca.product.save()
+                # Validate POST data
+                address_id = request.POST.get('address')
+                payment_method = request.POST.get('paymentMethod')
+                payment_status = request.POST.get('paymentstatus')
+
+                if not address_id or not payment_method or not payment_status:
+                    raise ValueError('Missing data in POST request')
+
+                # Create Shipping Address
+                shipping_address = get_object_or_404(Address, id=address_id)
+                ShippingAddress.objects.create(
+                    user=request.user,
+                    order=new_order,
+                    address_line_1=shipping_address.street_address,
+                    city=shipping_address.city,
+                    state=shipping_address.state,
+                    postal_code=shipping_address.postal_code,
+                    country=shipping_address.country,
+                )
+
+                # Create Payment
+                Payment.objects.create(
+                    order=new_order,
+                    method=int(payment_method),
+                    status=int(payment_status),
+                )
+                
+                cart.delete()
+            messages.success(request,'product added to the cart page')
+            return redirect('home:homepage')
+
+        except Exception as e:
+            return redirect('cart:cart_page')  
+    return redirect('checkout')
+
+

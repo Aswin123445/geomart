@@ -251,12 +251,21 @@
         </div>
         {% endif %}
         <!-- Cart Summary -->
+         {% if cartitem %}
         <div class="cart-summary">
             <h4>Cart Summary</h4>
             <p >Total Items: <span id="total-cart-item"> {{cartitem.count}}</span> </p>
             <p class="subtotal">Subtotal: <span class="subtotal-value"  id="total_price">{{sub_toal}}</span></p>
             <a href="{% url 'cart:checkout' cartitem.0.cart.id %}"><button class="btn btn-custom">Proceed to Checkout</button></a>
         </div>
+        {% else %}
+        <div class="cart-summary">
+            <h4>Cart Summary</h4>
+            <p >Total Items: <span id="total-cart-item"> 0</span> </p>
+            <p class="subtotal">Subtotal: <span class="subtotal-value"  id="total_price">0</span></p>
+            <a href="{% url 'home:homepage' %}"><button class="btn btn-custom">add product to the cart</button></a>
+        </div>
+        {% endif %}
     </div>
     <footer class="footer bg-dark text-white py-4">
         <div class="container">

@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from admin_custom.models import Product
+from accounts.models import UserData
 # Create your models here.
 
 #cart
@@ -25,5 +26,68 @@ class CartItem(models.Model):
         super().save(*args, **kwargs)
     def __str__(self):
         return f"{self.product.name} in {self.cart.user.email}'s cart"
+    
+    
+    
+#order management models
+class Order(models.Model):
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    STATUS_CHOICES = [
+        (1, 'Pending'),
+        (2, 'Processing'),
+        (3, 'Shipped'),
+        (4, 'Delivered'),
+        (5, 'Canceled'),
+    ]
+    status = models.IntegerField(choices=STATUS_CHOICES, default=1)
+
+    def __str__(self):
+        return f"Order {self.id} - {self.user.name}"
+    
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Assuming a Product model exists
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    STATUS_CHOICES = [
+        (1, 'Active'),
+        (0, 'Canceled'),
+    ]
+    status = models.IntegerField( choices=STATUS_CHOICES, default=1)
+
+    def __str__(self):
+        return f"{self.product.name} (Order {self.order.id})"
+    
+class Payment(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
+    PAYMENT_METHOD_CHOICES = [
+        (1, 'Cash on Delivery'),
+        (2, 'Credit/Debit Card'),
+        (3, 'UPI'),
+    ]
+    method = models.IntegerField(choices=PAYMENT_METHOD_CHOICES, default=1)
+    status = models.IntegerField(
+        choices=[(1, 'Pending'), (2, 'Completed'), (3, 'Failed')],
+        default=1,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment for Order {self.order.id}"
+    
+class ShippingAddress(models.Model):
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, null=True, blank=True)
+    address_line_1 = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"Address for {self.user.username}"
 
 

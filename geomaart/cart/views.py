@@ -80,6 +80,7 @@ def cart_page(request):
 
 @login_required
 def delete_cart_item(request,id):
+    print('some error has happend')
     if request.method == 'POST' :
         try :
             print(id)
@@ -106,7 +107,7 @@ def checkout(request , id):
     return render(request,'checkout/checkout.html',context)
 
 @login_required
-def placeorder(request, id):
+def placeorder(request, id = None):
     if request.method == 'POST':
         cart = get_object_or_404(Cart, id=id)
         try:
@@ -158,11 +159,31 @@ def placeorder(request, id):
                 )
                 
                 cart.delete()
-            messages.success(request,'product added to the cart page')
+            messages.success(request,'Order successfully placed')
             return redirect('home:homepage')
 
         except Exception as e:
             return redirect('cart:cart_page')  
     return redirect('checkout')
+
+def cancelorder(request , id):
+    order = Order.objects.get(id = id)
+    order_items = order.items.all()
+    item_list = []
+    for items in order_items :
+        if items.status == 2 :
+            messages.warning(request,'some products are already delivered try removing individual product')
+            return redirect('home:order_details')
+        items.status = 0
+        item_list.append(items)    
+    for item in item_list :
+        item.product.stock += item.quantity
+        item.product.save()
+        item.save()
+    order.status = 5
+    order.is_canceled = True
+    order.save()
+    messages.success(request,'order canceled successfully')
+    return redirect('home:order_list')
 
 

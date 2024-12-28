@@ -31,10 +31,15 @@ class CartItem(models.Model):
     
 #order management models
 class Order(models.Model):
+    is_canceled = models.BooleanField(default=False)
     user = models.ForeignKey(UserData, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    refund_status = models.IntegerField(
+        choices=[(1, 'Pending'), (2, 'Completed'), (3, 'Failed')],
+        default=1,
+    )
     STATUS_CHOICES = [
         (1, 'Pending'),
         (2, 'Processing'),
@@ -55,12 +60,13 @@ class OrderItem(models.Model):
     STATUS_CHOICES = [
         (1, 'Active'),
         (0, 'Canceled'),
+        (2, 'delivered')
     ]
     status = models.IntegerField( choices=STATUS_CHOICES, default=1)
 
     def __str__(self):
         return f"{self.product.name} (Order {self.order.id})"
-    
+
 class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
     PAYMENT_METHOD_CHOICES = [
@@ -88,6 +94,6 @@ class ShippingAddress(models.Model):
     country = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"Address for {self.user.username}"
+        return f"Address for {self.user.name}"
 
 

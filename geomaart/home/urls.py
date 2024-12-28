@@ -13,5 +13,6 @@ urlpatterns = [
     path('set_primary_address/<int:id>/',views.set_primary_address,name='set_primary_address'),
     path('delete_address/<int:id>/',views.delete_address,name='delete_address'),
     path('eidt_address/<int:id>/',views.edit_address,name='edit_address'),
-
+    path('order_list/',views.order_list,name='order_list'),
+    path('order_details/<int:id>',views.order_details,name='order_details')
 ]

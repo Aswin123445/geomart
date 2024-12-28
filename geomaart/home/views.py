@@ -13,6 +13,7 @@ from .utils import format_phone_number,send_otp_email,converter
 from accounts.utils import send_otp,validate_otp
 from django.contrib import messages
 from django.contrib.auth.models import User
+from cart.models import Order,OrderItem,ShippingAddress,Payment
 
 # Create your views here.
 @never_cache
@@ -221,3 +222,17 @@ def edit_address(request , id):
     context = {'address':address}
     return render(request,'home/profile/edit_address.html',context)
     
+@login_required
+def order_list(request):
+    order = Order.objects.filter(user = request.user)
+    context = {'order':order}
+    return render(request,'order/order_list.html',context)
+
+def order_details(request,id):
+    order = Order.objects.filter(id = id).first()
+    if not order :
+        return redirect('home:homepage')
+    order_item = order.items.all()
+    shipaddressaddress = ShippingAddress.objects.get(order = order)
+    context = {'order':order,'order_item':order_item,'shipping_address':shipaddressaddress}
+    return render(request ,'order/order_details.html',context)

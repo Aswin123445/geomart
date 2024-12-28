@@ -396,6 +396,9 @@
                     toastBody.textContent = data.message;
                     totalPriceElement.textContent = total_price - quat
                     sizeElement.textContent = size - 1
+                    if (parseInt(sizeElement.textContent) === 0){
+                        checkConditionAndRefresh();
+                    }
                     toast.show()
                   } else {
                     toastTitle.textContent = "Error";
@@ -417,6 +420,12 @@
         document.getElementById('modalQuantity').value = cartQuantity;
     });
 });
+function checkConditionAndRefresh() {
+    if (parseInt(document.getElementById("total-cart-item").textContent )=== 0) {
+        location.reload(); 
+    }
+}
+
 
 
     </script>

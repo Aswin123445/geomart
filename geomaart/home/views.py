@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
 from accounts.models import Address
+from accounts.forms import FogotPasswordForm
 from .forms import AddressForm
 from .utils import format_phone_number,send_otp_email,converter
 from accounts.utils import send_otp,validate_otp
@@ -167,7 +168,7 @@ def new_address(request):
                 address_instnace.is_primary = False
                 address_instnace.save()
                 return redirect('home:user_profile')
-            if Address.objects.count() == 1 :
+            if Address.objects.filter(user = request.user).count() == 1 :
                 return redirect('home:user_profile')
         else :
             l = list(form.errors.values())
@@ -221,6 +222,24 @@ def edit_address(request , id):
     address = Address.objects.get(id = id)
     context = {'address':address}
     return render(request,'home/profile/edit_address.html',context)
+
+#reset password by the user 
+@login_required
+def reset_password(request):
+    error = False
+    if request.method == 'POST':
+       form = FogotPasswordForm(request.POST)
+       if form.is_valid():
+           user = request.user
+           user.set_password(form.cleaned_data['password1'])
+           user.save()
+           messages.success(request, "Password reset successfully.")
+           return redirect('home:user_profile')
+       else :
+           error = True
+           errors=list(form.errors.values())[0][0]
+           messages.error(request,errors)
+    return render(request,'accounts/forgot_password_form.html',{'error':error})
     
 @login_required
 def order_list(request):

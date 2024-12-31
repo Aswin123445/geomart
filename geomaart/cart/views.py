@@ -47,11 +47,11 @@ def product_to_cart(request, slug):
     else:
         messages.info(request, 'already in cart added quatity by 1')
     return redirect('home:product_details',slug)
+
 @login_required
 def cart_page(request):
     cart=Cart.objects.filter(user = request.user).first() 
     if not cart :
-        print('your cart is empty ')
         return render(request,'cart/cart_page.html',{'cartitem':None,'sub_toal':0,'user_cart':None})
     if request.method == 'POST' :
         form = CartItemForm(request.POST)
@@ -165,7 +165,7 @@ def placeorder(request, id = None):
         except Exception as e:
             return redirect('cart:cart_page')  
     return redirect('checkout')
-
+@login_required
 def cancelorder(request , id):
     order = Order.objects.get(id = id)
     order_items = order.items.all()

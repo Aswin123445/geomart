@@ -36,5 +36,9 @@ urlpatterns = [
     path('delete_product/<int:id>/',views.delete_product,name='delete_product'),
     path('edit_product/<slug:name>/',views.edit_product,name='edit_product'),
     path('search_product/',views.search_product,name='search_product'),
-    path('product_details/<slug:slug>',views.product_details,name='product_details')
+    path('product_details/<slug:slug>',views.product_details,name='product_details'),
+    
+    #order management section
+    path('order_listing/',views.order_listing,name='order_listing'),
+    path('delete_order/<int:id>',views.delete_order,name='delete_order')
 ]

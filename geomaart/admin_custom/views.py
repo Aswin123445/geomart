@@ -13,6 +13,7 @@ from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation
 from .forms import categoryValidation,ProductValidation
 from django.views.decorators.cache import never_cache
+from cart.models import Order,OrderItem
 
 
 # Create your views here.
@@ -21,7 +22,8 @@ from django.views.decorators.cache import never_cache
 def dashboard(request):
         context = {
             'product_count':Product.objects.count(),
-            'total_user': UserData.objects.exclude(is_staff = True).count()
+            'total_user': UserData.objects.exclude(is_staff = True).count(),
+            'pending_orders': OrderItem.objects.filter(status = 1).count()
         }
         response = render(request,'admin_template/dashboard.html',context)
         return prevent_cache_view(response)
@@ -296,7 +298,6 @@ def search_location(request):
 @login_required
 @never_cache
 def product_listing(request,slug=None):
-       print("helo")
        current_page_number=request.GET.get('page',1)
        if slug is None :
            all_location = Product.objects.select_related('category','location')
@@ -393,3 +394,29 @@ def product_details(request,slug):
     image_url = [ image.image.url for image in data.images.all()]
     context={'product':data,'image_url':image_url}
     return render(request,'admin_template/product_management/product_details.html',context)
+
+@never_cache
+@login_required
+def order_listing(request):
+    orders_list = Order.objects.all()
+    if request.method == 'POST':
+      user_order =  orders_list.get(id = int(request.POST.get('order_id')))
+      user_order.status = int(request.POST.get('status'))
+      user_order.save()
+    current_page_number=request.GET.get('page',1)
+    paginator = Paginator(orders_list,3)
+    orders = paginator.get_page(current_page_number)
+    context = {'orders':orders}
+    return render(request,'admin_template/admin_ordermanagement/oder_management.html',context)
+
+@login_required
+def delete_order(request,id):
+    if request.method == 'POST' :
+        try :
+            order = Order.objects.get(id = id)
+            name = order.user.name
+            order.delete()
+            return JsonResponse({'success':True,'message':f'{name} \'s order was successfully deleted'})
+        except Location.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Location not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})

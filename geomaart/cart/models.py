@@ -37,7 +37,11 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     refund_status = models.IntegerField(
-        choices=[(1, 'Pending'), (2, 'Completed'), (3, 'Failed')],
+        choices=[
+            (1, 'Pending'), 
+            (2, 'Completed'),
+            (3, 'Failed')
+        ],
         default=1,
     )
     STATUS_CHOICES = [

@@ -1,6 +1,8 @@
+import json
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.shortcuts import redirect,render
+import razorpay
 from .models import Cart,CartItem,Order,OrderItem,ShippingAddress,Payment
 from admin_custom.models import Product
 from django.contrib import messages
@@ -10,7 +12,13 @@ from .forms import CartItemForm
 from accounts.models import Address
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from razorpay.errors import SignatureVerificationError
+from .utils import process_order_transaction
+import os
 
+
+razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_ID'], os.environ['RAZORPAY_SECRET_KEY']))
 # Create your views here.
 @login_required
 def product_to_cart(request, slug):
@@ -95,6 +103,7 @@ def delete_cart_item(request,id):
 #checkout page 
 @login_required
 def checkout(request , id):
+    print('inside the cart page')
     cart = Cart.objects.get(id = id)
     if not cart.user.is_phone_number_verified :
         messages.warning(request,'please verify your phonenumber before checkout')
@@ -107,64 +116,24 @@ def checkout(request , id):
     return render(request,'checkout/checkout.html',context)
 
 @login_required
-def placeorder(request, id = None):
+def placeorder(request, id=None):
     if request.method == 'POST':
         cart = get_object_or_404(Cart, id=id)
         try:
-            with transaction.atomic():
-                # Calculate total
-                total = sum(cart.items.all().values_list('total_price', flat=True))
+            address_id = request.POST.get('address')
+            payment_method = request.POST.get('paymentMethod')
+            payment_status = request.POST.get('paymentstatus')
 
-                # Create Order
-                new_order = Order.objects.create(
-                    user=request.user,
-                    total_amount=total
-                )
+            process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
 
-                # Create Order Items
-                for ca in cart.items.all():
-                    OrderItem.objects.create(
-                        order=new_order,
-                        product=ca.product,
-                        quantity=ca.quantity,
-                        price=ca.total_price
-                    )
-                    ca.product.stock -= ca.quantity
-                    ca.product.save()
-                # Validate POST data
-                address_id = request.POST.get('address')
-                payment_method = request.POST.get('paymentMethod')
-                payment_status = request.POST.get('paymentstatus')
-
-                if not address_id or not payment_method or not payment_status:
-                    raise ValueError('Missing data in POST request')
-
-                # Create Shipping Address
-                shipping_address = get_object_or_404(Address, id=address_id)
-                ShippingAddress.objects.create(
-                    user=request.user,
-                    order=new_order,
-                    address_line_1=shipping_address.street_address,
-                    city=shipping_address.city,
-                    state=shipping_address.state,
-                    postal_code=shipping_address.postal_code,
-                    country=shipping_address.country,
-                )
-
-                # Create Payment
-                Payment.objects.create(
-                    order=new_order,
-                    method=int(payment_method),
-                    status=int(payment_status),
-                )
-                
-                cart.delete()
-            messages.success(request,'Order successfully placed')
+            messages.success(request, 'Order successfully placed')
             return redirect('home:homepage')
 
         except Exception as e:
-            return redirect('cart:cart_page')  
+            print(e)
+            return redirect('cart:cart_page')
     return redirect('checkout')
+
 @login_required
 def cancelorder(request , id):
     order = Order.objects.get(id = id)
@@ -187,3 +156,53 @@ def cancelorder(request , id):
     return redirect('home:order_list')
 
 
+#payment razorpay create order
+def create_order(request):
+    cart = Cart.objects.filter(user = request.user).first()
+    cart_items = cart.items.all()
+    total_prize =sum(cart_items.all().values_list('total_price',flat = True))
+    amount = int(total_prize*100)
+    print('inside order page')
+    if request.method == "POST":
+        currency = "INR"
+
+        # Create Razorpay order
+        razorpay_order = razorpay_client.order.create({
+            "amount": amount,
+            "currency": currency,
+            "payment_capture": "1"
+        })
+        # Return the order ID to the frontend
+        return JsonResponse({
+            "order_id": razorpay_order["id"],
+            "key": os.environ['RAZORPAY_ID'],
+            "amount": amount,
+            "currency": currency,
+        })
+        
+@csrf_exempt
+def verify_payment(request):
+    if request.method == "POST":
+        print(request.POST)
+        address_id = request.POST.get('address_id')
+        print(address_id)
+        razorpay_order_id = request.POST.get("order_id")
+        razorpay_payment_id = request.POST.get("razorpay_payment_id")
+        razorpay_signature = request.POST.get("razorpay_signature")
+        payment_method = 2
+        payment_status = 2        
+        # Verify payment signature
+        try:
+            razorpay_client.utility.verify_payment_signature({
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature
+            })
+            cart = Cart.objects.filter(user = request.user).first()
+            process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
+            print('new order created cart also updated')
+            # Payment successful
+            return redirect('home:homepage')
+        except SignatureVerificationError:
+            # Payment verification failed
+            return HttpResponse("Payment verification failed.", status=400)

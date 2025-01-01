@@ -402,6 +402,10 @@ def order_listing(request):
     if request.method == 'POST':
       user_order =  orders_list.get(id = int(request.POST.get('order_id')))
       user_order.status = int(request.POST.get('status'))
+      payment = user_order.payment
+      if user_order.status == 4 and payment.method == 1 :
+        payment.status = 2
+        payment.save()
       user_order.save()
     current_page_number=request.GET.get('page',1)
     paginator = Paginator(orders_list,3)

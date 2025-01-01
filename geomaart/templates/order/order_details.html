@@ -151,7 +151,7 @@
       <div class="card-header bg-danger text-white">Payment Details</div>
       <div class="card-body">
         <p><strong>Payment Method:</strong> {{order.payment.get_method_display}}</p>
-        <p><strong>Payment Status:</strong> <span class="badge {%if order.payment.status == 1 %} bg-warning  {% elif order.payment.status %} bg-success {% else %}bg-danger {%endif%}">{{order.get_status_display}}</span></p>
+        <p><strong>Payment Status:</strong> <span class="badge {%if order.payment.status == 1 %} bg-warning  {% elif order.payment.status %} bg-success {% else %}bg-danger {%endif%}">{{order.payment.get_status_display}}</span></p>
       </div>
     </div>
     {% else %}
@@ -199,6 +199,7 @@
 </div>
 
 <!-- Action Buttons -->
+{% if not request.user.is_staff %}
 <div class="text-center">
   <a href="{% url 'home:order_list' %}" class="btn btn-success btn-action">Back to Orders</a>
   <!-- <a href="#" class="btn btn-secondary btn-action">Download Invoice</a> -->
@@ -207,6 +208,8 @@
   <a href="{% url 'cart:cancelorder' order.id %}"><button class="btn btn-danger btn-action">Cancel Entire Order</button></a>
   {% endif %}
 </div>
+{% endif %}
+
 
 
   </div>

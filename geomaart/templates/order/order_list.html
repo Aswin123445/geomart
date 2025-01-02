@@ -10,7 +10,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <!-- Brand Name -->
-            <a class="navbar-brand fw-bold fs-3" href="#" style="color: #DB4444;">GeoMaart</a>
+            <a class="navbar-brand fw-bold fs-3" href="{% url 'home:homepage' %}" style="color: #DB4444;">GeoMaart</a>
             <!-- Toggler for Mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -34,12 +34,23 @@
                 <form class="d-flex mx-auto w-50">
                     <input class="form-control me-2" type="search" id="searchInput" placeholder="Search for products" aria-label="Search">
                 </form>
-    
+                
                 <!-- Right Aligned Links -->
                 <ul class="navbar-nav ms-auto">
+                    <!-- Cart Icon -->
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'cart:cart_page' %}">
+                            <i class="bi bi-cart me-2"></i>Cart
+                        </a>
+                    </li>
                     {% if user.is_authenticated %}
                         <!-- Dropdown for Account -->
-                        <li class="nav-item dropdown">
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="{% url 'home:wishlist' %}" >
+                                <i class="bi bi-heart" style="padding-right: 5px;"></i>Wishlist
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown ">
                             <a class="nav-link dropdown-toggle px-3 d-flex align-items-center" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle me-2"></i>Account
                             </a>
@@ -47,6 +58,11 @@
                                 <li>
                                     <a class="dropdown-item" href="{% url 'home:user_profile' %}">
                                         <i class="bi bi-person me-2"></i>Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'home:order_list' %}">
+                                        <i class="bi bi-list-ul me-2"></i>Orders
                                     </a>
                                 </li>
                                 <li>

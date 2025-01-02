@@ -112,6 +112,9 @@ def checkout(request , id):
     total_sum = sum(cart_item.values_list('total_price',flat=True))
     print(total_sum)
     address =  Address.objects.filter(user = request.user)
+    if not address.exists():
+        messages.error(request,'please add a address to shop')
+        return redirect('home:user_profile')
     context = {'address':address ,'total_sum':total_sum,'cart_item':cart_item}
     return render(request,'checkout/checkout.html',context)
 
@@ -125,7 +128,7 @@ def placeorder(request, id=None):
             payment_status = request.POST.get('paymentstatus')
 
             process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
-
+            print('why it\' not printed')
             messages.success(request, 'Order successfully placed')
             return redirect('home:homepage')
 

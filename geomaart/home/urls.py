@@ -16,4 +16,10 @@ urlpatterns = [
     path('order_list/',views.order_list,name='order_list'),
     path('order_details/<int:id>',views.order_details,name='order_details'),
     path('reset_password/',views.reset_password,name='reset_password'),
+    path('product_detalls/<slug:slug>/',views.product_detalls,name='product_detalls'),
+    path('product_detoils/<slug:slug>/',views.product_detoils,name='product_detoils'),
+    path('wishlist/',views.wishlist,name='wishlist'),
+    path('wishlist_delete/<int:id>/',views.wishlist_delete,name='wishlist_delete'),
+    path('move_to_cart/<int:id>',views.move_to_cart,name='move_to_cart'),
+
 ]

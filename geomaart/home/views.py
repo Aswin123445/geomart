@@ -15,7 +15,8 @@ from accounts.utils import send_otp,validate_otp
 from django.contrib import messages
 from django.contrib.auth.models import User
 from cart.models import Order,OrderItem,ShippingAddress,Payment
-
+from .models import Wishlist,WishlistItem
+from cart.models import Cart , CartItem
 # Create your views here.
 @never_cache
 def hemepage(request):
@@ -56,9 +57,15 @@ def product_listing(request,name=None):
     return render(request,'home/product/product_list.html',context)
 
 def product_details(request,slug):
+    wishlist = Wishlist.objects.filter(user = request.user).first()
+    wishlistitem = WishlistItem.objects.filter(wishlist = wishlist)
     product = Product.objects.get(slug = slug)
+    #checking existance of product in a wishlist
+    
+    if_product_exists = wishlistitem.filter(product = product).exists()
+        
     product_images = [p.image.url for p in  product.images.all()]
-    context = {'product':product,'product_images':product_images}
+    context = {'product':product,'product_images':product_images,'wishlist':if_product_exists}
     return render(request,'home/product/product_details.html',context)
 
 #profile views 
@@ -255,3 +262,61 @@ def order_details(request,id):
     shipaddressaddress = ShippingAddress.objects.get(order = order)
     context = {'order':order,'order_item':order_item,'shipping_address':shipaddressaddress}
     return render(request ,'order/order_details.html',context)
+
+
+#wishlist add page
+def product_detalls(request,slug):
+    wishlist = Wishlist.objects.filter(user = request.user).first()
+    product = Product.objects.filter(slug = slug).first()
+    wishlistitem = WishlistItem.objects.filter(wishlist = wishlist)
+    if_product_exists = wishlistitem.filter(product = product).exists()
+    if not  if_product_exists :
+       WishlistItem.objects.create(wishlist = wishlist,product = product)
+    else :
+       messages.warning(request,'already in wishlist')
+    product_images = [p.image.url for p in  product.images.all()]
+    context = {'product':product,'product_images':product_images,'wishlist':True}
+    return render(request,'home/product/product_details.html',context)
+
+#wishlist remove page
+def product_detoils(request,slug):
+    wishlist = Wishlist.objects.filter(user = request.user).first()
+    product = Product.objects.filter(slug = slug).first()
+    WishlistItem.objects.filter(wishlist = wishlist ,product = product).delete()
+    print('wishlist item deleted successfull')
+    product_images = [p.image.url for p in  product.images.all()]
+    context = {'product':product,'product_images':product_images,'wishlist':False}
+    return render(request,'home/product/product_details.html',context)
+
+def wishlist(request):
+    wishlist = Wishlist.objects.filter(user = request.user).first()
+    wishlistitems = WishlistItem.objects.filter(wishlist = wishlist)
+    context = {'wishlist':wishlistitems}
+    return render(request,'home/wishlist/wishlist.html',context)
+@login_required
+def wishlist_delete(request,id):
+    if request.method == 'POST' :
+        try :
+            wishlist = WishlistItem.objects.get(id = id)
+            name= wishlist.product.name
+            wishlist.delete()
+            print('wishlist deleted ')
+            return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
+        except Location.DoesNotExist :
+            return JsonResponse({"success": False, "message": "wishlist not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})  
+@login_required
+def move_to_cart(request,id):
+    wishlistitem = WishlistItem.objects.filter(id  = id)
+    cart = Cart.objects.filter(user = request.user).first()
+    #if the user try to join at the first time
+    if cart == None:
+       cart =  Cart.objects.create(user = request.user)
+    if CartItem.objects.filter(product = wishlistitem.first().product , cart = cart).exists():
+        messages.warning(request,'product already in cart page')
+    else :
+         print(cart)
+         print(wishlistitem.first().product)
+         cart_item = CartItem.objects.create(cart = cart,product = wishlistitem.first().product)
+         messages.success(request,'moved to the cart page')
+    return redirect('home:wishlist')

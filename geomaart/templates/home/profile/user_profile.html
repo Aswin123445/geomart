@@ -217,6 +217,19 @@
                 </div>
             </div>
         </div>
+                    <!-- Wallet Details -->
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded bg-light shadow-sm d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Wallet Details</h6>
+                                    <p class="text-muted mb-0">Current Balance: <span class="text-success fw-semibold" >{{wallet.balance}}</span></p>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-wallet"></i> Add Money</button>
+                            </div>
+                        </div>
+                    </div>
+                    
         <!-- Footer -->
         <div class="card-footer text-center bg-light py-3">
             <a href="{% url 'home:reset_password' %}">

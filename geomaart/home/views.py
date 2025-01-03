@@ -16,7 +16,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from cart.models import Order,OrderItem,ShippingAddress,Payment
 from .models import Wishlist,WishlistItem
-from cart.models import Cart , CartItem
+from cart.models import Cart , CartItem , Wallet
 # Create your views here.
 @never_cache
 def hemepage(request):
@@ -127,7 +127,8 @@ def user_profile(request):
     else :
       userdetails = UserData.objects.get(email = request.user)
     address = userdetails.addresses.all()
-    context = {'userdetails':userdetails,'address':address}
+    wallet = Wallet.objects.get(user = request.user)
+    context = {'userdetails':userdetails,'address':address,'wallet':wallet}
     return render(request,'home/profile/user_profile.html',context)
 
 @login_required

@@ -193,6 +193,14 @@
                   Razorpay
                 </label>
               </div>
+              {% if total_sum < wallet_amount%}
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="3">
+                <label class="form-check-label" for="wallet">
+                  Wallet<span class="fw-bold text-success mx-1">Avl Bal {{wallet_amount}}</span> 
+                </label>
+              </div>
+              {% endif %}
             </div>
           </div>
         
@@ -200,12 +208,15 @@
           <!-- <div class="text-center">
             <button type="button" id="razorpayButton" class="btn btn-primary w-100 py-3">Pay with Razorpay</button>
           </div> -->
-        
-          <!-- Place Order Button -->
+          <!-- <div class="text-center mt-3">
+            <button type="submit" name="action" value="wallet" style="display: none;" id="walletid" class="btn btn-success w-100 py-3" onclick="disaple_cod()">Place Order with wallet</button>
+          </div> -->
+          <input type="hidden" id="performer" name="action" value="cod">
           <div class="text-center mt-3">
-            <button type="submit" id="submitbutton" class="btn btn-success w-100 py-3">Place Order</button>
+            <button type="submit"  id="submitbutton" class="btn btn-success w-100 py-3">Place Order with cod</button>
           </div>
         </form>
+        <!-- place order with wallet -->
         <form id="payment-form" method="POST" action="{% url 'cart:verify_payment' %}">
           {% csrf_token %}
           <input type="hidden" id="order_id" name="order_id">
@@ -213,7 +224,7 @@
           <input type="hidden" id="razorpay_signature" name="razorpay_signature">
           <input type="hidden" id="address_id" name="address_id">
           <div class="text-center mt-3">
-            <button type="submit" style="display: none;" id="rzp-button" class="btn btn-success w-100 py-3">Place Order</button>
+            <button type="submit" style="display: none;" id="rzp-button" class="btn btn-success w-100 py-3">Place Order rsppay </button>
           </div>
       </form>
         </div>
@@ -248,13 +259,16 @@
 </footer>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-
      const radioButtons = document.querySelectorAll('input[name="paymentMethod"]');
      radioButtons.forEach((radio) => {
          radio.addEventListener('change', function () {
              if (parseInt(this.value) == 1) {
               document.getElementById('rzp-button').style.display = 'none'
               document.getElementById('submitbutton').style.display = 'block'
+             }else if(parseInt(this.value) == 3){
+              document.getElementById('rzp-button').style.display = 'none'
+              document.getElementById('submitbutton').style.display = 'block'
+              document.getElementById('performer').value = 'wallet'
              }else{
               document.getElementById('submitbutton').style.display = 'none'
               document.getElementById('rzp-button').style.display = 'block'
@@ -265,10 +279,10 @@
       e.preventDefault();
       document.getElementById('submitbutton').style.display = 'block'
       const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
-      if (parseInt(selectedPaymentMethod.value) == 1) {
+      if (parseInt(selectedPaymentMethod.value) == 1 || parseInt(selectedPaymentMethod.value) == 3) {
          this.submit()
       } else {
-
+        
       }
     });
     document.addEventListener('DOMContentLoaded', () => {

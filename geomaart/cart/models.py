@@ -76,7 +76,7 @@ class Payment(models.Model):
     PAYMENT_METHOD_CHOICES = [
         (1, 'Cash on Delivery'),
         (2, 'Credit/Debit Card'),
-        (3, 'UPI'),
+        (3, 'wallet'),
     ]
     method = models.IntegerField(choices=PAYMENT_METHOD_CHOICES, default=1)
     status = models.IntegerField(
@@ -99,5 +99,22 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return f"Address for {self.user.name}"
+    
+    
+#making wallet model
+class Wallet(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
+    def add_amount(self, amount):
+        """Add amount to wallet"""
+        self.balance += amount
+        self.save()
+
+    def deduct_amount(self, amount):
+        """Deduct amount from wallet"""
+        if self.balance < amount:
+            raise ValueError("Insufficient balance")
+        self.balance -= amount
+        self.save()
 

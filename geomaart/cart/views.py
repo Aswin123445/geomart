@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.shortcuts import redirect,render
 import razorpay
-from .models import Cart,CartItem,Order,OrderItem,ShippingAddress,Payment
+from .models import Cart,CartItem,Order,Wallet
 from admin_custom.models import Product
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -105,9 +105,9 @@ def delete_cart_item(request,id):
 def checkout(request , id):
     print('inside the cart page')
     cart = Cart.objects.get(id = id)
-    if not cart.user.is_phone_number_verified :
-        messages.warning(request,'please verify your phonenumber before checkout')
-        return redirect('home:user_profile')
+    # if not cart.user.is_phone_number_verified :
+    #     messages.warning(request,'please verify your phonenumber before checkout')
+    #     return redirect('home:user_profile')
     cart_item = CartItem.objects.filter(cart = cart)
     total_sum = sum(cart_item.values_list('total_price',flat=True))
     print(total_sum)
@@ -115,19 +115,29 @@ def checkout(request , id):
     if not address.exists():
         messages.error(request,'please add a address to shop')
         return redirect('home:user_profile')
-    context = {'address':address ,'total_sum':total_sum,'cart_item':cart_item}
+    wallet_amount = Wallet.objects.get(user = request.user).balance
+    context = {'address':address ,'total_sum':total_sum,'cart_item':cart_item,'wallet_amount':wallet_amount}
     return render(request,'checkout/checkout.html',context)
 
 @login_required
 def placeorder(request, id=None):
+    print(request.POST.get('action'))
     if request.method == 'POST':
         cart = get_object_or_404(Cart, id=id)
         try:
-            address_id = request.POST.get('address')
-            payment_method = request.POST.get('paymentMethod')
-            payment_status = request.POST.get('paymentstatus')
+            if request.POST.get('action') == 'wallet' :
+               address_id = request.POST.get('address')
+               payment_method = 3
+               payment_status = 2
 
-            process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
+            else :
+               address_id = request.POST.get('address')
+               payment_method = request.POST.get('paymentMethod')
+               payment_status = request.POST.get('paymentstatus')
+
+            new_order = process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
+            if new_order and request.POST.get('action') == 'wallet' :
+                Wallet.objects.get(user = request.user).deduct_amount(new_order.total_amount)
             print('why it\' not printed')
             messages.success(request, 'Order successfully placed')
             return redirect('home:homepage')
@@ -155,6 +165,11 @@ def cancelorder(request , id):
     order.status = 5
     order.is_canceled = True
     order.save()
+    if order.payment.status == 2  or order.payment.status == 3:
+        wallet = Wallet.objects.get(user = request.user)
+        wallet.add_amount(order.total_amount)
+        order.refund_status = 2
+        order.save()
     messages.success(request,'order canceled successfully')
     return redirect('home:order_list')
 
@@ -205,7 +220,12 @@ def verify_payment(request):
             process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
             print('new order created cart also updated')
             # Payment successful
+            messages.success(request,'you have sucessfully placed the order')
             return redirect('home:homepage')
         except SignatureVerificationError:
             # Payment verification failed
             return HttpResponse("Payment verification failed.", status=400)
+        
+def pay_with_wallet(request):
+    pass
+

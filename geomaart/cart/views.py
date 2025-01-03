@@ -105,9 +105,9 @@ def delete_cart_item(request,id):
 def checkout(request , id):
     print('inside the cart page')
     cart = Cart.objects.get(id = id)
-    # if not cart.user.is_phone_number_verified :
-    #     messages.warning(request,'please verify your phonenumber before checkout')
-    #     return redirect('home:user_profile')
+    if not cart.user.is_phone_number_verified :
+        messages.warning(request,'please verify your phonenumber before checkout')
+        return redirect('home:user_profile')
     cart_item = CartItem.objects.filter(cart = cart)
     total_sum = sum(cart_item.values_list('total_price',flat=True))
     print(total_sum)

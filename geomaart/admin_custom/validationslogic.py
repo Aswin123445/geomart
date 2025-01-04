@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+import re
 def category_id_valid_check(value):
     if value<0 :
         raise ValidationError('id cannot go less than zero')
@@ -28,3 +29,10 @@ def location_valid_check(value):
 def category_valid_check(value):
   if isinstance(value,str):
     raise ValidationError("please select a category for the product ")
+  
+def coupon_special_character_check(value):
+    if not re.match(r'^[a-zA-Z0-9]+$', value):
+        raise ValidationError(
+            'Coupon code must contain only letters and numbers.',
+            code='invalid_coupon_code'
+        )

@@ -255,38 +255,45 @@ class ProductValidation(forms.Form):
         min_length= 20,
         strip= True
     )
-# class FileCheckerForm(forms.Form):
-#     productImages = forms.FileField(
-#         required=True,
-#     )
+from .validationslogic import coupon_special_character_check
+class CouponCreationForm(forms.Form) :
+    coupon_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        validators=[coupon_special_character_check]
+    )
+    coupon_type = forms.IntegerField(
+        min_value=1,
+        max_value=3
+    )
+    start_date = forms.DateField()
+    enddate = forms.DateField()
+    coupon_limit = forms.IntegerField(
+        min_value=1,
+    )
+    discount_value = forms.IntegerField(min_value=100)
+    limit_per_user =  forms.IntegerField(
+        min_value=1
+    )
+    min_purchase_amount = forms.IntegerField()
+    status = forms.IntegerField(min_value=0,max_value=1)
     
-#     def clean_productImages(self):
-#         uploaded_files = self.files.getlist('productImages')  # Access uploaded files
-#         if not uploaded_files:
-#             raise ValidationError("At least one image must be uploaded.")
-
-#         # Validation parameters
-#         ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
-#         ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png']
-#         MAX_FILE_SIZE = 2 * 1024 * 1024
-#         MAX_FILES = 3
-
-#         if len(uploaded_files) > MAX_FILES:
-#             raise ValidationError(f"You can upload a maximum of {MAX_FILES} images.")
-
-#         for file in uploaded_files:
-#             # Validate file extension
-#             if file.name.split('.')[-1].lower() not in ALLOWED_EXTENSIONS:
-#                 raise ValidationError(f"File {file.name} has an invalid extension.")
-
-#             # Validate file size
-#             if file.size > MAX_FILE_SIZE:
-#                 raise ValidationError(f"File {file.name} exceeds the maximum size of 2 MB.")
-
-#             # Validate MIME type
-#             if file.content_type not in ALLOWED_MIME_TYPES:
-#                 raise ValidationError(f"File {file.name} has an invalid MIME type.")
-
-#         return uploaded_files
+    def clean_coupon_code(self):
+        data = self.cleaned_data['coupon_code']
+        if data:
+            data = data.upper()
+        else:
+            raise ValidationError("This field cannot be empty.")
+        return data
     
+class CouponFilterForm(forms.Form):
+    status = forms.NullBooleanField()
+    discount_type = forms.IntegerField()
+    def clean_discount_type(self):
+        data = self.cleaned_data['discount_type']
+        if data == 0 :
+            data = None
+        return data
+        
+  
         

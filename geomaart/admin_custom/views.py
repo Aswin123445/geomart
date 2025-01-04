@@ -4,16 +4,17 @@ from django.contrib.auth.decorators import login_required
 from .utils import creating_product_instance, prevent_cache_view,handle_form_errors,update_user_data
 from accounts.models import UserData
 from admin_custom.models import Category,Location,Product
-from admin_custom.models import CulturalBackground
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .forms import UserDataUpdation
 from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation
-from .forms import categoryValidation,ProductValidation
+from .forms import categoryValidation,ProductValidation,CouponCreationForm
 from django.views.decorators.cache import never_cache
 from cart.models import Order,OrderItem
+from .models import Coupon
+from .forms import CouponFilterForm
 
 
 # Create your views here.
@@ -421,6 +422,104 @@ def delete_order(request,id):
             name = order.user.name
             order.delete()
             return JsonResponse({'success':True,'message':f'{name} \'s order was successfully deleted'})
+        except Location.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Location not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+
+#coupen management
+def coupon_list(request,id=None):
+    current_page_number=request.GET.get('page',1)
+    if request.method == 'POST':
+        form = CouponFilterForm(request.POST)
+        if form.is_valid():
+            query = {}
+            if not form.cleaned_data['status'] == None :
+                query['status'] = form.cleaned_data['status']
+            if  not form.cleaned_data['discount_type'] == None:
+                query['discount_type'] = form.cleaned_data['discount_type']
+            coupons = Coupon.objects.filter(**query)
+            paginator = Paginator(coupons,3)
+        else :
+            print(form.errors)
+    elif id is None :
+       coupons = Coupon.objects.all()
+       paginator = Paginator(coupons,3)
+    else :
+       results = Coupon.objects.filter(id = id)
+       paginator = Paginator(results,3)
+    page_obj=paginator.get_page(current_page_number)
+    context = {'coupons':page_obj}
+    return render(request,'admin_template/coupon_management/coup_list.html',context)
+
+def create_coupon(request):
+    if request.method == 'POST' :
+        print(request.POST)
+        forms = CouponCreationForm(request.POST)
+        if forms.is_valid():
+            Coupon.objects.create(
+                code = forms.cleaned_data['coupon_code'],
+                discount_type = forms.cleaned_data['coupon_type'],
+                discount_value = forms.cleaned_data['discount_value'],
+                start_date = forms.cleaned_data['start_date'],
+                end_date = forms.cleaned_data['enddate'],
+                usage_limit = forms.cleaned_data['coupon_limit'],
+                usage_limit_per_user = forms.cleaned_data['limit_per_user'],
+                min_purchase_amount = forms.cleaned_data['min_purchase_amount']
+            )
+            return redirect('custom_admin:coupon_list')
+        else :
+            error = list(forms.errors.values())[0][0]
+            messages.error(request,error)
+    return render(request,'admin_template/coupon_management/coupon_create.html')
+
+#serach coupons
+@login_required
+def search_coupons(request):
+    if request.method == 'GET':
+            if query := request.GET.get('query', ''):
+                    names_set = Coupon.objects.filter(code__icontains = query)
+            else:
+                    names_set = Product.objects.none()
+                    print('something bad happend here')
+            datas=[{'name':[coupon_data.id,coupon_data.code]} for coupon_data in names_set]
+            return JsonResponse({'results':datas})
+            
+@login_required
+def coupon_edit(request,id):
+    get_coupnon = Coupon.objects.filter(id = id).first()
+    if request.method == 'POST':
+        form = CouponCreationForm(request.POST)
+        print(form.is_valid())
+        if form.is_valid():
+            print(form.cleaned_data)
+            print(request.POST['coupon_type'])
+            get_coupnon.code = form.cleaned_data['coupon_code']
+            get_coupnon.discount_type = form.cleaned_data['coupon_type']
+            get_coupnon.discount_value = form.cleaned_data['discount_value']
+            get_coupnon.start_date = form.cleaned_data['start_date']
+            get_coupnon.end_date = form.cleaned_data['enddate']
+            get_coupnon.usage_limit = form.cleaned_data['coupon_limit']
+            get_coupnon.usage_limit_per_user = form.cleaned_data['limit_per_user']
+            get_coupnon.min_purchase_amount = form.cleaned_data['min_purchase_amount']
+            get_coupnon.save()
+            messages.success(request,'coupon updated successfully')
+            return redirect('custom_admin:coupon_list')
+        else :
+            error = list(form.errors.values())[0][0]
+            messages.error(request,error)
+    context = {'coupon':get_coupnon}
+    return render(request,'admin_template/coupon_management/coupon_edit.html',context)
+    
+@login_required
+def delete_coupon(request,id):
+    if request.method == 'POST' :
+        try :
+            coupon = Coupon.objects.get(id = id)
+            code = coupon.code
+            coupon.delete()
+            print('deleted the record')
+            return JsonResponse({'success':True,'message':f'{code} \'s record was successfully deleted'})
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})

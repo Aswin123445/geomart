@@ -79,3 +79,44 @@ class CulturalBackground(models.Model):
 
     def __str__(self):
         return f"Cultural Background for {self.product.name}"
+
+
+#coupons models
+class Coupon(models.Model):
+    # Core Attributes
+    code = models.CharField(max_length=50, unique=True, help_text="Unique code for the coupon")
+    DISCOUNT_TYPE_CHOICES = [
+        (1, 'Percentage'),
+        (2, 'Fixed Amount'),
+        (3, 'Free Shipping'),
+    ]
+    discount_type = models.IntegerField(choices=DISCOUNT_TYPE_CHOICES)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Value of the discount")
+    
+    # Validity
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.BooleanField(default=True, help_text="Set to False to deactivate the coupon")
+    
+    # Usage Restrictions
+    usage_limit = models.PositiveIntegerField(null=True, blank=True)
+    usage_limit_per_user = models.PositiveIntegerField(null=True, blank=True)
+    min_purchase_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Tracking
+    usage_count = models.PositiveIntegerField(default=0, help_text="Tracks how many times the coupon has been used")
+
+    # Meta and String Representation
+    class Meta:
+        ordering = ['-end_date', 'code']
+
+    def __str__(self):
+        return f"{self.code} ({self.discount_type})"
+
+    # Helper Methods
+    def is_valid(self):
+        from datetime import date
+        return self.status and self.start_date <= date.today() <= self.end_date
+
+    def increment_usage(self):
+        self.usage_count += 1
+        self.save()

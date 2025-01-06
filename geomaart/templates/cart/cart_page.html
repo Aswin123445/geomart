@@ -259,6 +259,49 @@
             </div>
         </div>
         {% endfor %}
+         <!-- Coupon Section -->
+        <div class="coupon-section mt-4 p-4 border rounded shadow-sm bg-light">
+            {% if not coup %}
+            <h5 class="fw-bold text-danger mb-3">Apply a Coupon Code</h5>
+            {% else %}
+            <h5 class="fw-bold text-danger mb-3" id="apply_coupon">coupon  successfully applied</h5>
+            {% endif %}
+            <form method="POST">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input 
+                type="text" 
+                {{coup}}
+                {% if coup %}
+                value="{{coup.coupen_code}}"
+                {% endif %}
+                name="coupon_code" 
+                class="form-control rounded-start border-primary" 
+                placeholder="Enter Coupon Code" 
+                        required>
+                    <button 
+                        type="submit" 
+                        class="btn btn-danger rounded-end">
+
+                        Apply
+                    </button>
+                </div>
+                <div class="mt-3">         
+            {% if applied_coupon %}
+            <p class="text-success d-flex align-items-center">
+                <i class="bi bi-check-circle-fill me-2"></i> 
+                Coupon Applied: <strong class="ms-1">{{ applied_coupon.code }}</strong>
+            </p>
+            {% endif %}
+            {% if coupon_error %}
+            <p class="text-danger d-flex align-items-center">
+                <i class="bi bi-exclamation-circle-fill me-2"></i> 
+                {{ coupon_error }}
+            </p>
+            {% endif %}
+                </div>
+            </form>
+        </div>
         {% else %}
         <div class="empty-cart-message text-center">
             <h4>Your cart is empty!</h4>
@@ -269,16 +312,25 @@
         <!-- Cart Summary -->
          {% if cartitem %}
         <div class="cart-summary">
-            <h4>Cart Summary</h4>
             <p >Total Items: <span id="total-cart-item"> {{cartitem.count}}</span> </p>
-            <p class="subtotal">Subtotal: <span class="subtotal-value"  id="total_price">{{sub_toal}}</span></p>
+            <p  id="disoounts">Sub Total: <span id="total_price" class="fw-bold" style="color: green;"> {{origin_price}}</span></p>
+            {% if coup %}
+            <p id="disoount">Discount :<span class="flex" style="color: green;">
+                {% if coup.type.discount_type == 1%}-{{coup.type.discount_value}}% 
+                {%else%}
+                -{{coup.type.discount_value}}
+            {%endif%}
+            </span><p>
+            <p class="subtotal" id="total_prices">final Amount: <span class="subtotal-value"  >{{sub_toal}}</span></p>
+            {% endif %}
             <a href="{% url 'cart:checkout' cartitem.0.cart.id %}"><button class="btn btn-custom">Proceed to Checkout</button></a>
         </div>
         {% else %}
         <div class="cart-summary">
             <h4>Cart Summary</h4>
-            <p >Total Items: <span id="total-cart-item"> 0</span> </p>
-            <p class="subtotal">Subtotal: <span class="subtotal-value"  id="total_price">0</span></p>
+            <p>Total Items: <span id="total-cart-item"> 0</span> </p>
+            
+            <p class="subtotal">Subtotals:<span class="subtotal-value"   id="total_price">0</span></p>
             <a href="{% url 'home:homepage' %}"><button class="btn btn-custom">add product to the cart</button></a>
         </div>
         {% endif %}
@@ -363,6 +415,9 @@
         </div>
       </div>
     </div>
+    <div id="total_price" style="display: none;"></div>
+    <div id="disoount" style="display: none;"></div>
+    <div id="apply_coupon" style="display: none;"></div>
     <script>
         function closeNotification() {
         document.getElementById("notification").style.display = "none";
@@ -386,7 +441,7 @@
             });
         });
 
-        confirmDelete.addEventListener('click',() =>{
+        confirmDelete.addEventListener('click',() => {
             modal.hide()
             const url = "{% url 'cart:delete_cart_item' 0 %}".replace('0',selectedCartId)
             fetch(url,{
@@ -397,23 +452,31 @@
             })
             .then(response => response.json())
                .then( data => {
+                  const total_pri = document.getElementById('total_prices');
                   const totalPriceElement = document.getElementById('total_price');
                   const total_price = parseFloat(totalPriceElement.textContent.trim());
                   const toast = new bootstrap.Toast(document.getElementById("toastNotification"),{ autohide: true, delay: 5000 });
                   const toastTitle = document.getElementById("toastTitle");
                   const toastBody = document.getElementById("toastBody");
-                  
+                  const applycoupon = document.getElementById("apply_coupon");
+                  const discountElement = document.getElementById("disoount");
+                //   const discountElements = document.getElementById("disoounts");
                   if(data.success){
-                    sizeElement = document.getElementById("total-cart-item")
-                    size = parseInt(sizeElement.textContent.trim())
+                    sizeElement = document.getElementById("total-cart-item");
+                    discountElement.style.display = 'none';
+                    total_pri.style.display = 'none';
+                    // discountElements.style.display = 'none';
+                    size = parseInt(sizeElement.textContent.trim());
                     document.getElementById(`address-row-${selectedCartId}`).remove();
                     toastTitle.textContent = "Success";
                     toastTitle.classList.add("text-success");
                     toastBody.textContent = data.message;
-                    totalPriceElement.textContent = total_price - quat
+                    totalPriceElement.textContent = data.total_price_json;
+                    console.log(data.total_price_json)
+                    applycoupon.textContent = 'Applay coupon ';
                     sizeElement.textContent = size - 1
                     if (parseInt(sizeElement.textContent) === 0){
-                        checkConditionAndRefresh();
+                       checkConditionAndRefresh();
                     }
                     toast.show()
                   } else {
@@ -425,7 +488,7 @@
                });
             });
         });
-        document.querySelectorAll('.btn-warning-custom').forEach(button => {
+    document.querySelectorAll('.btn-warning-custom').forEach(button => {
     button.addEventListener('click', function () {
         // Get data attributes from the clicked button
         const cartId = this.getAttribute('data-cart-id');

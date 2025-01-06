@@ -1,15 +1,18 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from cart.models import Order,OrderItem,ShippingAddress,Payment
+from cart.models import Order,OrderItem,ShippingAddress,Payment,Coupon
 from accounts.models import Address
+from django.utils.timezone import now
+from admin_custom.models import Coupon
+from cart.models import UserCoupon
 def process_order_transaction(cart, user, address_id, payment_method, payment_status):
     print(address_id)
     print(payment_method)
     print(payment_status)
     with transaction.atomic():
         # Calculate total
-        total = sum(cart.items.all().values_list('total_price', flat=True))
-
+        total = cart.total_price-cart.discount_amount
+        print(total)
         # Create Order
         new_order = Order.objects.create(
             user=user,
@@ -49,8 +52,31 @@ def process_order_transaction(cart, user, address_id, payment_method, payment_st
             method=int(payment_method),
             status=int(payment_status),
         )
-
+        if cart.discount_amount > 0 :
+            print('how are you')
+            coupon = Coupon.objects.filter(code = cart.temporary_coupon_code).first()
+            user_coupen,created = UserCoupon.objects.get_or_create(user = user ,coupon = coupon)
+            coupon.usage_count += 1
+            user_coupen.usage_count +=1
+            user_coupen.is_used = True
+            new_order.coupon = coupon
+            coupon.save()
+            user_coupen.save()
+            new_order.save()
+            print('coupon field updated before saving the coupon')
+            print(user_coupen)
+            print(coupon)
         # Delete Cart
         cart.delete()
-
         return new_order
+    
+    
+def validate_coupon(coupon_code,cart):
+    if not coupon_code.is_valid():
+        return {'is_valid':False,'message':'coupon expired'}
+    elif coupon_code.usage_limit < coupon_code.usage_count :
+        return {'is_valid':False,'message':'sorry usage limit exeeded'}
+    elif  cart.total_price < coupon_code.min_purchase_amount:
+        return {'is_valid':False,'message':'sorry this coupon is not applicable for this order'}
+    else :
+        return {'is_valid':True,'message':'coupon verification successfull'}

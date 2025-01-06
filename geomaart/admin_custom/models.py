@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
+from decimal import Decimal
+
 # Create your models here.
 class Category(models.Model):
   
@@ -45,7 +47,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2 )
     stock = models.PositiveIntegerField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name="products")
@@ -91,7 +93,7 @@ class Coupon(models.Model):
         (3, 'Free Shipping'),
     ]
     discount_type = models.IntegerField(choices=DISCOUNT_TYPE_CHOICES)
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Value of the discount")
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,default=Decimal('0.00'), help_text="Value of the discount")
     
     # Validity
     start_date = models.DateField()

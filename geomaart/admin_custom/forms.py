@@ -271,7 +271,7 @@ class CouponCreationForm(forms.Form) :
     coupon_limit = forms.IntegerField(
         min_value=1,
     )
-    discount_value = forms.IntegerField(min_value=100)
+    discount_value = forms.IntegerField(min_value=1)
     limit_per_user =  forms.IntegerField(
         min_value=1
     )

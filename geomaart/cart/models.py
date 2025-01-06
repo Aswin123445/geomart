@@ -1,7 +1,9 @@
 from django.db import models
 from django.conf import settings
-from admin_custom.models import Product
+from admin_custom.models import Product,Coupon
 from accounts.models import UserData
+from decimal import Decimal
+from django.utils.timezone import now
 # Create your models here.
 
 #cart
@@ -10,7 +12,9 @@ class Cart(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)  # Active or inactive status
-
+    total_price = models.DecimalField( max_digits=10, decimal_places=2,default=Decimal('0.00'))
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    temporary_coupon_code = models.CharField(max_length=10,null=True)
     def __str__(self):
         return f"Cart for {self.user.email}"
     
@@ -19,7 +23,7 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2 ,default=0.00)
 
     def save(self, *args, **kwargs):
         self.total_price = self.product.price * self.quantity
@@ -33,9 +37,11 @@ class CartItem(models.Model):
 class Order(models.Model):
     is_canceled = models.BooleanField(default=False)
     user = models.ForeignKey(UserData, on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     refund_status = models.IntegerField(
         choices=[
             (1, 'Pending'), 
@@ -118,3 +124,15 @@ class Wallet(models.Model):
         self.balance -= amount
         self.save()
 
+
+#user coupen tracking model
+class UserCoupon(models.Model):
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE, related_name='user_coupons')
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='user_coupons')
+    usage_count = models.PositiveIntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    used_date = models.DateTimeField(default=now, blank=True)
+    class Meta:
+        unique_together = ('user' , 'coupon')
+    def __str__(self):
+        return f"{self.user.name} - {self.coupon.code}"

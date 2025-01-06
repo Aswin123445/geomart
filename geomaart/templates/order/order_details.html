@@ -137,9 +137,13 @@
            class="badge {% if order.status == 1 or order.status == 2 or order.status == 3 %}bg-warning{% elif order.status == 4 %}bg-success {%else%} bg-dark {%endif%}"
            >
            {{order.get_status_display}}
-          
          </span></p>
-        <p><strong>Total Amount:</strong> <span class="text-success">{{order.total_amount}}</span></p>
+         {% if discount %}
+           <p><strong>Amount:</strong> <span class="text-success">{{discount.original_amount}}</span></p>
+           <p><strong>Dicount:</strong> <span class="text-success">{{discount.value}}</span></p>
+           <p><strong>Coupon Applied:</strong> <span class="text-success fw-bold">{{order.coupon.code}}</span></p>
+         {% endif %}
+        <p><strong>Final Amount:</strong> <span class="text-success fw-bold">{{order.total_amount}}</span></p>
       </div>
     </div>
 

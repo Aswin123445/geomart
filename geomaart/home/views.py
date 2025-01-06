@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 from django.http import JsonResponse
 from django.shortcuts import render,redirect,HttpResponse
@@ -256,12 +257,27 @@ def order_list(request):
     return render(request,'order/order_list.html',context)
 
 def order_details(request,id):
+    discount = None
     order = Order.objects.filter(id = id).first()
+    if order.coupon:
+       typ = order.coupon.discount_type
+       if typ == 1 :
+           price =(order.total_amount / (100 - order.coupon.discount_value)) * order.coupon.discount_type*10
+           print(order.coupon.discount_value)
+           discount ={ 
+                    'value':price,
+                    'original_amount':order.total_amount + price   
+           }
+       else :
+           discount ={
+               'value':order.coupon.discount_value,
+               'original_amount':order.total_amount + order.coupon.discount_value
+           }
     if not order :
         return redirect('home:homepage')
     order_item = order.items.all()
     shipaddressaddress = ShippingAddress.objects.get(order = order)
-    context = {'order':order,'order_item':order_item,'shipping_address':shipaddressaddress}
+    context = {'order':order,'order_item':order_item,'shipping_address':shipaddressaddress,'discount':discount}
     return render(request ,'order/order_details.html',context)
 
 
@@ -319,5 +335,8 @@ def move_to_cart(request,id):
          print(cart)
          print(wishlistitem.first().product)
          cart_item = CartItem.objects.create(cart = cart,product = wishlistitem.first().product)
+         cart.total_price += cart_item.product.price
+         cart.save()
+         
          messages.success(request,'moved to the cart page')
     return redirect('home:wishlist')

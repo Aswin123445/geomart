@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from decimal import Decimal
+from django.contrib.postgres.fields import CITextField
 
 # Create your models here.
 class Category(models.Model):
@@ -23,7 +24,13 @@ class Category(models.Model):
       ordering = ['name'] 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            slug = slugify(self.name)
+            counter = 1 
+            while Category.objects.filter(slug__iexact = slug).exists():
+                slug = f"{slug}- {counter}"
+                counter += 1
+            self.slug = slug
+        self.name = self.name.upper()
         super().save(*args, **kwargs) 
     def __str__(self):
         return self.name
@@ -35,11 +42,16 @@ class Location(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def save(self, *args,**kwargs):
-        
-        if not self.slug :
-            self.slug = slugify(self.district)
+        if not self.slug:
+            slug = slugify(self.district)
+            counter = 1 
+            while Category.objects.filter(slug__iexact = slug).exists():
+                slug = f"{slug}- {counter}"
+                counter += 1
+            self.slug = slug
+        self.district = self.name.upper()
         super().save(*args, **kwargs) 
-            
+      
     def __str__(self):
         return self.district
     
@@ -57,12 +69,16 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     
 
-    def save(self, *args, **kwargs):
-        # Automatically generate a slug from the product name
+    def save(self, *args,**kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
-        print('product saved')
-        super(Product, self).save(*args, **kwargs)
+            slug = slugify(self.name)
+            counter = 1 
+            while Category.objects.filter(slug__iexact = slug).exists():
+                slug = f"{slug}- {counter}"
+                counter += 1
+            self.slug = slug
+        self.name = self.name.upper()
+        super().save(*args, **kwargs) 
 
     def __str__(self):
         return self.name
@@ -94,7 +110,7 @@ class Coupon(models.Model):
     ]
     discount_type = models.IntegerField(choices=DISCOUNT_TYPE_CHOICES)
     discount_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,default=Decimal('0.00'), help_text="Value of the discount")
-    
+    cap_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=Decimal('0.00'), help_text="cap amount for each discount value")
     # Validity
     start_date = models.DateField()
     end_date = models.DateField()

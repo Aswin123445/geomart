@@ -31,7 +31,7 @@
     {% if request.user.is_staff %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-2">
       <div class="container-fluid">
-          <a class="navbar-brand" href="#">GeoMaart Admin Panel</a>
+          <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
           <div class="ms-auto">
               <ul class="navbar-nav">
                   <li class="nav-item">
@@ -146,7 +146,6 @@
         <p><strong>Final Amount:</strong> <span class="text-success fw-bold">{{order.total_amount}}</span></p>
       </div>
     </div>
-
     <!-- Shipping Information -->
     <div class="card mb-4">
       <div class="card-header bg-danger text-white">Shipping Address</div>

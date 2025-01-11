@@ -96,29 +96,17 @@
         </div>
 
         <!-- Filter Options -->
+         <form >
+        {%csrf_token%}
         <div class="row mb-4">
             <div class="col-md-4">
-                <input type="text" class="form-control" placeholder="Search by Order ID or Name">
-            </div>
-            <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>Filter by Status</option>
-                    <option value="1">Completed</option>
-                    <option value="2">Pending</option>
-                    <option value="3">Cancelled</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>Sort by Date</option>
-                    <option value="1">Newest</option>
-                    <option value="2">Oldest</option>
-                </select>
+                <input type="text" name="search_order" class="form-control" placeholder="Search by Order ID">
             </div>
             <div class="col-md-2">
-                <button class="btn btn-success w-100">Apply</button>
+                <button class="btn btn-success w-100">Search</button>
             </div>
         </div>
+         </form>
 
         <!-- Order Cards -->
         <div class="row g-4">
@@ -143,7 +131,8 @@
                                 data-bs-toggle="modal" 
                                 data-bs-target="#orderStatusModal"
                                 data-order-id="{{ order.id }}"
-                                >
+                                {% if order.status == 4  %} style="display: none;" {% endif %}
+                            >
                             Update Order
                         </button>
                         <button class="btn btn-danger btn-sm delete-order-button"  data-order-id="{{order.id}}">Delete</button>
@@ -272,7 +261,7 @@
     </div>
 </div>
   <script>
-            function closeNotification() {
+        function closeNotification() {
         document.getElementById("notification").style.display = "none";
         }
         document.querySelectorAll('.notification').forEach(notification => {

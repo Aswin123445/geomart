@@ -4,6 +4,8 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from .validationslogic import coupon_special_character_check
+from admin_custom.models import Category
 from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
 from .validationslogic import location_name_validations_check,product_integer_value_negative_check
 from .validationslogic import location_valid_check,category_valid_check
@@ -173,90 +175,383 @@ class AdminUserAddForm(forms.Form):
         
         return email
 
-class categoryValidation(forms.Form) :
+# class categoryValidation(forms.Form) :
+#     categoryName = forms.CharField(
+#         required=True,
+#         min_length=3,
+#         strip=True,
+#         error_messages={
+#             'min_length':'minium 5 characteres is requerid'
+#         },
+#         validators=[category_name_validations_check]
+#     )
+#     categoryId = forms.IntegerField(min_value=0,validators=[category_id_valid_check],required= False)
+#     categoryDescription = forms.CharField(
+#         required=True,
+#         min_length=5,
+#         max_length=400,
+#         validators=[category_description_empty_check]
+#     )
+#     categoryStatus=forms.IntegerField(min_value=1,max_value=3)
+
+
+
+class categoryValidation(forms.Form):
     categoryName = forms.CharField(
         required=True,
-        min_length=3,
+        min_length=5,
+        max_length=50,
         strip=True,
+        label="Category Name",
         error_messages={
-            'min_length':'minium 5 characteres is requerid'
+            'required': 'Category name is required.',
+            'min_length': 'Minimum 5 characters are required for the category name.',
+            'max_length': 'Category name cannot exceed 50 characters.',
         },
         validators=[category_name_validations_check]
     )
-    categoryId = forms.IntegerField(min_value=0,validators=[category_id_valid_check],required= False)
+    categoryId = forms.IntegerField(
+        min_value=0,
+        required=False,
+        label="Category ID",
+        error_messages={
+            'min_value': 'Category ID must be a positive integer.',
+        },
+        validators=[category_id_valid_check]
+    )
     categoryDescription = forms.CharField(
         required=True,
         min_length=5,
         max_length=400,
+        label="Category Description",
+        widget=forms.Textarea(attrs={'placeholder': 'Enter a detailed category description'}),
+        error_messages={
+            'required': 'Category description is required.',
+            'min_length': 'Category description must be at least 5 characters long.',
+            'max_length': 'Category description cannot exceed 400 characters.',
+        },
         validators=[category_description_empty_check]
     )
-    categoryStatus=forms.IntegerField(min_value=1,max_value=3)
-    
-#forms to add new loations to the list
-class LocationValidation(forms.Form):
-    district=forms.CharField(
-        max_length=100,
-        min_length=3,strip=True,
+    categoryStatus = forms.IntegerField(
+        min_value=1,
+        max_value=3,
         required=True,
-        validators=[location_name_validations_check],
-        error_messages={'min_length':'this is too small try increasing the length'}
+        label="Category Status",
+        error_messages={
+            'required': 'Category status is required.',
+            'min_value': 'Invalid category status. It must be between 1 and 3.',
+            'max_value': 'Invalid category status. It must be between 1 and 3.',
+        }
     )
-    description=forms.CharField(
+
+    def clean_categoryName(self):
+        category_name = self.cleaned_data.get('categoryName')
+        if category_name.isdigit():
+            raise ValidationError("Category name cannot be entirely numeric.")
+        return category_name
+
+    def clean_categoryStatus(self):
+        status = self.cleaned_data.get('categoryStatus')
+        valid_statuses = [1, 2, 3]  # Define valid statuses
+        if status not in valid_statuses:
+            raise ValidationError("Invalid category status selected.")
+        return status
+    def clean_categoryName(self):
+        category_name = self.cleaned_data.get('categoryName')
+        # Check for case-insensitive duplicates
+        if Category.objects.filter(name__iexact=category_name).exists():
+            raise ValidationError(f"The category '{category_name}' already exists.")
+        return category_name
+    def clean(self):
+        cleaned_data = super().clean()
+        category_name = cleaned_data.get('categoryName')
+        category_description = cleaned_data.get('categoryDescription')
+
+        # Cross-field validation
+        if category_name and category_description:
+            if category_name.lower() in category_description.lower():
+                self.add_error(
+                    'categoryDescription',
+                    'Category description should not contain the category name.'
+                )
+        
+        return cleaned_data
+
+    
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import Location, Product  # Assuming there's a Location model
+import re
+
+class LocationValidation(forms.Form):
+    district = forms.CharField(
+        max_length=100,
+        min_length=3,
+        strip=True,
+        required=True,
+        validators=[location_name_validations_check],  # Custom validator
+        error_messages={
+            'required': 'District name is required.',
+            'min_length': 'The district name is too short, please increase the length.',
+            'max_length': 'The district name exceeds the maximum limit of 100 characters.',
+        },
+    )
+    description = forms.CharField(
         max_length=500,
         min_length=3,
         required=True,
-        validators=[location_name_validations_check],
-        error_messages={'max_length':'this exceeded the maximum limit','min_length':'try increasing the length'}
+        validators=[location_name_validations_check],  # Custom validator
+        error_messages={
+            'required': 'Description is required.',
+            'min_length': 'The description is too short, please increase the length.',
+            'max_length': 'The description exceeds the maximum limit of 500 characters.',
+        },
     )
-    
-#product model validations
+
+    def clean_district(self):
+        """
+        Ensure district name is unique, case-insensitive, and doesn't contain special characters or numbers.
+        """
+        district = self.cleaned_data['district'].strip().lower()
+
+        # Check for special characters and numbers
+        if re.search(r'[^a-z\s]', district):  # Allows only letters and spaces
+            raise ValidationError('District name should contain only letters and spaces.')
+
+        # Check for case-insensitive uniqueness
+        if Location.objects.filter(district__iexact=district).exists():
+            raise ValidationError(f"A district with the name '{district}' already exists.")
+
+        return district
+
+    def clean_description(self):
+        """
+        Validate that the description is meaningful and doesn't contain invalid characters.
+        """
+        description = self.cleaned_data['description'].strip()
+
+        # Ensure description has at least two words
+        if len(description.split()) < 2:
+            raise ValidationError('Description must contain at least two words.')
+
+        # Check for invalid characters
+        if re.search(r'[^\w\s.,]', description):  # Allows letters, numbers, spaces, commas, and periods
+            raise ValidationError('Description contains invalid characters.')
+
+        return description
+
+    def clean(self):
+        """
+        Additional checks on the entire form.
+        """
+        cleaned_data = super().clean()
+
+        # Check if district and description are the same (optional, depends on use case)
+        district = cleaned_data.get('district')
+        description = cleaned_data.get('description')
+
+        if district and description and district.lower() in description.lower():
+            self.add_error(
+                'description', 'Description should not merely repeat the district name.'
+            )
+
+        return cleaned_data
+
+
 class ProductValidation(forms.Form):
     name = forms.CharField(
         min_length=3,
         max_length=40,
         required=True,
-        validators=[category_name_validations_check],
-        error_messages={'required':'this field is required',}
+        strip=True,
+        validators=[category_name_validations_check],  # Custom validator
+        error_messages={
+            'required': 'This field is required.',
+            'min_length': 'Product name should be at least 3 characters.',
+            'max_length': 'Product name cannot exceed 40 characters.'
+        }
     )
     description = forms.CharField(
         min_length=3,
         max_length=2000,
         required=True,
-        validators=[category_name_validations_check],
-        error_messages={'required':'this field is required',}
+        validators=[category_name_validations_check],  # Custom validator
+        error_messages={
+            'required': 'This field is required.',
+            'min_length': 'Description should be at least 3 characters.',
+            'max_length': 'Description cannot exceed 2000 characters.'
+        }
     )
     price = forms.IntegerField(
         min_value=5,
         required=True,
-        validators=[product_integer_value_negative_check],
-        error_messages={'required':'this field is required','min_value':'price must be 5 or more than 5'}
+        validators=[product_integer_value_negative_check],  # Custom validator
+        error_messages={
+            'required': 'This field is required.',
+            'min_value': 'Price must be 5 or more.'
+        }
     )
     stock = forms.IntegerField(
         min_value=1,
         required=True,
-        validators=[product_integer_value_negative_check],
-        error_messages={'required':'this field is required','min_value':'stock must contain more than 0'}
+        validators=[product_integer_value_negative_check],  # Custom validator
+        error_messages={
+            'required': 'This field is required.',
+            'min_value': 'Stock must be more than 0.'
+        }
     )
     location = forms.IntegerField(
         min_value=0,
         required=True,
-        validators=[location_valid_check],
-        error_messages={'invalid': 'please select a category'}
+        validators=[location_valid_check],  # Custom validator
+        error_messages={
+            'invalid': 'Please select a valid location.'
+        }
     )
     category = forms.IntegerField(
         min_value=0,
         required=True,
-        validators=[category_valid_check],
-        error_messages={'invalid': 'please select a category'}
-        
+        validators=[category_valid_check],  # Custom validator
+        error_messages={
+            'invalid': 'Please select a valid category.'
+        }
     )
-    culturalbackground= forms.CharField(
-        required = True,
-        min_length= 20,
-        strip= True
+    culturalbackground = forms.CharField(
+        required=True,
+        min_length=20,
+        strip=True,
+        error_messages={
+            'required': 'This field is required.',
+            'min_length': 'Cultural background should be at least 20 characters.'
+        }
     )
-from .validationslogic import coupon_special_character_check
-class CouponCreationForm(forms.Form) :
+
+    def clean_name(self):
+        """
+        Check if a product with the same name already exists (case-insensitive).
+        """
+        name = self.cleaned_data['name'].strip().upper()
+
+        # Check for case-insensitive uniqueness
+        if Product.objects.filter(name__iexact=name).exists():
+            raise ValidationError(f"A product with the name '{name}' already exists.")
+
+        return name
+
+    def clean(self):
+        """
+        Perform additional validation checks across the form fields.
+        """
+        cleaned_data = super().clean()
+
+        # You can add additional cross-field validation if needed
+        # For example, you can check if price and stock make sense logically
+
+        price = cleaned_data.get('price')
+        stock = cleaned_data.get('stock')
+
+        if price and stock and stock > 1000 and price < 5:
+            self.add_error('price', 'For high stock, the price should be at least 5.')
+
+        return cleaned_data
+
+class ProductUpdateForm(forms.Form):
+    name = forms.CharField(
+        min_length=3,
+        max_length=40,
+        required=False,  # Allow the name to remain unchanged
+        strip=True,
+        validators=[category_name_validations_check],  # Custom validator
+        error_messages={
+            'min_length': 'Product name should be at least 3 characters.',
+            'max_length': 'Product name cannot exceed 40 characters.'
+        }
+    )
+    description = forms.CharField(
+        min_length=3,
+        max_length=2000,
+        required=False,  # Allow the description to remain unchanged
+        validators=[category_name_validations_check],  # Custom validator
+        error_messages={
+            'min_length': 'Description should be at least 3 characters.',
+            'max_length': 'Description cannot exceed 2000 characters.'
+        }
+    )
+    price = forms.IntegerField(
+        min_value=5,
+        required=False,  # Allow the price to remain unchanged
+        validators=[product_integer_value_negative_check],  # Custom validator
+        error_messages={
+            'min_value': 'Price must be 5 or more.'
+        }
+    )
+    stock = forms.IntegerField(
+        min_value=1,
+        required=False,  # Allow the stock to remain unchanged
+        validators=[product_integer_value_negative_check],  # Custom validator
+        error_messages={
+            'min_value': 'Stock must be more than 0.'
+        }
+    )
+    location = forms.IntegerField(
+        min_value=0,
+        required=False,  # Allow the location to remain unchanged
+        validators=[location_valid_check],  # Custom validator
+        error_messages={
+            'invalid': 'Please select a valid location.'
+        }
+    )
+    category = forms.IntegerField(
+        min_value=0,
+        required=False,  # Allow the category to remain unchanged
+        validators=[category_valid_check],  # Custom validator
+        error_messages={
+            'invalid': 'Please select a valid category.'
+        }
+    )
+    culturalbackground = forms.CharField(
+        required=False,  # Allow the cultural background to remain unchanged
+        min_length=20,
+        strip=True,
+        error_messages={
+            'min_length': 'Cultural background should be at least 20 characters.'
+        }
+    )
+
+    # def clean_name(self):
+    #     """
+    #     Check if a product with the same name (other than the current product) already exists (case-insensitive).
+    #     """
+    #     # Only check if name is provided for update
+    #     name = self.cleaned_data.get('name')
+    #     if name:
+    #         name = name.strip().upper()
+    #         # Assuming `product_id` is passed as a part of the form data
+    #         product_id = self.initial.get('product_id')
+    #         if Product.objects.filter(name__iexact=name).exclude(id=product_id).exists():
+    #             raise ValidationError(f"A product with the name '{name}' already exists.")
+    #     return name
+
+    def clean(self):
+        """
+        Perform additional validation checks across the form fields.
+        """
+        cleaned_data = super().clean()
+
+        price = cleaned_data.get('price')
+        stock = cleaned_data.get('stock')
+
+        if price and stock and stock > 1000 and price < 5:
+            self.add_error('price', 'For high stock, the price should be at least 5.')
+
+        return cleaned_data
+
+from django import forms
+from django.core.exceptions import ValidationError
+from datetime import date
+from .models import Coupon  # Replace with the actual model name
+
+class CouponCreationForm(forms.Form):
     coupon_code = forms.CharField(
         max_length=6,
         min_length=6,
@@ -272,20 +567,42 @@ class CouponCreationForm(forms.Form) :
         min_value=1,
     )
     discount_value = forms.IntegerField(min_value=1)
-    limit_per_user =  forms.IntegerField(
+    limit_per_user = forms.IntegerField(
         min_value=1
     )
     min_purchase_amount = forms.IntegerField()
-    status = forms.IntegerField(min_value=0,max_value=1)
+    status = forms.IntegerField(min_value=0, max_value=1)
     
     def clean_coupon_code(self):
+        """Ensure the coupon code is unique and converted to uppercase."""
         data = self.cleaned_data['coupon_code']
         if data:
-            data = data.upper()
+            data = data.upper()  # Convert to uppercase
+            # Check uniqueness against the database
+            if Coupon.objects.filter(code=data).exists():
+                raise ValidationError("A coupon with this code already exists.")
         else:
             raise ValidationError("This field cannot be empty.")
         return data
-    
+
+    def clean(self):
+        """Ensure start date is less than end date."""
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        enddate = cleaned_data.get('enddate')
+        
+        # Check that start_date is less than enddate
+        if start_date and enddate:
+            if start_date >= enddate:
+                raise ValidationError(
+                    "Start date must be earlier than the end date."
+                )
+        
+        # Optional: Check start date is not in the past
+        if start_date and start_date < date.today():
+            raise ValidationError("Start date cannot be in the past.")
+        return cleaned_data
+
 class CouponFilterForm(forms.Form):
     status = forms.NullBooleanField()
     discount_type = forms.IntegerField()
@@ -294,6 +611,42 @@ class CouponFilterForm(forms.Form):
         if data == 0 :
             data = None
         return data
+from django import forms
+from django.core.exceptions import ValidationError
+
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.timezone import now
+
+class DateValidations(forms.Form):
+    start_date = forms.DateField(required=False)
+    enddate = forms.DateField(required=False)
+
+    def clean(self):
+        """
+        Custom clean method to validate start_date and enddate.
+        """
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        enddate = cleaned_data.get('enddate')
+        today = now().date()  # Get today's date
+
+        # Check if only one of the dates is provided
+        if (start_date and not enddate) or (enddate and not start_date):
+            raise ValidationError("Both start date and end date must be provided if either is entered.")
+
+        # Check if start_date is later than enddate
+        if start_date and enddate and start_date > enddate:
+            raise ValidationError("Start date cannot be later than end date.")
+
+        # Check if enddate is in the future
+        if enddate and enddate > today:
+            raise ValidationError("End date cannot be in the future.")
+
+        return cleaned_data
+
+
+    
         
   
         

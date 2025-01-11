@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from cart.models import Order,OrderItem,ShippingAddress,Payment,Coupon
@@ -78,5 +79,12 @@ def validate_coupon(coupon_code,cart):
         return {'is_valid':False,'message':'sorry usage limit exeeded'}
     elif  cart.total_price < coupon_code.min_purchase_amount:
         return {'is_valid':False,'message':'sorry this coupon is not applicable for this order'}
+    elif cart.items.all().count() == 1 :
+        max_value = coupon_code.discount_value if coupon_code.discount_type == 2 else coupon_code.cap_amount
+        item = cart.items.all().first()
+        if item.quantity == 1  and cart.total_price > Decimal('0.75')*max_value:
+           return {'is_valid':False,'message':"This coupon cannot be applied as the product price exceeds the allowable limit for single-item carts."}
+        return {'is_valid':True,'message':'coupon verification successfull'}
     else :
         return {'is_valid':True,'message':'coupon verification successfull'}
+    

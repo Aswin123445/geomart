@@ -105,7 +105,7 @@
   <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #343a40; position: fixed; top: 0; width: 100%; z-index: 1040; border-bottom: 1px solid #e9ecef;">
     <div class="container-fluid">
         <!-- Brand Logo -->
-        <a class="navbar-brand fw-bold fs-4" href="#" style="margin-left: 50px; color: aliceblue;">
+        <a  class="navbar-brand fw-bold fs-4" href="{% url 'custom_admin:dashboard' %}" style="margin-left: 50px; color: aliceblue;">
             GEOMAART ADMIN DASHBOARD
         </a>
         <!-- Toggle Button for Mobile View -->
@@ -184,8 +184,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-bar-chart"></i> Analytics
+                <a class="nav-link" href="{% url 'custom_admin:sales_report' %}">
+                    <i class="bi bi-bar-chart"></i> Sales Report
                 </a>
             </li>
             <li class="nav-item">

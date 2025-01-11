@@ -2,7 +2,10 @@ import json
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.shortcuts import redirect,render
+from django.urls import reverse
 import razorpay
+
+from home.forms import AddressForm
 from .models import Cart,CartItem,Order,Wallet,UserCoupon
 from admin_custom.models import Product,Coupon
 from django.contrib import messages
@@ -28,6 +31,7 @@ def product_to_cart(request, slug):
         messages.error(request, 'Out of stock. Please stay tuned; the product will be added soon.')
         return redirect('home:product_details')
     cart, created = Cart.objects.get_or_create(user=request.user)
+    print('cart eidher created or fetched')
     cart_item, created = CartItem.objects.update_or_create(
         cart=cart,
         product=product,
@@ -46,7 +50,15 @@ def product_to_cart(request, slug):
     #quantity checking
     print('total price increment')
     checker = Cart.objects.filter(user=request.user).first().items.filter(product = product).first()
-    if checker and not checker.quantity<product.stock :
+
+    if checker and not checker.quantity<=product.stock  :
+        print('then how this implemented')
+        print(created)
+        if not created :
+            cart.total_price -= cart_item.product.price
+            cart_item.quantity -= 1
+            cart_item.save()
+            cart.save()
         messages.warning(request,'we don\'t  that much product for know')
         return redirect('home:product_details',slug)
     if checker and checker.quantity == 10 :
@@ -69,9 +81,9 @@ def cart_page(request):
     coupen_details_context = None
     print(request.POST.get('coupon_code',0))
     cart, created = Cart.objects.get_or_create(user=request.user)
-    print(cart)
     cart.discount_amount = Decimal('0.00')
     cart.temporary_coupon_code = ''
+
     if not cart :
         return render(request,'cart/cart_page.html',{'cartitem':None,'sub_toal':0,'user_cart':None})
     if request.method == 'POST' and 'coupon_code' in request.POST :
@@ -83,7 +95,6 @@ def cart_page(request):
              cart.temporary_coupon_code = coupon_code.code
              #checking user already used it or not
              already_in_user = UserCoupon.objects.filter(user = request.user,coupon = coupon_code)
-             print(already_in_user)
              if already_in_user.exists() :
                  is_coupon_valid = {'status':True,'message':'this coupon is valid'}
                  coupon_count = coupon_code.usage_limit
@@ -112,7 +123,8 @@ def cart_page(request):
                 #  messages.success(request,f'Wow coupen successfully applied you  have saved {cart.discount_amount} rupees')
              if coupon_code.discount_type == 1 :
                  print('why so serious')
-                 cart.discount_amount = cart.total_price*coupon_code.discount_value*Decimal('0.01')
+                 print(coupon_code.cap_amount)
+                 cart.discount_amount = min(cart.total_price*coupon_code.discount_value*Decimal('0.01'),coupon_code.cap_amount)
              else :
                  cart.discount_amount = coupon_code.discount_value
              cart.save()
@@ -202,9 +214,9 @@ def checkout(request , id):
     if not discount_price == total_sum :
         coupon_applied = True
     address =  Address.objects.filter(user = request.user)
-    if not address.exists():
-        messages.error(request,'please add a address to shop')
-        return redirect('home:user_profile')
+    # if not address.exists():
+    #     messages.error(request,'please add a address to shop')
+    #     return redirect('home:user_profile')
     wallet_amount = Wallet.objects.get(user = request.user).balance
     context = {
         'address':address,
@@ -213,11 +225,42 @@ def checkout(request , id):
         'wallet_amount':wallet_amount,
         'coupon_applied':coupon_applied,
         'discounted_amount': cart.discount_amount,
-        'final_amount':total_sum- cart.discount_amount
+        'final_amount':total_sum- cart.discount_amount,
+        'cart_id':cart.id,
     }
     return render(request,'checkout/checkout.html',context)
+def add_address_checkout(request,id):
+    if request.method == 'POST' :
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            address_instnace = None
+            if form.cleaned_data['primaryAddress'] == True :
+               address_instnace = Address.objects.filter(user = request.user.id , is_primary = True).first()
+            address = Address.objects.create(
+                user = request.user,
+                address_type = form.cleaned_data['addressType'],
+                street_address = form.cleaned_data['streetAddress'],
+                city = form.cleaned_data['city'],
+                state = form.cleaned_data['state'],
+                postal_code =  form.cleaned_data['postalCode'],
+                is_primary = form.cleaned_data['primaryAddress']
+            )
+            if address  and address_instnace :
+                address_instnace.is_primary = False
+                address_instnace.save()
+                return redirect('cart:checkout',id)
+            if Address.objects.filter(user = request.user).count() == 1 :
+                return redirect('cart:checkout', id)
+        else :
+            l = list(form.errors.values())
+            messages.error(request,l[0][0])
+    return render(request,'home/profile/address.html')
 @login_required
 def placeorder(request, id=None):
+    address =  Address.objects.filter(user = request.user)
+    if not address.exists():
+        messages.error(request,'please add a address to shop')
+        return redirect('cart:checkout',id)
     if request.method == 'POST':
         cart = get_object_or_404(Cart, id=id)
         try:
@@ -271,7 +314,14 @@ def cancelorder(request , id):
 
 
 #payment razorpay create order
-def create_order(request):
+def create_order(request,id = None):
+    address =  Address.objects.filter(user = request.user)
+    print('some thing happening')
+    print(address.exists())
+    if not address.exists():
+        messages.error(request,'please add a address to shop')
+        redirect_url = reverse('cart:checkout', kwargs={'id': id})
+        return JsonResponse({'redirect': redirect_url})
     cart = Cart.objects.filter(user = request.user).first()
     cart_items = cart.items.all()
     total_prize = cart.total_price-cart.discount_amount
@@ -323,3 +373,66 @@ def verify_payment(request):
             return HttpResponse("Payment verification failed.", status=400)
         
 
+
+
+from django.http import JsonResponse
+from django.db import transaction
+from decimal import Decimal
+import json
+def update_cart_item_ajax(request):
+    if request.method == 'POST':
+        try:
+            # Parse the JSON body
+            data = json.loads(request.body)
+            cart_id = data.get('cart_id')
+            quantity = int(data.get('quantity'))
+
+            # Fetch the cart item
+            cart_item = CartItem.objects.filter(id=cart_id).first()
+            if not cart_item:
+                return JsonResponse({'success': False, 'error': 'Cart item not found.'})
+
+            # Fetch the associated cart
+            cart = cart_item.cart
+
+            # Validate maximum quantity (10)
+            if quantity > 10:
+                return JsonResponse({'success': False, 'error': 'Maximum quantity for each product is 10.'})
+
+            # Validate stock availability
+            if quantity > cart_item.product.stock:
+                return JsonResponse({'success': False, 'error': 'Requested quantity exceeds stock availability.'})
+
+            # Calculate the difference in quantity
+            difference = quantity - cart_item.quantity
+
+            # Update cart total price based on the difference
+            with transaction.atomic():
+                if difference > 0:
+                    cart.total_price += (difference * cart_item.product.price)
+                elif difference < 0:
+                    cart.total_price -= (abs(difference) * cart_item.product.price)
+                else:
+                    print('Total price is not updated as quantity remains unchanged.')
+
+                # Reset discount amount
+                cart.discount_amount = Decimal('0.00')
+                cart.save()
+
+                # Update cart item quantity
+                cart_item.quantity = quantity
+                cart_item.save()
+
+            # Return success response
+            return JsonResponse({
+                'success': True,
+                'message': 'Quantity updated successfully.',
+                'new_subtotal': cart_item.quantity * cart_item.product.price,
+                'new_total': cart.total_price,
+                'discount_amount': str(cart.discount_amount), 
+            })
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})

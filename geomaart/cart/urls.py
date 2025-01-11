@@ -11,7 +11,11 @@ urlpatterns = [
     path('cancelorder/<int:id>/',views.cancelorder,name='cancelorder'),
     
     #payment
-    path('create_order/',views.create_order,name='create_order'),
+    path('create_order/<int:id>/',views.create_order,name='create_order'),
     path("verify_payment/", views.verify_payment, name="verify_payment"),
+    path('update_cart_item_ajax/',views.update_cart_item_ajax,name="update_cart_item_ajax"),
+    
+    #edit address from checkout
+    path('add_address_checkout/<int:id>',views.add_address_checkout,name="add_address_checkout")
     
 ]

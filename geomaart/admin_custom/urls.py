@@ -43,6 +43,7 @@ urlpatterns = [
     path('delete_order/<int:id>',views.delete_order,name='delete_order'),
     
     
+    
     #coupon management
     path('coupon_list/',views.coupon_list,name='coupon_list'),
     path('coupon_list/<int:id>',views.coupon_list,name='coupon_list'),
@@ -50,4 +51,9 @@ urlpatterns = [
     path('search_coupons/',views.search_coupons,name='search_coupons'),
     path('coupon_edit/<int:id>',views.coupon_edit,name='coupon_edit'),
     path('delete_coupon/<int:id>/',views.delete_coupon,name='delete_coupon'),
+    
+    #sales report
+    path('sales_report/',views.sales_report,name='sales_report'),
+    path('download-sales-report/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
+
 ]

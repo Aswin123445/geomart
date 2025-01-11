@@ -81,7 +81,7 @@ class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
     PAYMENT_METHOD_CHOICES = [
         (1, 'Cash on Delivery'),
-        (2, 'Credit/Debit Card'),
+        (2, 'Razor Pay'),
         (3, 'wallet'),
     ]
     method = models.IntegerField(choices=PAYMENT_METHOD_CHOICES, default=1)
@@ -110,7 +110,7 @@ class ShippingAddress(models.Model):
 #making wallet model
 class Wallet(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wallet')
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     def add_amount(self, amount):
         """Add amount to wallet"""

@@ -50,7 +50,7 @@ def otp_verification(request):
         phone_number = request.session.get('phone_number')
         if not phone_number :
             messages.error(request, "Session expired. Please register again.")
-            return redirect('accounts:register')
+            return redirect('accounts:register') 
         data = validate_otp(phone_number, otp_code)
         print(data)
         if data  == True :

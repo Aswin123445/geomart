@@ -242,10 +242,17 @@
             <div class="cart-item-details d-flex flex-column justify-content-between">
                 <h5>{{ cart.product.name }}</h5>
                 <p>Price: ₹{{ cart.product.price }}</p>
-                <p data-sub-total="{{cart.total_price}}">Subtotal: ₹{{ cart.total_price }}</p> <!-- Subtotal Field -->
+                <p id="subttotal-{{cart.id}}" data-sub-totals="{{cart.total_price}}">Subtotal: ₹{{ cart.total_price }}</p> <!-- Subtotal Field -->
                 <div class="d-flex justify-content-between align-items-center">
-                    <input type="number" class="form-control input-quantity" name="quantity" value="{{ cart.quantity }}" min="1" >
-                    <div class="cart-item-actions">
+                <!-- Product Quantity Input -->
+                <input type="number" id="increment_product" 
+                       class="form-control input-quantity" 
+                       name="quantity" 
+                       value="{{ cart.quantity }}" 
+                       min="1" 
+                       data-cart-id="{{ cart.id }}">  
+                       <div id="ajax-message" style="display: none;" class="alert"></div>                  
+                       <div class="cart-item-actions">
                         <button class="btn btn-warning-custom btn-sm" 
                                 data-bs-toggle="modal" 
                                 data-bs-target="#updateBioModal"
@@ -270,6 +277,7 @@
                 {% csrf_token %}
                 <div class="input-group">
                     <input 
+                id="coupon_id"
                 type="text" 
                 {{coup}}
                 {% if coup %}
@@ -405,7 +413,7 @@
             </div>
         </div>
     </div>
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055" data-bs-delay="5000">
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toast_header" style="z-index: 1055" data-bs-delay="5000">
         <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <strong id="toastTitle" class="me-auto"></strong>
@@ -418,95 +426,165 @@
     <div id="total_price" style="display: none;"></div>
     <div id="disoount" style="display: none;"></div>
     <div id="apply_coupon" style="display: none;"></div>
-    <script>
-        function closeNotification() {
+    <div id="total_prices" style="display: none;"></div>
+<script>
+    function closeNotification() {
         document.getElementById("notification").style.display = "none";
-        }
-        document.querySelectorAll('.notification').forEach(notification => {
-            setTimeout(() => {
-                notification.style.display = "none";
-            }, 5000); // 4000 milliseconds = 4 seconds
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 5000 milliseconds = 4 seconds
+    });
+    // Function to show toast notifications
+    function showToast(title, body, type = "success", delay = 5000) {
+        const toastNotification = document.getElementById("toastNotification");
+        const toastTitle = document.getElementById("toastTitle");
+        const toastBody = document.getElementById("toastBody");
+    
+        // Update toast title and body
+        toastTitle.textContent = title;
+        toastBody.textContent = body;
+    
+        // Update toast class based on type
+        toastNotification.classList.remove("bg-success", "bg-danger", "bg-warning");
+        toastNotification.classList.add(
+            type === "success" ? "bg-success" : type === "error" ? "bg-danger" : "bg-warning"
+        );
+    
+        // Show the toast with specified delay
+        const toast = new bootstrap.Toast(toastNotification, { delay });
+        toast.show();
+    }
+    
+    // Function to handle quantity updates
+    function handleQuantityUpdate() {
+        document.querySelectorAll('.input-quantity').forEach(input => {
+            input.addEventListener('change', function () {
+                const cartId = this.getAttribute('data-cart-id');
+                const newQuantity = this.value;
+                const ajaxMessage = document.getElementById('ajax-message');
+                const total_pri = document.getElementById('total_prices');
+                const applyCoupon = document.getElementById("apply_coupon");
+                const dis = document.getElementById("disoount")
+    
+                // Validate new quantity
+                if (newQuantity < 1) {
+                    alert("Quantity cannot be less than 1.");
+                    this.value = 1;
+                    return;
+                }
+    
+                // Send AJAX request to update quantity
+                fetch("{% url 'cart:update_cart_item_ajax' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({ cart_id: cartId, quantity: newQuantity })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const inputText = document.getElementById('coupon_id').value = "";
+                        total_pri.style.display = 'none';
+                        applyCoupon.textContent = 'Apply coupon';
+                        dis.style.display = 'none';
+                        document.getElementById(`subttotal-${cartId}`).innerHTML = `Subtotal: ₹${data.new_subtotal}`;
+                        document.getElementById('total_price').innerText = `${data.new_total}`;
+                        showToast("Success", "Quantity updated successfully.", "success");
+                    } else {
+                        showToast("Error", "Failed to update quantity.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    showToast("Error", "An error occurred.", "error");
+                });
+            });
         });
-        document.addEventListener("DOMContentLoaded", function(){
+    }
+    
+    // Function to handle cart item deletion
+    function handleCartDeletion() {
         const modal = new bootstrap.Modal(document.getElementById("deleteCartItemModal"));
-        const cartDeleteButton = document.querySelectorAll(".delete-cart-item");
-        const confirmDelete = document.getElementById("confirmDeleteBtn");
-        let quat = null
         let selectedCartId = null;
-        cartDeleteButton.forEach(button =>{
-            button.addEventListener("click",()=>{
-                quat = parseFloat(button.dataset.subTotal);
+    
+        document.querySelectorAll(".delete-cart-item").forEach(button => {
+            button.addEventListener("click", () => {
                 selectedCartId = button.dataset.userId;
                 modal.show();
             });
         });
-
-        confirmDelete.addEventListener('click',() => {
-            modal.hide()
-            const url = "{% url 'cart:delete_cart_item' 0 %}".replace('0',selectedCartId)
-            fetch(url,{
+    
+        document.getElementById("confirmDeleteBtn").addEventListener('click', () => {
+            modal.hide();
+            const url = "{% url 'cart:delete_cart_item' 0 %}".replace('0', selectedCartId);
+    
+            fetch(url, {
                 method: "POST",
-                headers:{
-                     "X-CSRFToken": "{{ csrf_token }}"
-                }
+                headers: { "X-CSRFToken": "{{ csrf_token }}" }
             })
             .then(response => response.json())
-               .then( data => {
-                  const total_pri = document.getElementById('total_prices');
-                  const totalPriceElement = document.getElementById('total_price');
-                  const total_price = parseFloat(totalPriceElement.textContent.trim());
-                  const toast = new bootstrap.Toast(document.getElementById("toastNotification"),{ autohide: true, delay: 5000 });
-                  const toastTitle = document.getElementById("toastTitle");
-                  const toastBody = document.getElementById("toastBody");
-                  const applycoupon = document.getElementById("apply_coupon");
-                  const discountElement = document.getElementById("disoount");
-                //   const discountElements = document.getElementById("disoounts");
-                  if(data.success){
-                    sizeElement = document.getElementById("total-cart-item");
-                    discountElement.style.display = 'none';
-                    total_pri.style.display = 'none';
-                    // discountElements.style.display = 'none';
-                    size = parseInt(sizeElement.textContent.trim());
+            .then(data => {
+                if (data.success) {
+                    const dis = document.getElementById("disoount")
+                    const totalPriceElement = document.getElementById('total_price');
+                    const total_pri = document.getElementById('total_prices');
+                    const sizeElement = document.getElementById("total-cart-item");
+                    const applyCoupon = document.getElementById("apply_coupon");
+    
                     document.getElementById(`address-row-${selectedCartId}`).remove();
-                    toastTitle.textContent = "Success";
-                    toastTitle.classList.add("text-success");
-                    toastBody.textContent = data.message;
+                    sizeElement.textContent = parseInt(sizeElement.textContent) - 1;
                     totalPriceElement.textContent = data.total_price_json;
-                    console.log(data.total_price_json)
-                    applycoupon.textContent = 'Applay coupon ';
-                    sizeElement.textContent = size - 1
-                    if (parseInt(sizeElement.textContent) === 0){
-                       checkConditionAndRefresh();
+                    total_pri.style.display = 'none';
+                    dis.style.display = 'none';
+                    applyCoupon.textContent = 'Apply coupon';
+                    const inputText = document.getElementById('coupon_id').value = "";
+    
+                    if (parseInt(sizeElement.textContent) === 0) {
+                        checkConditionAndRefresh();
                     }
-                    toast.show()
-                  } else {
-                    toastTitle.textContent = "Error";
-                    toastTitle.classList.add("text-danger");
-                    toastBody.textContent = data.message;
-                    toast.show(); 
-                  }
-               });
+                    showToast("Success", data.message, "success");
+                } else {
+                    showToast("Error", data.message, "error");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                showToast("Error", "An error occurred while deleting the item.", "error");
             });
         });
-    document.querySelectorAll('.btn-warning-custom').forEach(button => {
-    button.addEventListener('click', function () {
-        // Get data attributes from the clicked button
-        const cartId = this.getAttribute('data-cart-id');
-        const cartQuantity = this.getAttribute('data-cart-quantity');
-        
-        // Populate the modal with the data
-        document.getElementById('modalCartId').value = cartId;
-        document.getElementById('modalQuantity').value = cartQuantity;
-    });
-});
-function checkConditionAndRefresh() {
-    if (parseInt(document.getElementById("total-cart-item").textContent )=== 0) {
-        location.reload(); 
     }
-}
-
-
-
+    
+    // Function to check cart conditions and refresh page
+    function checkConditionAndRefresh() {
+        if (parseInt(document.getElementById("total-cart-item").textContent) === 0) {
+            location.reload();
+        }
+    }
+    
+    // Function to handle modal interactions for editing quantity
+    function handleModalInteractions() {
+        document.querySelectorAll('.btn-warning-custom').forEach(button => {
+            button.addEventListener('click', function () {
+                document.getElementById('modalCartId').value = this.getAttribute('data-cart-id');
+                document.getElementById('modalQuantity').value = this.getAttribute('data-cart-quantity');
+            });
+        });
+    }
+    
+    // Initialize all event handlers
+    function initializeCartManagement() {
+        handleQuantityUpdate();
+        handleCartDeletion();
+        handleModalInteractions();
+    }
+    
+    // Initialize handlers when DOM is fully loaded
+    document.addEventListener("DOMContentLoaded", initializeCartManagement);
+    
     </script>
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

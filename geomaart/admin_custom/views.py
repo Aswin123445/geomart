@@ -1,7 +1,9 @@
+import json
+import os
 from django.shortcuts import render,redirect
 from django.contrib.auth import logout as log
 from django.contrib.auth.decorators import login_required
-from .utils import creating_product_instance, prevent_cache_view,handle_form_errors,update_user_data
+from .utils import build_table_data, calculate_order_conversion_rate, creating_product_instance, prevent_cache_view,handle_form_errors,update_user_data
 from accounts.models import UserData
 from admin_custom.models import Category,Location,Product
 from django.core.paginator import Paginator
@@ -9,13 +11,21 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .forms import UserDataUpdation
 from django.contrib import messages
-from .forms import AdminUserAddForm,LocationValidation
+from .forms import AdminUserAddForm,LocationValidation,ProductUpdateForm
 from .forms import categoryValidation,ProductValidation,CouponCreationForm
 from django.views.decorators.cache import never_cache
-from cart.models import Order,OrderItem
+from cart.models import Order,OrderItem, Wallet
 from .models import Coupon
 from .forms import CouponFilterForm
-
+from django.db.models import Q
+from .forms import DateValidations
+from django.utils.timezone import now, timedelta
+from django.db.models import Sum
+from django.db.models.functions import TruncDay
+from datetime import timedelta
+from weasyprint import HTML
+from django.template.loader import render_to_string
+from django.http import HttpResponse
 
 # Create your views here.
 
@@ -24,7 +34,7 @@ def dashboard(request):
         context = {
             'product_count':Product.objects.count(),
             'total_user': UserData.objects.exclude(is_staff = True).count(),
-            'pending_orders': OrderItem.objects.filter(status = 1).count()
+            'pending_orders': Order.objects.filter(status__in = [1,2,3]).count()
         }
         response = render(request,'admin_template/dashboard.html',context)
         return prevent_cache_view(response)
@@ -295,7 +305,6 @@ def search_location(request):
 
 
 
-
 @login_required
 @never_cache
 def product_listing(request,slug=None):
@@ -314,10 +323,15 @@ def product_listing(request,slug=None):
 def addproduct(request): 
     all_category = Category.objects.all()
     all_location = Location.objects.all()
+    list_temp_image =request.FILES.getlist('productImages')
+    if not list_temp_image :
+      messages.error(request,'please select images')
+      context={'category':all_category,'location':all_location}
+      return render(request,'admin_template/product_management/add_product.html',context)
     if request.method == 'POST':
         print(request.POST['culturalbackground'])
         forms = ProductValidation(request.POST)
-        list_temp_image =request.FILES.getlist('productImages')
+
         if forms.is_valid():
             print(f'{forms.cleaned_data} called in the view ')
             creating_product_instance(forms, request, list_temp_image)
@@ -356,7 +370,7 @@ def edit_product(request,name):
     if request.method == 'POST' :
         error = False
         print(request.POST['location'])
-        forms = ProductValidation(request.POST)
+        forms = ProductUpdateForm(request.POST)
         if forms.is_valid() :
             print(forms.cleaned_data)
             product = Product.objects.get(slug = name)
@@ -373,6 +387,7 @@ def edit_product(request,name):
             messages.success(request,'product data updated successfully successfully')
             return redirect('custom_admin:product_listing')
         else :
+            print(forms.errors)
             messages.error(request,list(forms.errors.values())[0]) 
             error = True
     context = {'product':data,'error':error,'data_category':category,'data_location':location}
@@ -396,14 +411,34 @@ def product_details(request,slug):
     context={'product':data,'image_url':image_url}
     return render(request,'admin_template/product_management/product_details.html',context)
 
+
 @never_cache
 @login_required
 def order_listing(request):
-    orders_list = Order.objects.all()
+    if request.method == 'GET' and 'search_order' in request.GET :
+        id = int(request.GET.get('search_order',0))
+        order = Order.objects.filter(id = id)
+        if order :
+          context = {'orders':order}
+          return render(request,'admin_template/admin_ordermanagement/oder_management.html',context)
+        else :
+            messages.error(request,'there is no orders with the specified id')
+    orders_list = Order.objects.all().order_by('-created_at')
     if request.method == 'POST':
       user_order =  orders_list.get(id = int(request.POST.get('order_id')))
+      previous_status = user_order.status
       user_order.status = int(request.POST.get('status'))
       payment = user_order.payment
+      user_order.save()
+      if user_order.status == 5 and previous_status != 5:
+         if payment.status == 2 :
+            wallet = Wallet.objects.get(user = user_order.user)
+            wallet.add_amount(user_order.total_amount)
+            wallet.save()
+            user_order.payment.status = 1
+            user_order.save()
+            payment.status = 1 
+            payment.save()
       if user_order.status == 4 and payment.method == 1 :
         payment.status = 2
         payment.save()
@@ -443,7 +478,7 @@ def coupon_list(request,id=None):
         else :
             print(form.errors)
     elif id is None :
-       coupons = Coupon.objects.all()
+       coupons = Coupon.objects.all().order_by('-start_date')
        paginator = Paginator(coupons,3)
     else :
        results = Coupon.objects.filter(id = id)
@@ -454,7 +489,6 @@ def coupon_list(request,id=None):
 
 def create_coupon(request):
     if request.method == 'POST' :
-        print(request.POST)
         forms = CouponCreationForm(request.POST)
         if forms.is_valid():
             Coupon.objects.create(
@@ -467,8 +501,13 @@ def create_coupon(request):
                 usage_limit_per_user = forms.cleaned_data['limit_per_user'],
                 min_purchase_amount = forms.cleaned_data['min_purchase_amount']
             )
+            if request.POST['coupon_cap'] :
+              coup = Coupon.objects.get(code = forms.cleaned_data['coupon_code'] )
+              coup.cap_amount = request.POST['coupon_cap']
+              coup.save()
             return redirect('custom_admin:coupon_list')
         else :
+            print(forms.errors)
             error = list(forms.errors.values())[0][0]
             messages.error(request,error)
     return render(request,'admin_template/coupon_management/coupon_create.html')
@@ -523,3 +562,206 @@ def delete_coupon(request,id):
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
+
+def sales_report(request):
+    # Initial data setup
+    total_orders = Order.objects.filter(Q(status=4) | Q(status=5))
+    users_date = None
+    labels = []
+    sales_data = []
+    # Handle POST request for filtering
+    if request.method == 'POST':
+        form = DateValidations(request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data.get('start_date')
+            end_date = form.cleaned_data.get('end_date')
+
+            if start_date and end_date:
+                # Custom date range
+                total_orders = total_orders.filter(created_at__date__range=(start_date, end_date))
+                users_date = {
+                    'timeline': None,
+                    'start_date': request.POST['start_date'],
+                    'end_date': request.POST['end_date'],
+                }
+            else:
+                # Predefined timeline filtering
+                timeline = request.POST.get('timeline', 'daily')
+                date_ranges = {
+                    'daily': now().date() - timedelta(days=1),
+                    'weekly': now().date() - timedelta(days=7),
+                    'monthly': now().date() - timedelta(days=30),
+                    'yearly': now().date() - timedelta(days=365),
+                }
+                start_date = date_ranges.get(timeline, now().date() - timedelta(days=1))
+                total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
+        else:
+            print(form.errors)
+
+    # Query completed orders and aggregate sales data
+    completed_orders = total_orders.filter(status=4)
+    total_orders_count = total_orders.count()
+    # Prepare sales data grouped by day
+    sales_datas = (
+        completed_orders
+        .annotate(day=TruncDay('created_at'))
+        .values('day')
+        .annotate(total_sales=Sum('total_amount'))
+        .order_by('day')
+    )
+    if sales_datas:  # Ensure sales_datas is not empty
+        # Get the date of the first and last order
+        first_order_date = sales_datas.first()['day']
+        last_order_date = sales_datas.last()['day']
+        
+        # Generate 15-day intervals from the first order date
+        interval_dates = []
+        current_date = first_order_date
+        while current_date <= last_order_date:
+            interval_dates.append(current_date)
+            current_date += timedelta(days=3)
+        
+        # Generate labels for 15-day intervals
+        labels = [date.strftime('%d %b') for date in interval_dates]
+        
+        # Calculate sales data for each 15-day interval
+        sales_data = []
+        for date in interval_dates:
+            interval_start = date
+            interval_end = date + timedelta(days=14)
+            total_sales = float(sum(
+                item['total_sales']
+                for item in sales_datas
+                if interval_start <= item['day'] <= interval_end
+            ))
+            sales_data.append(total_sales)
+    else:
+        labels = []
+        sales_data = []
+    
+    # Aggregate data for the rest of the report
+    total_amount = sum(completed_orders.values_list('total_amount', flat=True))
+    table_data, total_coupon_deductions = build_table_data(completed_orders)
+    order_conversion_rate = calculate_order_conversion_rate(completed_orders.count(), total_orders_count)
+    
+    # Context data for the template
+    context = {
+        'over_sales_count': completed_orders.count(),
+        'order_amount': total_amount,
+        'coupon_deduction': total_coupon_deductions,
+        'conversion_rate': order_conversion_rate,
+        'orders': completed_orders,
+        'list': table_data,
+        'user_date': users_date,
+        'labels': json.dumps(labels),
+        'sales_data': json.dumps((sales_data)),
+    }
+    return render(request, 'admin_template/sales_report/salesreport.html', context)
+
+
+#admin sales pdf generator funtion
+def download_sales_report_pdf(request):
+    # Initial data setup
+    total_orders = Order.objects.filter(Q(status=4) | Q(status=5))
+    users_date = None
+    labels = []
+    sales_data = []
+    # Handle POST request for filtering
+    if request.method == 'POST':
+        form = DateValidations(request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data.get('start_date')
+            end_date = form.cleaned_data.get('end_date')
+
+            if start_date and end_date:
+                # Custom date range
+                total_orders = total_orders.filter(created_at__date__range=(start_date, end_date))
+                users_date = {
+                    'timeline': None,
+                    'start_date': request.POST['start_date'],
+                    'end_date': request.POST['end_date'],
+                }
+            else:
+                # Predefined timeline filtering
+                timeline = request.POST.get('timeline', 'daily')
+                date_ranges = {
+                    'daily': now().date() - timedelta(days=1),
+                    'weekly': now().date() - timedelta(days=7),
+                    'monthly': now().date() - timedelta(days=30),
+                    'yearly': now().date() - timedelta(days=365),
+                }
+                start_date = date_ranges.get(timeline, now().date() - timedelta(days=1))
+                total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
+        else:
+            print(form.errors)
+
+    # Query completed orders and aggregate sales data
+    completed_orders = total_orders.filter(status=4)
+    total_orders_count = total_orders.count()
+    # Prepare sales data grouped by day
+    sales_datas = (
+        completed_orders
+        .annotate(day=TruncDay('created_at'))
+        .values('day')
+        .annotate(total_sales=Sum('total_amount'))
+        .order_by('day')
+    )
+    if sales_datas:  # Ensure sales_datas is not empty
+        # Get the date of the first and last order
+        first_order_date = sales_datas.first()['day']
+        last_order_date = sales_datas.last()['day']
+        
+        # Generate 15-day intervals from the first order date
+        interval_dates = []
+        current_date = first_order_date
+        while current_date <= last_order_date:
+            interval_dates.append(current_date)
+            current_date += timedelta(days=3)
+        
+        # Generate labels for 15-day intervals
+        labels = [date.strftime('%d %b') for date in interval_dates]
+        
+        # Calculate sales data for each 15-day interval
+        sales_data = []
+        for date in interval_dates:
+            interval_start = date
+            interval_end = date + timedelta(days=14)
+            total_sales = float(sum(
+                item['total_sales']
+                for item in sales_datas
+                if interval_start <= item['day'] <= interval_end
+            ))
+            sales_data.append(total_sales)
+    else:
+        labels = []
+        sales_data = []
+    
+    # Aggregate data for the rest of the report
+    total_amount = sum(completed_orders.values_list('total_amount', flat=True))
+    table_data, total_coupon_deductions = build_table_data(completed_orders)
+    order_conversion_rate = calculate_order_conversion_rate(completed_orders.count(), total_orders_count)
+    
+    # Context data for the template
+    context = {
+        'over_sales_count': completed_orders.count(),
+        'order_amount': total_amount,
+        'coupon_deduction': total_coupon_deductions,
+        'conversion_rate': order_conversion_rate,
+        'orders': completed_orders,
+        'list': table_data,
+        'user_date': users_date,
+        'labels': json.dumps(labels),
+        'sales_data': json.dumps((sales_data)),
+    }
+
+    # Render the template into HTML
+    os.add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
+    html_content = render_to_string('admin_template/sales_report/salesreport.html', context)
+    # Generate the PDF
+    pdf_file = HTML(string=html_content).write_pdf()
+
+    # Create HTTP response with PDF
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
+
+    return response

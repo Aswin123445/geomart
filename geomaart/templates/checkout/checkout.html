@@ -33,6 +33,25 @@
       border-top: 2px dashed #dee2e6;
       margin: 20px 0;
     }
+    .notification {
+        background-color: #4CAF50;
+        color: white;
+        padding: 16px;
+        position: fixed;
+        top: 10vh;
+        right: 20px;
+        width: 350px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .error-notification {
+        background-color: red;
+        color: white;
+    }
   </style>
 </head>
 <body>
@@ -113,6 +132,14 @@
         </div>
     </div>
 </nav>
+{% if messages %}
+{% for message in messages %}
+<div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+     {{ message }}
+      <button class="close-btn" onclick="closeNotification()">X</button>
+</div>
+{% endfor %}
+{% endif %}
   <div class="container py-5">
     <!-- Checkout Header -->
     <div class="checkout-header">
@@ -142,7 +169,7 @@
             </select>
           </div>
           <div class="text-end">
-            <a href="{% url 'home:user_profile' %}">
+            <a href="{% url 'cart:add_address_checkout' cart_item.0.cart.id %}">
               <button type="button" class="btn btn-outline-danger">+ Add New Address</button>
             </a>
           </div>
@@ -269,6 +296,14 @@
 </footer>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
+        function closeNotification() {
+        document.getElementById("notification").style.display = "none";
+        }
+        document.querySelectorAll('.notification').forEach(notification => {
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 5000); // 4000 milliseconds = 4 seconds
+        });
      const radioButtons = document.querySelectorAll('input[name="paymentMethod"]');
      radioButtons.forEach((radio) => {
          radio.addEventListener('change', function () {
@@ -308,7 +343,7 @@
         // Fetch order details from the backend
         const id = document.getElementById('addressSelect').value
         console.log("something wil happen")
-        fetch("{% url 'cart:create_order'  %}", {
+        fetch("{% url 'cart:create_order' cart_id  %}", {
            method: "POST",
            headers: {
              "X-CSRFToken": "{{ csrf_token }}" 
@@ -316,7 +351,11 @@
         })
             .then(response => response.json())
             .then(data => {
-                const options = {
+                if (data.redirect) {
+                  // Redirect the browser
+                  window.location.href = data.redirect;
+                }
+                  const options = {
                     "key": data.key,
                     "amount": data.amount,
                     "currency": data.currency,

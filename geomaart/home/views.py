@@ -252,7 +252,7 @@ def reset_password(request):
     
 @login_required
 def order_list(request):
-    order = Order.objects.filter(user = request.user)
+    order = Order.objects.filter(user = request.user).order_by('status')
     context = {'order':order}
     return render(request,'order/order_list.html',context)
 

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Offer Listing</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .container {
+      margin-top: 50px;
+    }
+    .btn-primary, .btn-warning, .btn-danger {
+      border-radius: 0.5rem;
+    }
+    .table th, .table td {
+      vertical-align: middle;
+    }
+    .badge {
+      padding: 0.4em 1em;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
+                    <i class="bi bi-house-door"></i> Dashboard
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+  <div class="container">
+    <div class="card p-4">
+      <h2 class="text-center mb-4">Product Offer Listing</h2>
+
+      <!-- Add Product Offer Button -->
+      <div class="mb-4 text-end">
+        <a href="{% url 'product_offer_create' %}" class="btn btn-primary">Add New Product Offer</a>
+      </div>
+
+      <!-- Product Offer Table -->
+      <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>Offer</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product_offer in product_offers %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ product_offer.product.name }}</td>
+            <td>{{ product_offer.offer.name }}</td>
+            <td>
+              {% if product_offer.is_active %}
+              <span class="badge bg-success">Active</span>
+              {% else %}
+              <span class="badge bg-danger">Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'product_offer_edit' product_offer.id %}" class="btn btn-warning btn-sm">Edit</a>
+              <a href="{% url 'product_offer_delete' product_offer.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this offer?')">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center">No product offers found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+    <!-- Footer -->
+    <footer class="footer bg-black text-white " style="margin-top: 20vh;" >
+      <div class="container-fluid text-center">
+          <div class="row pt-2">
+              <div class="col-md-4 mb-3">
+                  <h5 class="fw-bold">GeoMaart</h5>
+                  <p>Your one-stop shop for unique local products.</p>
+              </div>
+              <div class="col-md-4 mb-3">
+                  <h5 class="fw-bold">Quick Links</h5>
+                  <ul class="list-unstyled">
+                      <li><a href="#" class="text-white text-decoration-none">Home</a></li>
+                      <li><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                      <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                      <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                  </ul>
+              </div>
+              <div class="col-md-4">
+                  <h5 class="fw-bold">Follow Us</h5>
+                  <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
+                  <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
+                  <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
+              </div>
+          </div>
+          <hr class="bg-white">
+          <p class="mb-0">&copy; 2024 GeoMaart. All Rights Reserved.</p>
+      </div>
+  </footer>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

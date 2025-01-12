@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from .forms import UserDataUpdation
 from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation,ProductUpdateForm
-from .forms import categoryValidation,ProductValidation,CouponCreationForm
+from .forms import categoryValidation,ProductValidation,CouponCreationForm,OfferForm,OfferEdit
 from django.views.decorators.cache import never_cache
 from cart.models import Order,OrderItem, Wallet
 from .models import Coupon
@@ -26,6 +26,7 @@ from datetime import timedelta
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse
+from .models import Offer,ProductOffer
 
 # Create your views here.
 
@@ -765,3 +766,90 @@ def download_sales_report_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
 
     return response
+
+#offers imlementation
+def offers(request,id = None):
+    current_page_number=request.GET.get('page',1)
+    if id is None :
+        all_offers = Offer.objects.all()
+        paginator = Paginator(all_offers,3)
+    else :
+        results = Offer.objects.filter(id = id)
+        paginator = Paginator(results,3)
+    page_obj=paginator.get_page(current_page_number)
+    context = {'offers':page_obj}
+    return render (request,'admin_template/offer/offer.html',context)
+
+def create_offer(request):
+    if request.method == 'POST':
+        form = OfferForm(request.POST)
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+            offer = Offer(
+                name=cleaned_data['name'], 
+                offer_type=cleaned_data['offer_type'],
+                discount_value=cleaned_data['discount_value'],
+                start_date=cleaned_data['start_date'],
+                end_date=cleaned_data['end_date'],
+                is_active=cleaned_data['is_active'],
+            )
+            offer.save()
+            messages.success(request,'new offer created successfully')
+            return redirect('custom_admin:offers')  
+        else :
+            errors = list(form.errors.values())[0]
+            messages.error(request,errors)
+    return render(request,'admin_template/offer/offer_create.html')
+
+@login_required
+def delete_offer(request,id):
+    if request.method == 'POST' :
+        print('helo')
+        try :
+            offer = Offer.objects.get(id = id)
+            offer_name = offer.name
+            offer.delete()
+            print('deleted the record')
+            return JsonResponse({'success':True,'message':f'{offer_name} \'s record was successfully deleted'})
+        except Offer.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Location not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+@login_required
+def edit_offer(request,id):
+    offer_data = Offer.objects.get(id = id)
+    if request.method == 'POST':
+        form = OfferEdit(request.POST)
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+            cheking = Offer.objects.filter(name = cleaned_data['name']).exclude(name = offer_data.name)
+            if cheking.exists():
+                form.add_error('name', 'An offer with this name already exists.')
+                messages.error(request,'this offer already exist')
+                return render(request, 'admin_template/offer/offer_edit.html',{'offer':offer_data}) 
+            offer_data.name = cleaned_data['name']
+            offer_data.offer_type = cleaned_data['offer_type']
+            offer_data.discount_value = cleaned_data['discount_value']
+            offer_data.start_date = cleaned_data['start_date']
+            offer_data.end_date = cleaned_data['end_date']
+            offer_data.is_active = cleaned_data['is_active']
+            # Save the updated offer object to the database
+            offer_data.save()
+            messages.success(request, "Offer updated successfully!")
+            return redirect('custom_admin:offers')
+        else :
+            errors = list(form.errors.values())[0]
+            messages.error(request,errors)
+    context = {'offer':offer_data}
+    return render(request,'admin_template/offer/offer_edit.html',context)
+
+@login_required
+def search_offer(request):
+        if request.method == 'GET':
+                if query := request.GET.get('query', ''):
+                        names_set = Offer.objects.filter(name__icontains = query)
+                else:
+                        names_set = Offer.objects.none()
+                        print('something bad happend here')
+                datas=[{'name':[product_data.id,product_data.name]} for product_data in names_set]
+                return JsonResponse({'results':datas})

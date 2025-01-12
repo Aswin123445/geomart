@@ -55,5 +55,14 @@ urlpatterns = [
     #sales report
     path('sales_report/',views.sales_report,name='sales_report'),
     path('download-sales-report/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
+    
+    #offer module
+    path('offers/',views.offers,name='offers'),
+    path('offers/<int:id>/',views.offers,name='offers'),
+    path('delete_offer/<int:id>/',views.delete_offer,name='delete_offer'),
+    path('create_offer/',views.create_offer,name='create_offer'),
+    path('edit_offer/<int:id>/',views.edit_offer,name='edit_offer'),
+    path('search_offer/',views.search_offer,name='search_offer'),
 
+    
 ]

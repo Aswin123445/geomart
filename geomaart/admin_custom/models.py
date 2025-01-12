@@ -138,3 +138,46 @@ class Coupon(models.Model):
     def increment_usage(self):
         self.usage_count += 1
         self.save()
+
+
+class Offer(models.Model):
+    OFFER_TYPES = [
+        (1, 'Percentage Discount'),
+        (2, 'Flat Discount'),
+    ]
+
+    name = models.CharField(max_length=255, unique=True)    
+    offer_type = models.IntegerField(choices=OFFER_TYPES)  
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2) 
+    start_date = models.DateField() 
+    end_date = models.DateField() 
+    is_active = models.BooleanField(default=True)  
+
+    def __str__(self):
+        offer_type_display = dict(self.OFFER_TYPES).get(self.offer_type, "Unknown")
+        return f"{self.name} ({offer_type_display} - {self.discount_value})"
+    
+#product offer
+class ProductOffer(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='product_offers')
+    offer = models.ForeignKey('Offer', on_delete=models.CASCADE, related_name='product_offers')
+    is_active = models.BooleanField(default=True)  
+
+    def __str__(self):
+        return f"Offer: {self.offer.name} on Product: {self.product.name}"
+
+    class Meta:
+        unique_together = ('product', 'offer') 
+
+class CategoryOffer(models.Model):
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='category_offers')
+    offer = models.ForeignKey('Offer', on_delete=models.CASCADE, related_name='category_offers')
+    is_active = models.BooleanField(default=True)  
+
+    def __str__(self):
+        return f"Offer: {self.offer.name} on Category: {self.category.name}"
+
+    class Meta:
+        unique_together = ('category', 'offer')  
+
+

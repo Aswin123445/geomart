@@ -9,6 +9,7 @@ from admin_custom.models import Category
 from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
 from .validationslogic import location_name_validations_check,product_integer_value_negative_check
 from .validationslogic import location_valid_check,category_valid_check
+from .models import Offer
 class UserDataUpdation(forms.Form):
     name = forms.CharField(
         max_length=150,
@@ -566,7 +567,7 @@ class CouponCreationForm(forms.Form):
     coupon_limit = forms.IntegerField(
         min_value=1,
     )
-    discount_value = forms.IntegerField(min_value=1)
+    discout_value = forms.IntegerField(min_value=1)
     limit_per_user = forms.IntegerField(
         min_value=1
     )
@@ -605,9 +606,9 @@ class CouponCreationForm(forms.Form):
 
 class CouponFilterForm(forms.Form):
     status = forms.NullBooleanField()
-    discount_type = forms.IntegerField()
-    def clean_discount_type(self):
-        data = self.cleaned_data['discount_type']
+    type = forms.IntegerField()
+    def clean_type(self):
+        data = self.cleaned_data['type']
         if data == 0 :
             data = None
         return data
@@ -643,6 +644,89 @@ class DateValidations(forms.Form):
         if enddate and enddate > today:
             raise ValidationError("End date cannot be in the future.")
 
+        return cleaned_data
+
+class OfferForm(forms.Form):
+    name = forms.CharField(max_length=255, required=True)
+    offer_type = forms.ChoiceField(choices=[('1', 'Percentage'), ('2', 'Fixed Amount')], required=True)
+    discount_value = forms.DecimalField(min_value=0, required=True)
+    start_date = forms.DateField(required=True)
+    end_date = forms.DateField(required=True)
+    is_active = forms.BooleanField(required=False)
+
+    def clean_name(self):
+        # Capitalize the name field value
+        name = self.cleaned_data['name'].capitalize()
+        
+        # Check for duplicate names in the database
+        if Offer.objects.filter(name=name).exists():
+            raise forms.ValidationError("This offer name already exists.")
+        
+        return name
+
+    def clean_start_date(self):
+        start_date = self.cleaned_data['start_date']
+        today = date.today()
+
+        if start_date < today:
+            raise forms.ValidationError("Start date cannot be in the past.")
+        return start_date
+
+    def clean_end_date(self):
+        end_date = self.cleaned_data['end_date']
+        today = date.today()
+
+        if end_date < today:
+            raise forms.ValidationError("End date cannot be in the past.")
+        return end_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        # Validate that start_date is earlier than or equal to end_date
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError("Start date must be earlier than or equal to the end date.")
+        return cleaned_data
+
+class OfferEdit(forms.Form):
+    name = forms.CharField(max_length=255, required=True)
+    offer_type = forms.ChoiceField(choices=[('1', 'Percentage'), ('2', 'Fixed Amount')], required=True)
+    discount_value = forms.DecimalField(min_value=0, required=True)
+    start_date = forms.DateField(required=True)
+    end_date = forms.DateField(required=True)
+    is_active = forms.BooleanField(required=False)
+
+    def clean_name(self):
+        # Capitalize the name field value
+        name = self.cleaned_data['name'].capitalize()
+        return name
+
+    def clean_start_date(self):
+        start_date = self.cleaned_data['start_date']
+        today = date.today()
+
+        if start_date < today:
+            raise forms.ValidationError("Start date cannot be in the past.")
+        return start_date
+
+    def clean_end_date(self):
+        end_date = self.cleaned_data['end_date']
+        today = date.today()
+
+        if end_date < today:
+            raise forms.ValidationError("End date cannot be in the past.")
+        return end_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        # Validate that start_date is earlier than or equal to end_date
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError("Start date must be earlier than or equal to the end date.")
         return cleaned_data
 
 

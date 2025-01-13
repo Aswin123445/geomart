@@ -75,7 +75,7 @@
 </div>
   <div class="container">
     <div class="card p-4">
-      <h2 class="text-center mb-4">Create Product Offer</h2>
+      <h2 class="text-center mb-4">Create Category Offer</h2>
 
       <!-- Product Offer Form -->
       <form method="POST">
@@ -84,7 +84,7 @@
 
         <!-- Product Field -->
         <div class="mb-3">
-          <label for="product" class="form-label">Product</label>
+          <label for="product" class="form-label">Category</label>
           <input type="text" class="form-control" id="searchInput" name="product" required>
         </div>
 
@@ -107,7 +107,7 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary w-100">Create Product Offer</button>
+        <button type="submit" class="btn btn-primary w-100">Create Category Offer</button>
       </form>
     </div>
   </div>
@@ -152,12 +152,11 @@
             resultContainer.style.display = 'none';
             return;
         } else {
-            const queryUrl = "{% url 'custom_admin:search_product' %}?query=" + encodeURIComponent(query);
+            const queryUrl = "{% url 'custom_admin:search_category' %}?query=" + encodeURIComponent(query);
             fetch(queryUrl)  
                 .then(response => response.json())
                 .then(data => {
                     resultList.innerHTML = '';  // Clear previous results
-
                     if (data.results.length > 0) {
                         data.results.forEach(result => {
                             const listItem = document.createElement('li');

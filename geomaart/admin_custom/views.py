@@ -26,7 +26,7 @@ from datetime import timedelta
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse
-from .models import Offer,ProductOffer
+from .models import Offer,ProductOffer,CategoryOffer
 
 # Create your views here.
 
@@ -853,3 +853,129 @@ def search_offer(request):
                         print('something bad happend here')
                 datas=[{'name':[product_data.id,product_data.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
+def product_offer(request,id = None):
+    current_page_number=request.GET.get('page',1)
+    if id is None :
+        all_offers = ProductOffer.objects.all()
+        paginator = Paginator(all_offers,3)
+    else :
+        results = ProductOffer.objects.filter(id = id)
+        paginator = Paginator(results,3)
+    page_obj=paginator.get_page(current_page_number)
+    context = {'product_offers':page_obj}
+    return render(request,'admin_template/offer/product_offer/listing.html',context)
+
+def create_product_offer(request):
+    offers = Offer.objects.all()
+    if request.method == 'POST':
+        name = request.POST.get('product','')
+        product = Product.objects.filter(name = name)
+        checker = product.exists()
+        instance_checker = ProductOffer.objects.filter(offer = offers.get(id = int(request.POST.get('offer'))),product = product.first()).exists()
+        if checker  and not instance_checker:
+            is_active = 'on' == request.POST.get('is_active')
+            print(is_active)
+            instance = product.first()
+            offer = offers.get(id = int(request.POST.get('offer')))
+            product_offer = ProductOffer.objects.create(
+                product = instance,
+                offer = offer,
+                is_active = is_active
+            )
+            if product_offer :
+                messages.success(request,'new product offer is created')
+                return redirect('custom_admin:product_offer')
+            else :
+                messages.error(request,'something bad happend')
+                return redirect('custom_admin:create_product_offer')
+        else :
+            messages.error(request,'this offer already exist')
+    context = {'offers':offers}
+    return render(request,'admin_template/offer/product_offer/create.html',context)
+
+@login_required
+def delete_product_offer(request,id):
+    if request.method == 'POST' :
+        try :
+            product_offer = ProductOffer.objects.get(id = id)
+            product_offer.delete()
+            return JsonResponse({'success':True,'message':f'this offer was deleted'})
+        except Offer.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Location not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+@login_required
+def search_product_offer(request):
+        if request.method == 'GET':
+                if query := request.GET.get('query', ''):
+                        names_set = ProductOffer.objects.filter(offer__name__icontains = query)
+                else:
+                        names_set = ProductOffer.objects.none()
+                datas=[{'name':[product_data.id,product_data.offer.name]} for product_data in names_set]
+                return JsonResponse({'results':datas})
+            
+@login_required
+def edit_product_offer(request,id):
+    product_offer = ProductOffer.objects.get(id = id)
+    context = {'product_offer':product_offer}
+    return render(request,'admin_template/offer/product_offer/edit.html',context)
+
+def category_offer(request,id = None):
+    current_page_number=request.GET.get('page',1)
+    if id is None :
+        all_offers = CategoryOffer.objects.all()
+        paginator = Paginator(all_offers,3)
+    else :
+        results = CategoryOffer.objects.filter(id = id)
+        paginator = Paginator(results,3)
+    page_obj=paginator.get_page(current_page_number)
+    context = {'product_offers':page_obj}
+    return render(request,'admin_template/offer/category/listing.html',context)
+
+def create_category_offer(request):
+    offers = Offer.objects.all()
+    if request.method == 'POST':
+        name = request.POST.get('product','')
+        category = Category.objects.filter(name = name)
+        checker = category.exists()
+        instance_checker = CategoryOffer.objects.filter(offer = offers.get(id = int(request.POST.get('offer'))),category = category.first()).exists()
+        if checker  and not instance_checker:
+            is_active = 'on' == request.POST.get('is_active')
+            print(is_active)
+            instance = category.first()
+            offer = offers.get(id = int(request.POST.get('offer')))
+            category_offer = CategoryOffer.objects.create(
+                category = instance,
+                offer = offer,
+                is_active = is_active
+            )
+            if category_offer :
+                messages.success(request,'new category offer is created')
+                return redirect('custom_admin:category_offer')
+            else :
+                messages.error(request,'something bad happend')
+                return redirect('custom_admin:create_category_offer')
+        else :
+            messages.error(request,'this offer already exist')
+    context = {'offers':offers}
+    return render(request,'admin_template/offer/category/create.html',context)
+
+@login_required
+def search_category_offer(request):
+        if request.method == 'GET':
+                if query := request.GET.get('query', ''):
+                        names_set = CategoryOffer.objects.filter(offer__name__icontains = query)
+                else:
+                        names_set = CategoryOffer.objects.none()
+                datas=[{'name':[product_data.id,product_data.offer.name]} for product_data in names_set]
+                return JsonResponse({'results':datas})
+@login_required
+def delete_category_offer(request,id):
+    if request.method == 'POST' :
+        try :
+            product_offer = CategoryOffer.objects.get(id = id)
+            product_offer.delete()
+            return JsonResponse({'success':True,'message':f'this offer was deleted'})
+        except Offer.DoesNotExist :
+            return JsonResponse({"success": False, "message": "Offer not found not found."})
+    return JsonResponse({"success": False, "message": "Invalid request method."})

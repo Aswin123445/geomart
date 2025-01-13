@@ -63,6 +63,20 @@ urlpatterns = [
     path('create_offer/',views.create_offer,name='create_offer'),
     path('edit_offer/<int:id>/',views.edit_offer,name='edit_offer'),
     path('search_offer/',views.search_offer,name='search_offer'),
-
     
+    #product offer
+    path('product_offer/',views.product_offer,name='product_offer'),
+    path('product_offer/<int:id>/',views.product_offer,name='offers'),
+    path('create_product_offer/',views.create_product_offer,name='create_product_offer'),
+    path('delete_product_offer/<int:id>/',views.delete_product_offer,name='delete_product_offer'),
+    path('search_product_offer/',views.search_product_offer,name='search_product_offer'),
+    path('edit_product_offer/<int:id>/',views.edit_product_offer,name='edit_product_offer'),
+    
+    #catogry offer
+    path('category_offer/',views.category_offer,name='category_offer'),
+    path('category_offer/<int:id>/',views.category_offer,name='category_offer'),
+    path('create_category_offer/',views.create_category_offer,name='create_category_offer'),
+    path('search_categoryt_offer/',views.search_category_offer,name='search_category_offer'),
+    path('delete_category_offer/<int:id>/',views.delete_category_offer,name='delete_category_offer'),
+
 ]

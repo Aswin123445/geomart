@@ -88,7 +88,7 @@
 {% endfor %}
 {% endif %}
   <div class="container">
-      <h2 class="text-center mb-4">Product Offer Listing</h2>
+      <h2 class="text-center mb-4">Category Offer Listing</h2>
 
     <!-- Search Bar -->
     <div class="row mb-3">
@@ -108,7 +108,7 @@
 
       <!-- Add Product Offer Button -->
       <div class="mb-4 text-end">
-        <a href="{% url 'custom_admin:create_product_offer' %}" class="btn btn-primary">Add New Product Offer</a>
+        <a href="{% url 'custom_admin:create_category_offer' %}" class="btn btn-primary">Add Category Offer</a>
       </div>
 
       <!-- Product Offer Table -->
@@ -141,7 +141,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center">No product offers found.</td>
+            <td colspan="5" class="text-center">No category offers found.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -259,7 +259,7 @@
         });
         confirmDelete.addEventListener('click',() =>{
             modal.hide()
-            const url = "{% url 'custom_admin:delete_product_offer' 0 %}".replace('0',selectedLocationId)
+            const url = "{% url 'custom_admin:delete_category_offer' 0 %}".replace('0',selectedLocationId)
             fetch(url,{
                 method: "POST",
                 headers:{
@@ -296,7 +296,7 @@
             resultContainer.style.display = 'none';
             return;
         } else {
-            const queryUrl = "{% url 'custom_admin:search_product_offer' %}?query=" + encodeURIComponent(query);
+            const queryUrl = "{% url 'custom_admin:search_category_offer' %}?query=" + encodeURIComponent(query);
             fetch(queryUrl)  
                 .then(response => response.json())
                 .then(data => {

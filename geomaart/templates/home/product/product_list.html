@@ -129,26 +129,61 @@
             </select>
             <button type="submit"  class="btn btn-primary btn-danger" onclick="sortByLocation()">Sort</button>
         </form>
-        <!-- Product Grid -->
-        <div id="product-list" class="row justify-content-center row-cols-1 row-cols-md-3 g-4">
-            {% for product in product_list %}
-            <a href="{% url 'home:product_details' product.slug %}" style="text-decoration: none;">
-                <div class="col " data-category="{{ product.category.name }}" data-location="{{ product.location }}">
-                    <div class="card shadow-sm" style="min-height: 380px;">
-                        <div class="position-relative" style="height: 200px; overflow: hidden;">
-                            <img src="{{ images|get_item:product.id }}" class="card-img-top h-100 object-fit-cover" alt="Product">
-                            <span class="badge bg-success position-absolute top-0 start-0 m-2">{{ product.name }}</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title text-truncate" title="{{ product.category.name }}">{{ product.category.name }}</h5>
-                            <p class="card-text text-muted" title="{{ product.description }}">{{ product.description|slice:":100" }}...</p>
-                            <p class="text-muted fw-bold">Price: {{ product.price }}</p>
-                        </div>
-                    </div>
+<!-- Product Grid -->
+<div id="product-list" class="row justify-content-center row-cols-1 row-cols-md-3 g-4">
+    {% for product in product_list %}
+    <a href="{% url 'home:product_details' product.slug %}" style="text-decoration: none;">
+        <div class="col" data-category="{{ product.category.name }}" data-location="{{ product.location }}">
+            <div class="card shadow-sm" style="min-height: 400px;">
+                <!-- Product Image Section -->
+                <div class="position-relative" style="height: 200px; overflow: hidden;">
+                    <img src="{{ images|get_item:product.id }}" class="card-img-top h-100 object-fit-cover" alt="Product">
+                    <!-- Best Offer Badge -->
+                    {% with product_prices|get_item:product.id as prices %}
+                        {% if prices.discount_amount > 0 %}
+                        {% if prices.offer_name %}
+                        <span class="badge bg-success position-absolute top-0 start-0 m-2">
+                            {{ prices.offer_name }}
+                        </span>
+                    {% endif %}                            <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                ₹{{ prices.discount_amount }} OFF
+                            </span>
+                        {% endif %}
+                    {% endwith %}
                 </div>
-            </a>
-            {% endfor %}
+                
+                <!-- Product Details Section -->
+                <div class="card-body">
+                    <h5 class="card-title text-truncate" title="{{ product.category.name }}">
+                        {{ product.name }}
+                    </h5>
+                    <p class="card-text text-muted" title="{{ product.description }}">
+                        {{ product.description|slice:":100" }}...
+                    </p>
+                    
+                    <!-- Price Section -->
+                    <p class="fw-bold">
+                        {% with product_prices|get_item:product.id as prices %}
+                            <!-- Original Price -->
+                            <!-- Discounted Price -->
+
+                             {% if prices.original_price != prices.discounted_price %}
+                             <del class="text-danger">₹{{ prices.original_price }}</del>
+
+                            <span class="text-success ms-2">₹{{ prices.discounted_price }}</span>
+                            {% else %}
+                            <p class="text-success fw-bold">₹{{ prices.original_price }}</p>
+                            {% endif %}
+                        {% endwith %}
+                    </p>
+                </div>
+            </div>
         </div>
+    </a>
+    {% endfor %}
+</div>
+
+
     </div>
     <nav>
         <ul class="pagination justify-content-center">

@@ -567,7 +567,7 @@ class CouponCreationForm(forms.Form):
     coupon_limit = forms.IntegerField(
         min_value=1,
     )
-    discout_value = forms.IntegerField(min_value=1)
+    discount_value = forms.IntegerField(min_value=1)
     limit_per_user = forms.IntegerField(
         min_value=1
     )
@@ -603,6 +603,51 @@ class CouponCreationForm(forms.Form):
         if start_date and start_date < date.today():
             raise ValidationError("Start date cannot be in the past.")
         return cleaned_data
+class CouponUpdateForm(forms.Form):
+    coupon_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        validators=[coupon_special_character_check]
+    )
+    coupon_type = forms.IntegerField(
+        min_value=1,
+        max_value=3
+    )
+    start_date = forms.DateField()
+    enddate = forms.DateField()
+    coupon_limit = forms.IntegerField(
+        min_value=1,
+    )
+    discount_value = forms.IntegerField(min_value=1)
+    limit_per_user = forms.IntegerField(
+        min_value=1
+    )
+    min_purchase_amount = forms.IntegerField()
+    status = forms.IntegerField(min_value=0, max_value=1)
+    
+    def clean_coupon_code(self):
+        """Ensure the coupon code is unique and converted to uppercase."""
+        data = self.cleaned_data['coupon_code']
+        if data:
+            data = data.upper()  # Convert to uppercase
+        else:
+            raise ValidationError("This field cannot be empty.")
+        return data
+
+    def clean(self):
+        """Ensure start date is less than end date."""
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        enddate = cleaned_data.get('enddate')
+        
+        # Check that start_date is less than enddate
+        if start_date and enddate:
+            if start_date >= enddate:
+                raise ValidationError(
+                    "Start date must be earlier than the end date."
+                )
+        
+
 
 class CouponFilterForm(forms.Form):
     status = forms.NullBooleanField()

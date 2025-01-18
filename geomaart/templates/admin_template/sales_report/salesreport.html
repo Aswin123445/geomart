@@ -9,21 +9,34 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-      <!-- Navigation Bar -->
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
-            <div class="ms-auto">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
-                            <i class="bi bi-house-door"></i> Dashboard
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+          <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
+          <ul class="navbar-nav ms-auto">
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
+                      <i class="bi bi-house-door"></i> Dashboard
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:order_listing' %}">
+                      <i class="bi bi-card-list"></i> Orders
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:product_listing' %}">
+                      <i class="bi bi-box"></i> Products
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:logout' %}">
+                      <i class="bi bi-box-arrow-right"></i> Logout
+                  </a>
+              </li>
+          </ul>
+      </div>
+  </nav>
   <div class="container my-5">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">

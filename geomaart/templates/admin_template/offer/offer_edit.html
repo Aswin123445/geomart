@@ -63,18 +63,34 @@
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
-        <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-                <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
-                    <i class="bi bi-house-door"></i> Dashboard
-                </a>
-            </li>
-        </ul>
-    </div>
-</nav>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+          <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
+          <ul class="navbar-nav ms-auto">
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
+                      <i class="bi bi-house-door"></i> Dashboard
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:order_listing' %}">
+                      <i class="bi bi-card-list"></i> Orders
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:product_listing' %}">
+                      <i class="bi bi-box"></i> Products
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'custom_admin:logout' %}">
+                      <i class="bi bi-box-arrow-right"></i> Logout
+                  </a>
+              </li>
+          </ul>
+      </div>
+  </nav>
 {% if messages %}
 {% for message in messages %}
 <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">

@@ -7,13 +7,9 @@ from django.utils.timezone import now
 from admin_custom.models import Coupon
 from cart.models import UserCoupon
 def process_order_transaction(cart, user, address_id, payment_method, payment_status):
-    print(address_id)
-    print(payment_method)
-    print(payment_status)
     with transaction.atomic():
         # Calculate total
         total = cart.total_price-cart.discount_amount
-        print(total)
         # Create Order
         new_order = Order.objects.create(
             user=user,
@@ -46,7 +42,6 @@ def process_order_transaction(cart, user, address_id, payment_method, payment_st
             postal_code=shipping_address.postal_code,
             country=shipping_address.country,
         )
-
         # Create Payment
         Payment.objects.create(
             order=new_order,
@@ -54,7 +49,6 @@ def process_order_transaction(cart, user, address_id, payment_method, payment_st
             status=int(payment_status),
         )
         if cart.discount_amount > 0 :
-            print('how are you')
             coupon = Coupon.objects.filter(code = cart.temporary_coupon_code).first()
             user_coupen,created = UserCoupon.objects.get_or_create(user = user ,coupon = coupon)
             coupon.usage_count += 1

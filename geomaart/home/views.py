@@ -11,13 +11,13 @@ from django.core.paginator import Paginator
 from accounts.models import Address
 from accounts.forms import FogotPasswordForm
 from .forms import AddressForm
-from .utils import format_phone_number,send_otp_email,converter
+from .utils import calculate_discounted_price, format_phone_number, get_best_offer_name,send_otp_email,converter
 from accounts.utils import send_otp,validate_otp
 from django.contrib import messages
 from django.contrib.auth.models import User
 from cart.models import Order,OrderItem,ShippingAddress,Payment
 from .models import Wishlist,WishlistItem
-from cart.models import Cart , CartItem , Wallet
+from cart.models import Cart , CartItem , Wallet , ReturnRequest
 # Create your views here.
 @never_cache
 def hemepage(request):
@@ -44,30 +44,83 @@ def home_user_search(request):
                 return JsonResponse({'results':datas})
 @login_required
 @never_cache
-def product_listing(request,name=None):
-    current_page_number=request.GET.get('page',1)
-    category = Category.objects.get(slug = name,status=1)
-    results = Product.objects.filter(category=category,is_active = True, stock__gt  = 0)
-    if 'location' in request.GET and request.GET.get('location') != 'all':
-        results = results.filter(location = request.GET.get('location'))
-    product_images = {product.id:product.images.all().first().image.url for product in results}
-    paginator = Paginator(results,3)
-    page_obj=paginator.get_page(current_page_number)
-    location = Location.objects.all()
-    context = {'product_list':page_obj,'category_name':category.name,'location':location ,'images':product_images}
-    return render(request,'home/product/product_list.html',context)
-
-def product_details(request,slug):
-    wishlist = Wishlist.objects.filter(user = request.user).first()
-    wishlistitem = WishlistItem.objects.filter(wishlist = wishlist)
-    product = Product.objects.get(slug = slug)
-    #checking existance of product in a wishlist
+def product_listing(request, name=None):
+    current_page_number = request.GET.get('page', 1)
+    category = Category.objects.get(slug=name, status=1)
+    results = Product.objects.filter(category=category, is_active=True, stock__gt=0).prefetch_related('product_offers__offer')
     
-    if_product_exists = wishlistitem.filter(product = product).exists()
+    if 'location' in request.GET and request.GET.get('location') != 'all':
+        results = results.filter(location=request.GET.get('location'))
+    
+    product_images = {product.id: product.images.all().first().image.url for product in results}
+    for product in results:
         
-    product_images = [p.image.url for p in  product.images.all()]
-    context = {'product':product,'product_images':product_images,'wishlist':if_product_exists}
-    return render(request,'home/product/product_details.html',context)
+       print(get_best_offer_name(product))
+    product_prices = {
+        product.id: {
+            'original_price': product.price,
+            'discounted_price': calculate_discounted_price(product),
+            'discount_amount': product.price - calculate_discounted_price(product),  # Calculate the discount
+            'offer_name': get_best_offer_name(product),
+        }
+        for product in results
+    }
+    print(product_prices)
+    paginator = Paginator(results, 3)
+    page_obj = paginator.get_page(current_page_number)
+    location = Location.objects.all()
+    
+    context = {
+        'product_list': page_obj,
+        'category_name': category.name,
+        'location': location,
+        'images': product_images,
+        'product_prices': product_prices,
+    }
+    return render(request, 'home/product/product_list.html', context)
+
+
+def product_details(request, slug):
+    wishlist = Wishlist.objects.filter(user=request.user).first()
+    wishlistitem = WishlistItem.objects.filter(wishlist=wishlist)
+    product = Product.objects.prefetch_related('product_offers__offer').get(slug=slug)
+    
+    if_product_exists = wishlistitem.filter(product=product).exists()
+
+    product_images = [p.image.url for p in product.images.all()]
+
+    def calculate_discounted_price(product):
+        offers = product.product_offers.all()
+        if offers:
+            best_offer = max(
+                offers,
+                key=lambda o: (
+                    product.price * o.offer.discount_value / 100
+                    if o.offer.offer_type == 1
+                    else o.offer.discount_value
+                )
+            )
+            discount_value = (
+                product.price * best_offer.offer.discount_value / 100
+                if best_offer.offer.offer_type == 1
+                else best_offer.offer.discount_value
+            )
+            discounted_price = product.price - Decimal(discount_value)
+            return discounted_price, best_offer.offer.name
+        return product.price, None
+
+    discounted_price, offer_name = calculate_discounted_price(product)
+
+    # Pass data to the template
+    context = {
+        'product': product,
+        'product_images': product_images,
+        'wishlist': if_product_exists,
+        'discounted_price': discounted_price,
+        'offer_name': offer_name,
+    }
+    return render(request, 'home/product/product_details.html', context)
+
 
 #profile views 
 @never_cache
@@ -252,12 +305,13 @@ def reset_password(request):
     
 @login_required
 def order_list(request):
-    order = Order.objects.filter(user = request.user).order_by('status')
+    order = Order.objects.filter(user = request.user).order_by('status','created_at')
     context = {'order':order}
     return render(request,'order/order_list.html',context)
 
 def order_details(request,id):
     discount = None
+    offer = False
     order = Order.objects.filter(id = id).first()
     if order.coupon:
        typ = order.coupon.discount_type
@@ -273,11 +327,26 @@ def order_details(request,id):
                'value':order.coupon.discount_value,
                'original_amount':order.total_amount + order.coupon.discount_value
            }
+    
     if not order :
         return redirect('home:homepage')
     order_item = order.items.all()
+    total_sum = sum(order_item.values_list('price',flat =True))
+    offered_value = total_sum-order.total_amount
+    if offered_value != 0 :
+        offer = True
     shipaddressaddress = ShippingAddress.objects.get(order = order)
-    context = {'order':order,'order_item':order_item,'shipping_address':shipaddressaddress,'discount':discount}
+    user_cancel = ReturnRequest.objects.filter(order = order)
+    context = {
+                  'order':order,
+                  'order_item':order_item,
+                  'shipping_address':shipaddressaddress,
+                  'discount':discount,
+                  'is_offer':offer,
+                  'offered':offered_value,
+                  'cancel_order':user_cancel,
+                  'actual_amount':total_sum
+               }
     return render(request ,'order/order_details.html',context)
 
 

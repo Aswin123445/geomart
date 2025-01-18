@@ -268,47 +268,69 @@
                 </a>
                 {% endif %}
             
-                <!-- Product Details -->
-                <p class="text-muted">Category: <span class="text-dark fw-semibold">{{ product.category.name }}</span></p>
-                <p class="text-muted">Location: <span class="text-primary">{{ product.location.district }}</span></p>
-                <p class="text-muted">Stock Left: <span class="text-danger fw-bold">{{ product.stock }}</span></p>
-                <p class="text-secondary">{{ product.description }}</p>
-                <h3 class="text-success fw-bold">{{ product.price }}</h3>
-                <div class="d-flex align-items-center my-3">
-                    <div class="rating">
-                        <span class="text-warning fs-5">&#9733;</span>
-                        <span class="text-warning fs-5">&#9733;</span>
-                        <span class="text-warning fs-5">&#9733;</span>
-                        <span class="text-warning fs-5">&#9733;</span>
-                        <span class="text-muted fs-5">&#9734;</span>
-                    </div>
-                    <span class="ms-3 text-secondary">(4.5 / 5)</span>
-                </div>
-                <p class="text-muted">Over <span class="text-primary fw-bold">1,200</span> users have bought this product.</p>
+                <div class="product-details">
                 
-                <!-- Add to Cart Button -->
-                <a href="{% url 'cart:product_to_cart' product.slug %}">
-                    <button class="btn btn-danger btn-lg">Add to Cart</button>
-                </a>
-            
-                <!-- Buy Now Button -->
-                <button class="btn btn-outline-success btn-lg ms-2">Buy Now</button>
-            
-                <!-- Add to Wishlist Button -->
-                {% if not wishlist %}
-                <a href="{% url 'home:product_detalls' product.slug %}">
-                    <button class="btn btn-outline-primary btn-lg ms-2">
-                        <i class="bi bi-heart"></i> Add to Wishlist
-                    </button>
-                </a>
-                {% else %}
-                <a href="{% url 'home:product_detoils' product.slug %}">
-                    <button class="btn btn-outline-primary btn-lg ms-2">
-                        <i class="bi bi-heart"></i> Remove from Wishlist
-                    </button>
-                </a>
-                {% endif %}
-            </div>            
+                    <div class="product-info">
+                        <h1>{{ product.name }}</h1>
+                        <p class="text-secondary">{{ product.description }}</p>
+                        <p class="text-muted">Category: <span class="text-dark fw-semibold">{{ product.category.name }}</span></p>
+                        <p class="text-muted">Location: <span class="text-primary">{{ product.location.district }}</span></p>
+                        <p class="text-muted">Stock Left: <span class="text-danger fw-bold">{{ product.stock }}</span></p>
+                
+                        <!-- Price Section -->
+                         {%if not product.price == discounted_price%}
+                        <h4 class="text-muted">
+                            <del>₹{{ product.price }}</del>
+                        </h4>
+                         {% endif %}
+                        <h3 class="text-success fw-bold">₹{{ discounted_price }}</h3>
+                
+                        <!-- Offer Name -->
+                        {% if offer_name %}
+                        <span class="badge bg-warning text-dark">Offer: {{ offer_name }}</span>
+                        {% else %}
+                        <span class="text-muted">No current offers</span>
+                        {% endif %}
+                
+                        <!-- Ratings -->
+                        <div class="d-flex align-items-center my-3">
+                            <div class="rating">
+                                <span class="text-warning fs-5">&#9733;</span>
+                                <span class="text-warning fs-5">&#9733;</span>
+                                <span class="text-warning fs-5">&#9733;</span>
+                                <span class="text-warning fs-5">&#9733;</span>
+                                <span class="text-muted fs-5">&#9734;</span>
+                            </div>
+                            <span class="ms-3 text-secondary">(4.5 / 5)</span>
+                        </div>
+                
+                        <!-- <p class="text-muted">Over <span class="text-primary fw-bold">1,200</span> users have bought this product.</p> -->
+                
+                        <!-- Add to Cart Button -->
+                        <a href="{% url 'cart:product_to_cart' product.slug %}">
+                            <button class="btn btn-danger btn-lg">Add to Cart</button>
+                        </a>
+                
+                        <!-- Buy Now Button -->
+                        <button class="btn btn-outline-success btn-lg ms-2">Buy Now</button>
+                
+                        <!-- Wishlist Button -->
+                        {% if not wishlist %}
+                        <a href="{% url 'home:product_details' product.slug %}">
+                            <button class="btn btn-outline-primary btn-lg ms-2">
+                                <i class="bi bi-heart"></i> Add to Wishlist
+                            </button>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'home:product_details' product.slug %}">
+                            <button class="btn btn-outline-primary btn-lg ms-2">
+                                <i class="bi bi-heart"></i> Remove from Wishlist
+                            </button>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                        </div>
         <!-- Cultural Background Section -->
         <div class="cultural-container">
             <h4 class="fw-bold text-center mb-4" style="color: #DB4444;">Cultural Background</h4>

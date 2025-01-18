@@ -195,8 +195,14 @@
               </div>
               {% endfor %}
               <div class="divider"></div>
+              {% if amount_saved > 0 %}
+              <div class="d-flex justify-content-between">
+                <div class="fw-bold text-success" style="width: 25%;">DISCOUNTS</div>
+                <div class="text-end fw-bold text-success" style="width: 25%;">- {{amount_saved}}</div>
+              </div>
+              {% endif %}
               <div class="d-flex justify-content-between fw-bold">
-                <span>Total</span>
+                <span>Final Amount</span>
                 <span>{{total_sum}}</span>
               </div>
               {% if coupon_applied %}

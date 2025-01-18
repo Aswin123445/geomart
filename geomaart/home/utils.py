@@ -24,3 +24,38 @@ def converter(date):
     date_object = datetime.strptime(date, "%m/%d/%Y")
     formatted_date = date_object.strftime("%Y-%m-%d")
     return formatted_date
+
+def calculate_discounted_price(product):
+    offers = product.product_offers.filter(is_active=True, offer__is_active=True)
+    data= None
+    if not offers.exists():
+        return product.price  
+
+    best_offer = max(
+        offers,
+        key=lambda o: (
+            product.price * o.offer.discount_value / 100 
+            if o.offer.offer_type == 1
+            else o.offer.discount_value 
+        )
+    )
+    discount = best_offer.offer.discount_value
+    if best_offer.offer.offer_type == 1: 
+        return product.price * (1 - discount / 100)
+    elif best_offer.offer.offer_type == 2: 
+        return max(0, product.price - discount)
+    return product.price
+
+def get_best_offer_name(product):
+    offers = product.product_offers.all()
+    if offers:
+        best_offer = max(
+            offers,
+            key=lambda o: (
+                product.price * o.offer.discount_value / 100  # Percentage Discount
+                if o.offer.offer_type == 1
+                else o.offer.discount_value  # Flat Discount
+            )
+        )
+        return best_offer.offer.name  # Return the name of the best offer
+    return None

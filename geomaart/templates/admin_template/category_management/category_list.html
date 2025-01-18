@@ -67,6 +67,21 @@
                         <i class="bi bi-house-door"></i> Dashboard
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:order_listing' %}">
+                        <i class="bi bi-card-list"></i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:product_listing' %}">
+                        <i class="bi bi-box"></i> Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:logout' %}">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>

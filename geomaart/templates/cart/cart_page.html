@@ -1,3 +1,4 @@
+{% load cart_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -241,8 +242,14 @@
             <img src="{{cart.product.images.first.image.url}}" alt="Product 1">
             <div class="cart-item-details d-flex flex-column justify-content-between">
                 <h5>{{ cart.product.name }}</h5>
-                <p>Price: ₹{{ cart.product.price }}</p>
-                <p id="subttotal-{{cart.id}}" data-sub-totals="{{cart.total_price}}">Subtotal: ₹{{ cart.total_price }}</p> <!-- Subtotal Field -->
+                <p>Original Price: ₹{{ cart.product.price }}</p>
+                    <!-- Discounted Price -->
+                    {% with cart.product|get_discounted_price as discounted_price %}
+                    {% if discounted_price != cart.product.price %}
+                    <p>Discounted Price: ₹{{ discounted_price }}</p>
+                    {% endif %}
+                    {% endwith %}
+                <p id="subttotal-{{cart.id}}" class="fw-bold text-success" data-sub-totals="{{cart.offer_price}}">Subtotal: ₹{{ cart.offer_price }}</p> <!-- Subtotal Field -->
                 <div class="d-flex justify-content-between align-items-center">
                 <!-- Product Quantity Input -->
                 <input type="number" id="increment_product" 

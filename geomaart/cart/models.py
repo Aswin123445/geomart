@@ -24,14 +24,12 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     total_price = models.DecimalField(max_digits=10, decimal_places=2 ,default=0.00)
-
+    offer_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     def save(self, *args, **kwargs):
         self.total_price = self.product.price * self.quantity
         super().save(*args, **kwargs)
     def __str__(self):
         return f"{self.product.name} in {self.cart.user.email}'s cart"
-    
-    
     
 #order management models
 class Order(models.Model):
@@ -42,11 +40,12 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
+    #offer amount also added
     refund_status = models.IntegerField(
         choices=[
-            (1, 'Pending'), 
+            (1, 'Pending'),
             (2, 'Completed'),
-            (3, 'Failed')
+            (3, 'Failed'),
         ],
         default=1,
     )
@@ -56,6 +55,7 @@ class Order(models.Model):
         (3, 'Shipped'),
         (4, 'Delivered'),
         (5, 'Canceled'),
+        (6,'Returned')
     ]
     status = models.IntegerField(choices=STATUS_CHOICES, default=1)
 
@@ -136,3 +136,29 @@ class UserCoupon(models.Model):
         unique_together = ('user' , 'coupon')
     def __str__(self):
         return f"{self.user.name} - {self.coupon.code}"
+    
+#user return model
+class ReturnRequest(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='return_request')
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE)
+    reason = models.TextField(blank=True, null=True)
+    status = models.IntegerField(
+        choices=(
+            (1, 'Pending'),
+            (2, 'Approved'),
+            (3, 'Rejected'),
+        ),
+        default=1
+    )
+    requested_date = models.DateTimeField(default=now)
+    processed_date = models.DateTimeField(blank=True, null=True)
+
+    def approve(self):
+        self.status = 2
+        self.processed_date = now()
+        self.save()
+
+    def reject(self):
+        self.status = 3
+        self.processed_date = now()
+        self.save()

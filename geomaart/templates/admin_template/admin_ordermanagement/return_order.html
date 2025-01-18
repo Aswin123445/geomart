@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Return Management</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
+                        <i class="bi bi-house-door"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:order_listing' %}">
+                        <i class="bi bi-card-list"></i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:product_listing' %}">
+                        <i class="bi bi-box"></i> Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'custom_admin:logout' %}">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Order Return Requests</h2>
+        </div>
+
+        <!-- Order Return List Table -->
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Reason for Return</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for list in  all_request %}
+                <tr>
+                    <td>{{list.id}}</td>
+                    <td>{{list.order.id}}</td>
+                    <td>{{list.user.name}}</td>
+                    <td>{{list.reason}}</td>
+                    <td><span class="badge bg-warning text-dark">{{list.get_status_display}}</span></td>
+                    {% if list.status == 1 %}
+                    <td>
+                        <a href="{% url 'custom_admin:approve_return_request' list.id %}"><button class="btn btn-sm btn-success me-2">Approve</button></a>
+                        <a href="{% url 'custom_admin:reject_return_request' list.id %}"><button class="btn btn-sm btn-danger">Reject</button></a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                <!-- Add more rows dynamically -->
+            </tbody>
+        </table>
+    </div>
+    <footer class="footer bg-dark text-white py-4 mt-5" >
+      <div class="container">
+          <div class="row">
+              <div class="col-md-4 mb-3">
+                  <h5 class="fw-bold">GeoMaart</h5>
+                  <p>Your one-stop shop for unique local products.</p>
+              </div>
+              <div class="col-md-4 mb-3">
+                  <h5 class="fw-bold">Quick Links</h5>
+                  <ul class="list-unstyled">
+                      <li><a href="#" class="text-white text-decoration-none">Home</a></li>
+                      <li><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                      <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                      <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                  </ul>
+              </div>
+              <div class="col-md-4">
+                  <h5 class="fw-bold">Follow Us</h5>
+                  <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
+                  <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
+                  <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
+              </div>
+          </div>
+          <hr class="bg-white">
+          <p class="mb-0 text-center">&copy; 2024 GeoMaart. All Rights Reserved.</p>
+      </div>
+  </footer>
+    <!-- Bootstrap JS (Optional for interactivity) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -9,12 +9,12 @@ from admin_custom.models import Category,Location,Product
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .forms import UserDataUpdation
+from .forms import CouponUpdateForm, UserDataUpdation
 from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation,ProductUpdateForm
 from .forms import categoryValidation,ProductValidation,CouponCreationForm,OfferForm,OfferEdit
 from django.views.decorators.cache import never_cache
-from cart.models import Order,OrderItem, Wallet
+from cart.models import Order, Wallet,ReturnRequest
 from .models import Coupon
 from .forms import CouponFilterForm
 from django.db.models import Q
@@ -424,7 +424,7 @@ def order_listing(request):
           return render(request,'admin_template/admin_ordermanagement/oder_management.html',context)
         else :
             messages.error(request,'there is no orders with the specified id')
-    orders_list = Order.objects.all().order_by('-created_at')
+    orders_list = Order.objects.all().order_by('-created_at').order_by('status')
     if request.method == 'POST':
       user_order =  orders_list.get(id = int(request.POST.get('order_id')))
       previous_status = user_order.status
@@ -445,7 +445,7 @@ def order_listing(request):
         payment.save()
       user_order.save()
     current_page_number=request.GET.get('page',1)
-    paginator = Paginator(orders_list,3)
+    paginator = Paginator(orders_list,6)
     orders = paginator.get_page(current_page_number)
     context = {'orders':orders}
     return render(request,'admin_template/admin_ordermanagement/oder_management.html',context)
@@ -529,9 +529,11 @@ def search_coupons(request):
 def coupon_edit(request,id):
     get_coupnon = Coupon.objects.filter(id = id).first()
     if request.method == 'POST':
-        form = CouponCreationForm(request.POST)
-        print(form.is_valid())
+        form = CouponUpdateForm(request.POST)
         if form.is_valid():
+            if Coupon.objects.filter(code = form.cleaned_data['coupon_type']).exclude(id = get_coupnon.id).count() > 0 :
+                messages.error(request,'this code already exist')
+                return redirect('custom_admin:coupon_edit')
             print(form.cleaned_data)
             print(request.POST['coupon_type'])
             get_coupnon.code = form.cleaned_data['coupon_code']
@@ -546,6 +548,7 @@ def coupon_edit(request,id):
             messages.success(request,'coupon updated successfully')
             return redirect('custom_admin:coupon_list')
         else :
+            print(form.errors)
             error = list(form.errors.values())[0][0]
             messages.error(request,error)
     context = {'coupon':get_coupnon}
@@ -979,3 +982,35 @@ def delete_category_offer(request,id):
         except Offer.DoesNotExist :
             return JsonResponse({"success": False, "message": "Offer not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
+
+#admin return order list
+def return_orders_list(request):
+    all_list = ReturnRequest.objects.all()
+    context= {'all_request':all_list}
+    return render(request,'admin_template/admin_ordermanagement/return_order.html',context)
+
+def approve_return_request(request,id):
+    cancel_request = ReturnRequest.objects.get(id = id)
+    cancel_request.approve()
+    if cancel_request.status == 2 :
+        amount = cancel_request.order.total_amount
+        print(amount)
+        wallet = Wallet.objects.get(user = cancel_request.user)
+        wallet.add_amount(amount)
+        print(f'{wallet.balance} this is my balance')
+        wallet.save()
+        #increase the stock of the inventory
+        for ord in cancel_request.order.items.all():
+            ord.product.stock += ord.quantity
+            ord.product.save()
+        cancel_request.order.status = 6
+        cancel_request.order.refund_status = 2
+        cancel_request.order.is_canceled = True
+        cancel_request.order.save()
+        
+    return redirect('custom_admin:return_orders_list')
+
+def reject_return_request(request,id):
+    return_request = ReturnRequest.objects.get(id = id)
+    return_request.reject()
+    return redirect('custom_admin:return_orders_list')

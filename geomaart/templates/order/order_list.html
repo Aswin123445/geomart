@@ -96,14 +96,19 @@
         <div class="card">
           <div class="card-header bg-danger text-white d-flex justify-content-between">
             <span>Order {{ord.id}}</span>
-            <span
+            
+              {% if not ord.return_request %}
+              <span
              class="badge {% if ord.status == 1 or ord.status == 2 or ord.status == 3 %}bg-warning{% elif ord.status == 4 %}bg-success {%else%} bg-dark {%endif%}"
             >
-            {{ord.get_status_display}}
-          </span>
+              {{ord.get_status_display}}
+            </span>
+            {%else%}
+            <span class="badge bg-warning">return request {{ord.return_request.get_status_display}}</span>
+            {% endif %}
           </div>
           <div class="card-body">
-            <p class="mb-2"><strong>Date:</strong> {{ord.created_at}}</p>
+            <p class="mb-2"><strong>Date:</strong> {{ ord.created_at|date:"d-m-Y" }} </p>
             <p class="mb-2"><strong>Total:</strong> {{ord.total_amount}}</p>
             <p class="mb-2"><strong>Items:</strong> {{ord.items.all|length}}</p>
             <div class="d-flex justify-content-between">

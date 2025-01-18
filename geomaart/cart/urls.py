@@ -16,6 +16,9 @@ urlpatterns = [
     path('update_cart_item_ajax/',views.update_cart_item_ajax,name="update_cart_item_ajax"),
     
     #edit address from checkout
-    path('add_address_checkout/<int:id>',views.add_address_checkout,name="add_address_checkout")
+    path('add_address_checkout/<int:id>',views.add_address_checkout,name="add_address_checkout"),
+    
+     #user return link
+     path("user_return/", views.user_return, name="user_return"),
     
 ]

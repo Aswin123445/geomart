@@ -78,5 +78,11 @@ urlpatterns = [
     path('create_category_offer/',views.create_category_offer,name='create_category_offer'),
     path('search_categoryt_offer/',views.search_category_offer,name='search_category_offer'),
     path('delete_category_offer/<int:id>/',views.delete_category_offer,name='delete_category_offer'),
+    
+    #order return 
+    path('return_orders_list/',views.return_orders_list,name='return_orders_list'),
+    path('approve_return_request/<int:id>/,',views.approve_return_request,name='approve_return_request'),
+    path('reject_return_request/<int:id>/,',views.reject_return_request,name='reject_return_request'),
+
 
 ]

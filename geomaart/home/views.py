@@ -48,14 +48,10 @@ def product_listing(request, name=None):
     current_page_number = request.GET.get('page', 1)
     category = Category.objects.get(slug=name, status=1)
     results = Product.objects.filter(category=category, is_active=True, stock__gt=0).prefetch_related('product_offers__offer')
-    
     if 'location' in request.GET and request.GET.get('location') != 'all':
         results = results.filter(location=request.GET.get('location'))
     
     product_images = {product.id: product.images.all().first().image.url for product in results}
-    for product in results:
-        
-       print(get_best_offer_name(product))
     product_prices = {
         product.id: {
             'original_price': product.price,
@@ -69,7 +65,6 @@ def product_listing(request, name=None):
     paginator = Paginator(results, 3)
     page_obj = paginator.get_page(current_page_number)
     location = Location.objects.all()
-    
     context = {
         'product_list': page_obj,
         'category_name': category.name,
@@ -78,17 +73,12 @@ def product_listing(request, name=None):
         'product_prices': product_prices,
     }
     return render(request, 'home/product/product_list.html', context)
-
-
 def product_details(request, slug):
     wishlist = Wishlist.objects.filter(user=request.user).first()
     wishlistitem = WishlistItem.objects.filter(wishlist=wishlist)
     product = Product.objects.prefetch_related('product_offers__offer').get(slug=slug)
-    
     if_product_exists = wishlistitem.filter(product=product).exists()
-
     product_images = [p.image.url for p in product.images.all()]
-
     def calculate_discounted_price(product):
         offers = product.product_offers.all()
         if offers:

@@ -57,5 +57,5 @@ def get_best_offer_name(product):
                 else o.offer.discount_value  # Flat Discount
             )
         )
-        return best_offer.offer.name  # Return the name of the best offer
+        return best_offer.offer
     return None

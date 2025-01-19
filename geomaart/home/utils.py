@@ -59,3 +59,9 @@ def get_best_offer_name(product):
         )
         return best_offer.offer
     return None
+
+def generate_invoice(request):
+    number = random.randint(100000,999999)
+    append_number = request.user.name.strip()[:3].lower() + str(number)
+    return append_number
+    

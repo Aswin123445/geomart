@@ -1,5 +1,6 @@
 from decimal import Decimal
-import json
+from weasyprint import HTML
+import os
 from django.http import JsonResponse
 from django.shortcuts import render,redirect,HttpResponse
 from accounts.models import UserData
@@ -11,11 +12,11 @@ from django.core.paginator import Paginator
 from accounts.models import Address
 from accounts.forms import FogotPasswordForm
 from .forms import AddressForm
-from .utils import calculate_discounted_price, format_phone_number, get_best_offer_name,send_otp_email,converter
+from .utils import calculate_discounted_price, format_phone_number, generate_invoice, get_best_offer_name,send_otp_email,converter
 from accounts.utils import send_otp,validate_otp
 from django.contrib import messages
-from django.contrib.auth.models import User
-from cart.models import Order,OrderItem,ShippingAddress,Payment
+from cart.models import Order, OrderItem, Payment,ShippingAddress
+from django.template.loader import render_to_string
 from .models import Wishlist,WishlistItem
 from cart.models import Cart , CartItem , Wallet , ReturnRequest
 # Create your views here.
@@ -399,3 +400,47 @@ def move_to_cart(request,id):
          
          messages.success(request,'moved to the cart page')
     return redirect('home:wishlist')
+
+
+#user invoice for orders
+def order_user_invoice(request,id):
+        # Render the template into HTML
+    order = Order.objects.get(id = id)
+    #address details
+    address = ShippingAddress.objects.get(order = order)
+    address_data = {
+        'primary':address.address_line_1,
+        'city':address.city,
+        'state':address.state,
+        'zip':address.postal_code
+    }
+    #generate random invoice number
+    invoice_number = generate_invoice(request)
+    invoice = {
+      'invoice_number': invoice_number,
+      'date':order.created_at,
+      'payment_instance':Payment.objects.get(order = order),
+      'name':request.user.name
+    }
+    #purchase related data
+    total_price = sum(OrderItem.objects.filter(order= order).values_list('price',flat=True))
+    product_details = {
+        'products' : OrderItem.objects.filter(order = order ),
+        'delivary':40,
+        'reductions':total_price - order.total_amount,
+        'total_price' : total_price,
+        'sub_total':order.total_amount + 40
+    }
+    context={
+        'address':address_data,
+        'invoice':invoice,
+        'product_details':product_details
+    }
+    os.add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
+    html_content = render_to_string('order/order_invoice.html',context)
+    # Generate the PDF
+    pdf_file = HTML(string=html_content).write_pdf()
+    #Create HTTP response with PDF
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="order_invoice.pdf"'
+    return response

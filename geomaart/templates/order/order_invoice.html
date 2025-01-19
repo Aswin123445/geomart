@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+  <style>
+    .invoice-header {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .invoice-footer {
+      background-color: #f8f9fa;
+      padding: 10px;
+      text-align: center;
+      border-top: 1px solid #dee2e6;
+    }
+    .invoice-details th, .invoice-details td {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="invoice-header text-center mb-4">
+      <h1 class="fw-bold">GeoMaart Invoice</h1>
+      <p class="mb-0">Thank you for your purchase!</p>
+    </div>
+
+    <!-- Company and Customer Information -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <h5>From:</h5>
+        <p>
+          <strong>GeoMaart Limited</strong><br>
+          123 Business St.<br>
+          Ernakulam, kerala, 670703<br>
+          Email: GeoMaart@gmail.com<br>
+          Phone: 8848499413
+        </p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <h5>To:</h5>
+        <p>
+          <strong>{{invoice.name}}</strong><br>
+          {{address.primary}}<br>
+          {{address.city}}, {{address.state}}, {{address.zip}}<br>
+          Email: {{request.user.email}}<br>
+          Phone: {{request.user.phone_number}}
+        </p>
+      </div>
+    </div>
+
+    <!-- Invoice Details -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <p><strong>Invoice Number:</strong> {{invoice.invoice_number}}</p>
+        <p><strong>Date:</strong> {{invoice.date|date:"d M Y"}}</p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <p><strong>Payment Method:</strong> {{invoice.payment_instance.get_method_display}}</p>
+        <p><strong>Status:</strong> {{invoice.payment_instance.get_status_display}}</p>
+      </div>
+    </div>
+
+    <!-- Table of Items -->
+    <table class="table table-bordered invoice-details">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          <th>Quantity</th>
+          <th>Unit Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for items in product_details.products %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>{{items.product.name}}</td>
+          <td>{{items.quantity}}</td>
+          <td>{{items.product.price}}</td>
+          <td>{{items.price}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="4" class="text-end">Subtotal</th>
+          <th>{{product_details.total_price}}</th>
+        </tr>
+        {% if product_details.reductions > 0 %}
+        <tr>
+          <th colspan="4" class="text-end">Reductions</th>
+          <th>{{product_details.reductions}}</th>
+        </tr>
+        {% endif %}
+        <tr>
+          <th colspan="4" class="text-end">Delivary charges</th>
+          <th>{{product_details.delivary}}</th>
+        </tr>
+        <tr>
+          <th colspan="4" class="text-end">Total</th>
+          <th>{{product_details.sub_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Footer -->
+    <div class="invoice-footer mt-4">
+      <p class="mb-0">If you have any questions, contact us at geomaart@gmail.com</p>
+      <p class="mb-0">&copy; 2025 geomaart. All rights reserved.</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

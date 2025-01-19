@@ -271,7 +271,8 @@
                                 data-cart-id="{{ order.id }}"
                                 data-cart-quantity="{{ cart.quantity }}">
                             Return Order
-  </button>
+          </button>
+          <a href="{% url 'home:order_user_invoice' order.id %}"><button class="btn btn-danger btn-warning" >Download Invoice</button></a>
   {% elif order.status == 4 and cancel_order  %}
   {% endif %}
 </div>

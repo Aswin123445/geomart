@@ -7,7 +7,7 @@ import razorpay
 
 from home.utils import calculate_discounted_price
 from home.forms import AddressForm
-from .models import Cart,CartItem,Order,Wallet,UserCoupon,ReturnRequest
+from .models import Cart,CartItem,Order, Payment,Wallet,UserCoupon,ReturnRequest
 from admin_custom.models import Product,Coupon
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -94,7 +94,7 @@ def cart_page(request):
            if component.exists():
                offer.append(component)
         print(f'let check the offer is null{offer}')
-    if request.method == 'POST' and 'coupon_code' in request.POST  :
+    if request.method == 'POST' and  'coupon_code' in request.POST  :
         #validate coupon
         coupon_code = Coupon.objects.filter(code = request.POST['coupon_code'],status = True).first()
         if coupon_code and not offer :
@@ -251,13 +251,14 @@ def checkout(request , id):
     if not amount_saved == 0:
         offers = True
     context = {
+        'actual_price':cart.total_price+amount_saved,
         'address':address,
         'total_sum':cart.total_price,
         'cart_item':cart_item,
         'wallet_amount':wallet_amount,
         'coupon_applied':coupon_applied,
         'discounted_amount': cart.discount_amount,
-        'final_amount':cart.total_price - cart.discount_amount ,
+        'final_amount':cart.total_price - cart.discount_amount + 40,
         'cart_id':cart.id,
         'offers' :True,
         'amount_saved':amount_saved
@@ -315,12 +316,16 @@ def placeorder(request, id=None):
             print('why it\' not printed')
             print(new_order.total_amount)
             messages.success(request, 'Order successfully placed')
-            return redirect('home:homepage')
+            return redirect('cart:order_success_page')
 
         except Exception as e:
             print(e)
             return redirect('cart:cart_page')
     return redirect('checkout')
+
+@login_required
+def order_success_page(request):
+    return render(request,'order/user_info_page/order_success.html')
 
 @login_required
 def cancelorder(request , id):
@@ -352,58 +357,56 @@ def cancelorder(request , id):
 #payment razorpay create order
 def create_order(request,id = None):
     address =  Address.objects.filter(user = request.user)
-    print('some thing happening')
-    print(address.exists())
     if not address.exists():
         messages.error(request,'please add a address to shop')
         redirect_url = reverse('cart:checkout', kwargs={'id': id})
         return JsonResponse({'redirect': redirect_url})
     cart = Cart.objects.filter(user = request.user).first()
-    cart_items = cart.items.all()
-    total_prize = cart.total_price-cart.discount_amount
+    total_prize = cart.total_price-cart.discount_amount+40
     amount = int(total_prize*100)
-    print('inside order page')
     if request.method == "POST":
+        payment_method = 2
+        payment_status = 1
+        body = json.loads(request.body)
+        print(body)
+        address_id = body.get('address_id')
         currency = "INR"
-
         # Create Razorpay order
         razorpay_order = razorpay_client.order.create({
             "amount": amount,
             "currency": currency,
             "payment_capture": "1"
         })
+        order_payment_pending = process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
         # Return the order ID to the frontend
         return JsonResponse({
             "order_id": razorpay_order["id"],
             "key": os.environ['RAZORPAY_ID'],
             "amount": amount,
             "currency": currency,
-        })
-        
+            "order_id_with_payment_pending":order_payment_pending.id,
+        })      
 @csrf_exempt
 def verify_payment(request):
     if request.method == "POST":
-        print(request.POST)
-        address_id = request.POST.get('address_id')
-        print(address_id)
         razorpay_order_id = request.POST.get("order_id")
         razorpay_payment_id = request.POST.get("razorpay_payment_id")
         razorpay_signature = request.POST.get("razorpay_signature")
-        payment_method = 2
-        payment_status = 2        
-        # Verify payment signature
+        order_id = request.POST.get("order_id_with_payment_pending")
         try:
             razorpay_client.utility.verify_payment_signature({
                 "razorpay_order_id": razorpay_order_id,
                 "razorpay_payment_id": razorpay_payment_id,
                 "razorpay_signature": razorpay_signature
             })
-            cart = Cart.objects.filter(user = request.user).first()
-            process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
+            #change the payment status to success
             print('new order created cart also updated')
             # Payment successful
+            order = Order.objects.get(id = order_id)
+            order.payment.status = 2
+            order.payment.save()
             messages.success(request,'you have sucessfully placed the order')
-            return redirect('home:homepage')
+            return redirect('cart:order_success_page')
         except SignatureVerificationError:
             # Payment verification failed
             return HttpResponse("Payment verification failed.", status=400)

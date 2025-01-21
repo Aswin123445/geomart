@@ -84,13 +84,8 @@
             </div>
         </div>
     </nav>
-  <div class="container my-5 ">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">My Orders</h2>
-        <a href="{% url 'home:failed_orders' %}" class="btn btn-danger btn-md">
-            Failed Orders
-        </a>
-    </div>
+  <div class="container my-5">
+    <h2 class="mb-4">Failed orders</h2>
     <!-- Order List -->
     <div class="row">
       {% if order %}
@@ -102,11 +97,11 @@
             <span>Order {{ord.id}}</span>
             
               {% if not ord.return_request %}
-              <span
+              <!-- <span
              class="badge {% if ord.status == 1 or ord.status == 2 or ord.status == 3 %}bg-warning{% elif ord.status == 4 %}bg-success {%else%} bg-dark {%endif%}"
             >
               {{ord.get_status_display}}
-            </span>
+            </span> -->
             {%else%}
             <span class="badge bg-warning">return request {{ord.return_request.get_status_display}}</span>
             {% endif %}
@@ -116,13 +111,27 @@
             <p class="mb-2"><strong>Total:</strong> {{ord.total_amount}}</p>
             <p class="mb-2"><strong>Items:</strong> {{ord.items.all|length}}</p>
             <div class="d-flex justify-content-between">
-              <a href="{% url 'home:order_details' ord.id %}" class="btn btn-sm btn-success">View Details</a>
-              <!-- <a href="#" class="btn btn-sm btn-outline-secondary">Download Invoice</a> -->
-            </div>
+                <a href="{% url 'home:failed_order_payment' ord.id %}" class="btn btn-sm btn-success">View Details</a>
+                <!-- <a href="#" class="btn btn-sm btn-outline-secondary">Download Invoice</a> -->
+              </div>
+            <form id="payment-form" method="POST" action="{% url 'cart:verify_payment' %}">
+                {% csrf_token %}
+                <input type="hidden" id="order_id" name="order_id">
+                <input type="hidden" id="razorpay_payment_id" name="razorpay_payment_id">
+                <input type="hidden" id="razorpay_signature" name="razorpay_signature">
+                <input type="hidden" id="address_id" name="address_id">
+                <input type="hidden" id="order_id_with_payment_pending" name="order_id_with_payment_pending">
+      
+                <div class="text-center mt-3">
+                  <button type="submit" style="display: none;" id="rzp-button" class="btn btn-success w-100 py-3">Place order</button>
+                </div>
+            </form>
           </div>
         </div>
       </div>
       {% endfor %}
+      {% else %}
+      nothing to show here 
       {% endif %}
 
       <!-- More Orders can be added similarly -->

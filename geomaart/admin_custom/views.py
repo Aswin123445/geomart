@@ -35,7 +35,7 @@ def dashboard(request):
         context = {
             'product_count':Product.objects.count(),
             'total_user': UserData.objects.exclude(is_staff = True).count(),
-            'pending_orders': Order.objects.filter(status__in = [1,2,3]).count()
+            'pending_orders': Order.objects.filter(status__in = [1,2,3],payment__status = 2).count()
         }
         response = render(request,'admin_template/dashboard.html',context)
         return prevent_cache_view(response)
@@ -424,7 +424,7 @@ def order_listing(request):
           return render(request,'admin_template/admin_ordermanagement/oder_management.html',context)
         else :
             messages.error(request,'there is no orders with the specified id')
-    orders_list = Order.objects.all().order_by('-created_at').order_by('status')
+    orders_list = Order.objects.filter(payment__status = 2).order_by('-created_at').order_by('status')
     if request.method == 'POST':
       user_order =  orders_list.get(id = int(request.POST.get('order_id')))
       previous_status = user_order.status
@@ -569,7 +569,7 @@ def delete_coupon(request,id):
 
 def sales_report(request):
     # Initial data setup
-    total_orders = Order.objects.filter(Q(status=4) | Q(status=5))
+    total_orders = Order.objects.filter(Q(status=4) | Q(status=5),payment__status = 2)
     users_date = None
     labels = []
     sales_data = []

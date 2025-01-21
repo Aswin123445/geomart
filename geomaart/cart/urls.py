@@ -18,7 +18,9 @@ urlpatterns = [
     #edit address from checkout
     path('add_address_checkout/<int:id>',views.add_address_checkout,name="add_address_checkout"),
     
-     #user return link
-     path("user_return/", views.user_return, name="user_return"),
+    #user return link
+    path("user_return/", views.user_return, name="user_return"),
+    path("order_success_page/", views.order_success_page, name="order_success_page"),
+
     
 ]

@@ -1,4 +1,6 @@
 from decimal import Decimal
+import json
+import razorpay
 from weasyprint import HTML
 import os
 from django.http import JsonResponse
@@ -19,7 +21,13 @@ from cart.models import Order, OrderItem, Payment,ShippingAddress
 from django.template.loader import render_to_string
 from .models import Wishlist,WishlistItem
 from cart.models import Cart , CartItem , Wallet , ReturnRequest
+from django.views.decorators.csrf import csrf_exempt
+from razorpay.errors import SignatureVerificationError
+
+
 # Create your views here.
+
+razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_ID'], os.environ['RAZORPAY_SECRET_KEY']))
 @never_cache
 def hemepage(request):
     if request.user.is_authenticated and UserData.objects.get(id=request.user.id).is_staff:
@@ -296,7 +304,7 @@ def reset_password(request):
     
 @login_required
 def order_list(request):
-    order = Order.objects.filter(user = request.user).order_by('status','created_at')
+    order = Order.objects.filter(user = request.user,payment__status = 2).order_by('status','created_at')
     context = {'order':order}
     return render(request,'order/order_list.html',context)
 
@@ -323,7 +331,7 @@ def order_details(request,id):
         return redirect('home:homepage')
     order_item = order.items.all()
     total_sum = sum(order_item.values_list('price',flat =True))
-    offered_value = total_sum-order.total_amount
+    offered_value = total_sum-order.total_amount+40
     if offered_value != 0 :
         offer = True
     shipaddressaddress = ShippingAddress.objects.get(order = order)
@@ -444,3 +452,77 @@ def order_user_invoice(request,id):
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="order_invoice.pdf"'
     return response
+
+#payment razorpay create order
+def create_order(request,id):
+    order = Order.objects.get(id = id)
+    total_prize = order.total_amount
+    amount = int(total_prize*100)
+    if request.method == "POST":
+        payment_method = 2
+        payment_status = 1
+        currency = "INR"
+        # Create Razorpay order
+        razorpay_order = razorpay_client.order.create({
+            "amount": amount,
+            "currency": currency,
+            "payment_capture": "1"
+        })
+        # Return the order ID to the frontend
+        return JsonResponse({
+            "order_id": razorpay_order["id"],
+            "key": os.environ['RAZORPAY_ID'],
+            "amount": amount,
+            "currency": currency,
+            "order_id_with_payment_pending":order.id,
+        })  
+
+def failed_orders(request  ):
+   orders_with_status_1 = Order.objects.filter(payment__status=1)
+   print(orders_with_status_1)
+   context = {'order':orders_with_status_1}
+   return render(request,'order/failed_orders.html',context)
+
+def failed_order_payment(request,id):
+    discount = None
+    offer = False
+    order = Order.objects.filter(id = id).first()
+    if order.coupon:
+       typ = order.coupon.discount_type
+       if typ == 1 :
+           price =(order.total_amount / (100 - order.coupon.discount_value)) * order.coupon.discount_type*10
+           print(order.coupon.discount_value)
+           discount ={ 
+                    'value':price,
+                    'original_amount':order.total_amount + price   
+           }
+       else :
+           discount ={
+               'value':order.coupon.discount_value,
+               'original_amount':order.total_amount + order.coupon.discount_value
+           }
+    
+    if not order :
+        return redirect('home:homepage')
+    order_item = order.items.all()
+    total_sum = sum(order_item.values_list('price',flat =True))
+    offered_value = total_sum-order.total_amount+40
+    if offered_value != 0 :
+        offer = True
+    shipaddressaddress = ShippingAddress.objects.get(order = order)
+    user_cancel = ReturnRequest.objects.filter(order = order)
+    context = {
+                  'order':order,
+                  'order_item':order_item,
+                  'shipping_address':shipaddressaddress,
+                  'discount':discount,
+                  'is_offer':offer,
+                  'offered':offered_value,
+                  'cancel_order':user_cancel,
+                  'actual_amount':total_sum
+               }
+    return render(request,'order/failed_order_payment.html',context)
+
+#failed order infor page
+def failed_order_info_page(request):
+    return render(request,'order/user_info_page/failed_payment_page.html')

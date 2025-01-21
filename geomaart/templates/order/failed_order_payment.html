@@ -150,9 +150,6 @@
 </nav>
   <div class="container my-5">
   {% endif %}
-
-
-
     <!-- Order Information -->
     <div class="card mb-4">
       <div class="card-header bg-danger text-white">Order Summary</div>
@@ -162,12 +159,6 @@
         </p>
         {% if  not cancel_order%}
 
-        <p><strong>Order Status:</strong>
-           <span
-           class="badge {% if order.status == 1 or order.status == 2 or order.status == 3 %}bg-warning{% elif order.status == 4 %}bg-success {%else%} bg-dark {%endif%}"
-           >
-           {{order.get_status_display}}
-         </span></p>
          {% elif order.status == 4 and cancel_order %}
          <strong>Order Status:</strong> : <span class="badge bg-warning mb-3"> Return Request  {{cancel_order.0.get_status_display}}</span>
          {% elif order.status == 6 %}
@@ -178,31 +169,25 @@
            <p><strong>Dicount:</strong> <span class="text-success">{{discount.value}}</span></p>
          {% endif %}
          {% if is_offer %}
-         {%if order.coupon.code%}
-         <p><strong>Coupon Applied:</strong> <span class="text-success fw-bold">{{order.coupon.code}}</span></p>
-         {%endif%}
+
          <p><strong>Amount:</strong> <span class="text-success fw-bold">{{actual_amount}}</span></p>
-         {% if offered > 0 %}
-         <p><strong>Discount Value:</strong> <span class="text-success fw-bold">-{{offered}}</span></p>
-         {% endif %}
+
          {% endif %}
          <p><strong>Delivary charge:</strong> <span class=" fw-bold">+40</span></p>
         <p><strong>Final Amount:</strong> <span class="text-success fw-bold">{{order.total_amount}}</span></p>
+        <div class="text-center mt-3">
+          <button id="complete-payment-btn" class="btn btn-success" onclick="startPayment()">Complete Payment</button>
+        </div>
+        <form id="payment-form" method="POST" action="{% url 'cart:verify_payment' %}">
+          {% csrf_token %}
+          <input type="hidden" id="order_id" name="order_id">
+          <input type="hidden" id="razorpay_payment_id" name="razorpay_payment_id">
+          <input type="hidden" id="razorpay_signature" name="razorpay_signature">
+          <input type="hidden" id="order_id_with_payment_pending" name="order_id_with_payment_pending">
+      </form>
       </div>
     </div>
-    <!-- Shipping Information -->
-    <div class="card mb-4">
-      <div class="card-header bg-danger text-white">Shipping Address</div>
-      <div class="card-body">
-        <p><strong>Name: &nbsp;</strong>{{request.user.name}}</p>
-        <p><strong>Address:</strong>&nbsp;{{shipping_address.address_line_1}}</p>
-        <p><strong>City:</strong>&nbsp; {{shipping_address.city}}</p>
-        <p><strong>State:</strong>&nbsp; {{shipping_address.state}}</p>
-        <p><strong>Postal Code:</strong>&nbsp; {{shipping_address.postal_code}}</p>
-        <p><strong>Country:</strong>&nbsp; {{shipping_address.country}}</p>
-        <p><strong>Phone:</strong>&nbsp; {{request.user.phone_number}}</p>
-      </div>
-    </div>
+
     <!-- Payment Information -->
      {%if not order.is_canceled %}
     <div class="card mb-4">
@@ -258,28 +243,7 @@
   </div>
 </div>
 
-<!-- Action Buttons -->
-{% if not request.user.is_staff %}
-<div class="text-center">
-  <a href="{% url 'home:order_list' %}" class="btn btn-success btn-action">Back to Orders</a>
-  <!-- <a href="#" class="btn btn-secondary btn-action">Download Invoice</a> -->
-  <!-- Button to Cancel Entire Order -->
-  {% if order.status != 5 and order.status != 4  and order.status != 6%}  
-    <a href="{% url 'cart:cancelorder' order.id %}"><button class="btn btn-danger btn-action">Cancel Entire Order</button></a>
-  {% endif %}
-  {% if order.status == 4 and not cancel_order%}
-  <button class="btn btn-success btn-warning" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#updateBioModal"
-                                data-cart-id="{{ order.id }}"
-                                data-cart-quantity="{{ cart.quantity }}">
-                            Return Order
-          </button>
-          <a href="{% url 'home:order_user_invoice' order.id %}"><button class="btn btn-danger btn-warning" >Download Invoice</button></a>
-  {% elif order.status == 4 and cancel_order  %}
-  {% endif %}
-</div>
-{% endif %}
+
   </div>
   <div class="modal fade" id="updateBioModal" tabindex="-1" aria-labelledby="updateBioModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -332,6 +296,8 @@
     </div>
 </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
    <script>
             function closeNotification() {
         document.getElementById("notification").style.display = "none";
@@ -341,6 +307,48 @@
                 notification.style.display = "none";
             }, 5000); // 4000 milliseconds = 4 seconds
         });
+        function startPayment() {
+        // Make an AJAX request to your server to create the Razorpay order
+        fetch("{% url 'home:create_order' order.id%}", {
+            method: 'POST',
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}" ,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            var options = {
+                key: data.key,
+                amount: data.amount, 
+                currency: 'INR',
+                order_id: data.order_id, // The Razorpay order ID from your server
+                "handler": function(response) {
+                      console.log(data.new_order_id)
+                        document.getElementById("order_id").value = data.order_id;
+                        document.getElementById("razorpay_payment_id").value = response.razorpay_payment_id;
+                        document.getElementById("razorpay_signature").value = response.razorpay_signature;
+                        document.getElementById("order_id_with_payment_pending").value = data.order_id_with_payment_pending;
+                        document.getElementById("payment-form").submit();
+                    },
+                prefill: {
+                    name: 'Customer Name',
+                    email: 'customer@example.com',
+                    contact: '9999999999'
+                },
+                theme: {
+                    color: "#F37254"
+                }
+            };
+
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+        })
+        .catch(error => {
+            console.error('Error creating Razorpay order:', error);
+            alert('Something went wrong. Please try again later.');
+        });
+    }
    </script>
 </body>
 </html>

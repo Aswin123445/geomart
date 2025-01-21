@@ -22,4 +22,12 @@ urlpatterns = [
     path('wishlist_delete/<int:id>/',views.wishlist_delete,name='wishlist_delete'),
     path('move_to_cart/<int:id>',views.move_to_cart,name='move_to_cart'),
     path('order_user_invoice/<int:id>',views.order_user_invoice,name='order_user_invoice'),
+    path('failed_orders/',views.failed_orders,name='failed_orders'),
+    path('create_order/<int:id>/',views.create_order,name='create_order'),
+    path('failed_order_payment/<int:id>/',views.failed_order_payment,name='failed_order_payment'),
+    
+    #user info
+    path('failed_order_info_page/',views.failed_order_info_page,name='failed_order_info_page'),
+
+
 ]

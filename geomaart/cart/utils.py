@@ -13,7 +13,7 @@ def process_order_transaction(cart, user, address_id, payment_method, payment_st
         # Create Order
         new_order = Order.objects.create(
             user=user,
-            total_amount=total
+            total_amount=total+40
         )
 
         # Create Order Items

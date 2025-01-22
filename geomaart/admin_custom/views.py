@@ -14,7 +14,7 @@ from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation,ProductUpdateForm
 from .forms import categoryValidation,ProductValidation,CouponCreationForm,OfferForm,OfferEdit
 from django.views.decorators.cache import never_cache
-from cart.models import Order, Wallet,ReturnRequest
+from cart.models import Order, OrderItem, Wallet,ReturnRequest
 from .models import Coupon
 from .forms import CouponFilterForm
 from django.db.models import Q
@@ -27,18 +27,96 @@ from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from .models import Offer,ProductOffer,CategoryOffer
+from django.db.models import Sum,Count
 
 # Create your views here.
 
 @login_required
 def dashboard(request):
-        context = {
-            'product_count':Product.objects.count(),
-            'total_user': UserData.objects.exclude(is_staff = True).count(),
-            'pending_orders': Order.objects.filter(status__in = [1,2,3],payment__status = 2).count()
+    total_orders = Order.objects.filter(Q(status=4) | Q(status=5),payment__status = 2)
+    users_date = None
+    labels = []
+    sales_data = []
+    dictionary_of_product_selling = {}
+    dictionary_of_category_selling = {}
+    top_category = OrderItem.objects.values('product__category__name') \
+    .annotate(order_count=Count('order')) \
+    .order_by('-order_count')[:5]
+    for cat in top_category :
+        print(cat)
+        dictionary_of_category_selling[cat['product__category__name']] = cat['order_count']
+        print(cat['product__category__name'])
+    print(dictionary_of_category_selling)
+    top_products = Product.objects.annotate(total_sales = Sum('items_order__quantity')).order_by('-total_sales')[:5]
+    for product in top_products:
+        data = product.items_order.all()
+        product_quantities = data.values('product__name').annotate(total_quantity=Sum('quantity'))
+        for item in product_quantities:
+            dictionary_of_product_selling[item['product__name']]= item['total_quantity']
+    if request.method == 'POST':
+        timeline = request.POST.get('timeline','daily')
+        date_ranges = {
+                    'daily': now().date() - timedelta(days=1),
+                    'weekly': now().date() - timedelta(days=7),
+                    'monthly': now().date() - timedelta(days=30),
+                    'yearly': now().date() - timedelta(days=365),
         }
-        response = render(request,'admin_template/dashboard.html',context)
-        return prevent_cache_view(response)
+        start_date = date_ranges.get(timeline, now().date() - timedelta(days=1))
+        total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
+     # Query completed orders and aggregate sales data
+    completed_orders = total_orders.filter(status=4)
+    total_orders_count = total_orders.count()
+    # Prepare sales data grouped by day
+    sales_datas = (
+        completed_orders
+        .annotate(day=TruncDay('created_at'))
+        .values('day')
+        .annotate(total_sales=Sum('total_amount'))
+        .order_by('day')
+    )
+    if sales_datas:  # Ensure sales_datas is not empty
+        # Get the date of the first and last order
+        first_order_date = sales_datas.first()['day']
+        last_order_date = sales_datas.last()['day']
+        
+        # Generate 15-day intervals from the first order date
+        interval_dates = []
+        current_date = first_order_date
+        while current_date <= last_order_date:
+            interval_dates.append(current_date)
+            current_date += timedelta(days=3)
+        
+        # Generate labels for 15-day intervals
+        labels = [date.strftime('%d %b') for date in interval_dates]
+        
+        # Calculate sales data for each 15-day interval
+        sales_data = []
+        for date in interval_dates:
+            interval_start = date
+            interval_end = date + timedelta(days=14)
+            total_sales = float(sum(
+                item['total_sales']
+                for item in sales_datas
+                if interval_start <= item['day'] <= interval_end
+            ))
+            sales_data.append(total_sales)
+    else:
+        labels = []
+        sales_data = []
+    context = {
+        'product_count':Product.objects.count(),
+        'total_user': UserData.objects.exclude(is_staff = True).count(),
+        'pending_orders': Order.objects.filter(status__in = [1,2,3],payment__status = 2).count(),
+        'labels': json.dumps(labels),
+        'sales_data': json.dumps((sales_data)),
+        'top_product':json.dumps(list(dictionary_of_product_selling.keys())),
+        'product_count':json.dumps(list(dictionary_of_product_selling.values())),
+        'top_category':json.dumps(list(dictionary_of_category_selling.keys())),
+        'category_count':json.dumps(list(dictionary_of_category_selling.values())),
+        'product_number':Product.objects.all().count()
+    }
+    response = render(request,'admin_template/dashboard.html',context)
+    return prevent_cache_view(response)
 @login_required
 def logout(request):
     log(request)  # Logout the user and clear the session

@@ -263,8 +263,6 @@ def checkout(request , id):
         'offers' :True,
         'amount_saved':amount_saved
     }
-    print(cart.total_price)
-    print(cart.discount_amount)
     return render(request,'checkout/checkout.html',context)
 def add_address_checkout(request,id):
     if request.method == 'POST' :

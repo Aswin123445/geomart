@@ -22,14 +22,14 @@ from django.template.loader import render_to_string
 from .models import Wishlist,WishlistItem
 from cart.models import Cart , CartItem , Wallet , ReturnRequest
 from django.views.decorators.csrf import csrf_exempt
-from razorpay.errors import SignatureVerificationError
-
+from django.db.models import Sum,F
 
 # Create your views here.
 
 razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_ID'], os.environ['RAZORPAY_SECRET_KEY']))
 @never_cache
 def hemepage(request):
+    location_based_product  = None
     if request.user.is_authenticated and UserData.objects.get(id=request.user.id).is_staff:
         return redirect('custom_admin:dashboard')
     else :
@@ -37,7 +37,30 @@ def hemepage(request):
             Prefetch('images', queryset=ProductImage.objects.order_by('id'), to_attr='prefetched_images')
             )
         category = Category.objects.filter(status = 1)
-        context ={'product':products,'category':category}
+        #recommended product
+        #collect all the items purchased by the usee
+        if request.user.is_authenticated:
+           user_order = Order.objects.filter(user = request.user)
+           top_order_user_item = OrderItem.objects.filter(order__in  = user_order)
+           if top_order_user_item:
+               most_bought_product = top_order_user_item.values('product')\
+               .annotate(total_quantity=Sum('quantity')) \
+               .order_by('-total_quantity') \
+               .first()
+               bought_product = Product.objects.filter(id =  most_bought_product['product']).first()
+               location = bought_product.location.id
+               location_based_product = Product.objects.filter(location = Location.objects.filter(id = location).first(),is_active = True, stock__gt = 0).prefetch_related(
+                   Prefetch('images', queryset=ProductImage.objects.order_by('id'), to_attr='prefetched_images')
+               )[:3]
+        top_products = Product.objects.annotate(total_sales = Sum('items_order__quantity')).order_by('-total_sales').filter(is_active = True, stock__gt = 0).prefetch_related(
+         Prefetch('images', queryset=ProductImage.objects.order_by('id'), to_attr='prefetched_images')
+        )[:3]
+
+        if not location_based_product:
+            location_based_product = products
+        if not top_products:
+            top_products = products
+        context = {'product':products,'category':category,'recommended':location_based_product,'top_products':top_products}
         return render(request,'home/home_page.html',context)
  
 
@@ -476,9 +499,9 @@ def create_order(request,id):
             "currency": currency,
             "order_id_with_payment_pending":order.id,
         })  
-
+@login_required
 def failed_orders(request  ):
-   orders_with_status_1 = Order.objects.filter(payment__status=1)
+   orders_with_status_1 = Order.objects.filter(payment__status=1,user= request.user)
    print(orders_with_status_1)
    context = {'order':orders_with_status_1}
    return render(request,'order/failed_orders.html',context)

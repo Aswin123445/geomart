@@ -43,10 +43,7 @@ def dashboard(request):
     .annotate(order_count=Count('order')) \
     .order_by('-order_count')[:5]
     for cat in top_category :
-        print(cat)
         dictionary_of_category_selling[cat['product__category__name']] = cat['order_count']
-        print(cat['product__category__name'])
-    print(dictionary_of_category_selling)
     top_products = Product.objects.annotate(total_sales = Sum('items_order__quantity')).order_by('-total_sales')[:5]
     for product in top_products:
         data = product.items_order.all()

@@ -18,3 +18,14 @@ class WishlistItem(models.Model):
 
     def __str__(self):
         return f"{self.product} in {self.wishlist.user.name}'s Wishlist"
+    
+class Review(models.Model):
+    user = models.ForeignKey(UserData, on_delete=models.CASCADE, related_name="reviews")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    content = models.TextField()
+    rating = models.PositiveSmallIntegerField() 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.product.name} ({self.rating} Stars)"

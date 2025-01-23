@@ -28,6 +28,9 @@ urlpatterns = [
     
     #user info
     path('failed_order_info_page/',views.failed_order_info_page,name='failed_order_info_page'),
+    
+    #review form 
+    path('review_submition/',views.review_submition ,name='review_submition')
 
 
 ]

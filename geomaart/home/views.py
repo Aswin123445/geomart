@@ -22,7 +22,7 @@ from django.template.loader import render_to_string
 from .models import Wishlist,WishlistItem
 from cart.models import Cart , CartItem , Wallet , ReturnRequest
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum,F
+from django.db.models import Sum
 
 # Create your views here.
 
@@ -142,8 +142,6 @@ def product_details(request, slug):
         'offer_name': offer_name,
     }
     return render(request, 'home/product/product_details.html', context)
-
-
 #profile views 
 @never_cache
 @login_required
@@ -332,6 +330,8 @@ def order_list(request):
     return render(request,'order/order_list.html',context)
 
 def order_details(request,id):
+    if request.method == 'POST':
+        print(request.POST['rating'])
     discount = None
     offer = False
     order = Order.objects.filter(id = id).first()
@@ -549,3 +549,8 @@ def failed_order_payment(request,id):
 #failed order infor page
 def failed_order_info_page(request):
     return render(request,'order/user_info_page/failed_payment_page.html')
+
+#review submition review 
+def review_submition(request):
+    id = request.POST.get('id')
+    return redirect('home:order_details', id)

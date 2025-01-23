@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Details</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  
+
   <style>
     .card-header {
       font-size: 1.25rem;
@@ -43,6 +46,15 @@
     .error-notification {
         background-color: red;
         color: white;
+    }
+    .star-rating .fa-star {
+      font-size: 30px;
+      color: gray;
+      cursor: pointer;
+    }
+
+    .star-rating .fa-star.checked {
+      color: gold;
     }
   </style>
 </head>
@@ -233,7 +245,11 @@
           <th>Quantity</th>
           <th>Price</th>
           <th>Total</th>
-          {%if not order.status == 5 or not order.status == 4%}<th>Action</th>{% endif %}
+          {%if  order.status != 5 and  order.status != 4%}<th>
+            Action</th>
+          {%else%}
+          <th>Rate Products</th>          
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -249,6 +265,8 @@
             <!-- Button to Remove Individual Item -->
             <button class="btn btn-danger btn-sm" onclick="removeItem(1)">Remove</button>
           </td>
+          {%else%}
+          <td><button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal" data-order-id="{{ orderitem.id }}">add your ratings</button></td>
           {%endif%}
         </tr>
         {% endif %}
@@ -276,6 +294,7 @@
                             Return Order
           </button>
           <a href="{% url 'home:order_user_invoice' order.id %}"><button class="btn btn-danger btn-warning" >Download Invoice</button></a>
+
   {% elif order.status == 4 and cancel_order  %}
   {% endif %}
 </div>
@@ -331,9 +350,51 @@
         <p class="mb-0 text-center">&copy; 2024 GeoMaart. All Rights Reserved.</p>
     </div>
 </footer>
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="reviewModalLabel">add review</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="review-form" method = "POST" action="{% url 'home:review_submition' %}" class="border p-4 rounded shadow-sm bg-light">
+              {% csrf_token %}
+      
+              <div class="mb-3">
+                <label for="reviewText" class="form-label">Review Text</label>
+                <textarea class="form-control" id="reviewText" rows="4" placeholder="Write your review here..." required></textarea>
+              </div>
+        
+              <div class="mb-3">
+                <label class="form-label">Rating</label>
+                <div>
+                  <input type="radio" class="btn-check" name="rating" id="rating1" value="1" required>
+                  <label class="btn btn-outline-warning" for="rating1">1 Star</label>
+        
+                  <input type="radio" class="btn-check" name="rating" id="rating2" value="2">
+                  <label class="btn btn-outline-warning" for="rating2">2 Stars</label>
+        
+                  <input type="radio" class="btn-check" name="rating" id="rating3" value="3">
+                  <label class="btn btn-outline-warning" for="rating3">3 Stars</label>
+        
+                  <input type="radio" class="btn-check" name="rating" id="rating4" value="4">
+                  <label class="btn btn-outline-warning" for="rating4">4 Stars</label>
+        
+                  <input type="radio" class="btn-check" name="rating" id="rating5" value="5">
+                  <label class="btn btn-outline-warning" for="rating5">5 Stars</label>
+                </div>
+              </div>
+              <input type="hidden" value = {{order.id}} name="id" >
+              <button type="submit" class="btn btn-primary w-100">Submit Review</button>
+            </form>
+          </div>
+      </div>
+  </div>
+</div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
    <script>
-            function closeNotification() {
+        function closeNotification() {
         document.getElementById("notification").style.display = "none";
         }
         document.querySelectorAll('.notification').forEach(notification => {

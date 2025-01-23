@@ -42,6 +42,7 @@ def dashboard(request):
     top_category = OrderItem.objects.values('product__category__name') \
     .annotate(order_count=Count('order')) \
     .order_by('-order_count')[:5]
+    print(top_category)
     for cat in top_category :
         dictionary_of_category_selling[cat['product__category__name']] = cat['order_count']
     top_products = Product.objects.annotate(total_sales = Sum('items_order__quantity')).order_by('-total_sales')[:5]
@@ -62,7 +63,6 @@ def dashboard(request):
         total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
      # Query completed orders and aggregate sales data
     completed_orders = total_orders.filter(status=4)
-    total_orders_count = total_orders.count()
     # Prepare sales data grouped by day
     sales_datas = (
         completed_orders

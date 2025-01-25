@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.shortcuts import redirect,render
 from django.urls import reverse
 import razorpay
-
+from django.views.decorators.cache import never_cache
 from home.utils import calculate_discounted_price
 from home.forms import AddressForm
 from .models import Cart,CartItem,Order, Payment,Wallet,UserCoupon,ReturnRequest
@@ -76,7 +76,7 @@ def product_to_cart(request, slug):
     else:
         messages.info(request, 'already in cart added quatity by 1')
     return redirect('home:product_details',slug)
-
+@never_cache
 @login_required
 def cart_page(request):
     offer = None
@@ -303,7 +303,6 @@ def placeorder(request, id=None):
                address_id = request.POST.get('address')
                payment_method = 3
                payment_status = 2
-
             else :
                address_id = request.POST.get('address')
                payment_method = request.POST.get('paymentMethod')
@@ -313,6 +312,7 @@ def placeorder(request, id=None):
                 Wallet.objects.get(user = request.user).deduct_amount(new_order.total_amount)
             print('why it\' not printed')
             print(new_order.total_amount)
+            print(new_order.id)
             messages.success(request, 'Order successfully placed')
             return redirect('cart:order_success_page')
 

@@ -666,7 +666,7 @@ from django.utils.timezone import now
 
 class DateValidations(forms.Form):
     start_date = forms.DateField(required=False)
-    enddate = forms.DateField(required=False)
+    end_date = forms.DateField(required=False)
 
     def clean(self):
         """
@@ -674,7 +674,7 @@ class DateValidations(forms.Form):
         """
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
-        enddate = cleaned_data.get('enddate')
+        enddate = cleaned_data.get('end_date')
         today = now().date()  # Get today's date
 
         # Check if only one of the dates is provided

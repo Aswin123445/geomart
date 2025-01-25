@@ -210,3 +210,30 @@ class AddressForm(forms.Form):
         cleaned_data = super().clean()
         return cleaned_data
 
+class ReviewForm(forms.Form):
+    review_text = forms.CharField(
+        max_length=1000,
+        required=True,
+    )
+    rating = forms.IntegerField(
+        required=True,
+    )
+    id = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        required=True
+    )
+    def clean_review_text(self):
+        """Ensure the review text is not empty."""
+        review_text = self.cleaned_data.get('review_text', '').strip()
+        if not review_text:
+            raise forms.ValidationError("Review text cannot be empty.")
+        return review_text
+
+    def clean_rating(self):
+        """Convert the rating to an integer."""
+        rating = self.cleaned_data.get('rating')
+        try:
+            return int(rating)
+        except ValueError:
+            raise forms.ValidationError("Invalid rating value.")
+

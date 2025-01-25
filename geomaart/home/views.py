@@ -13,13 +13,13 @@ from django.db.models import Prefetch
 from django.core.paginator import Paginator
 from accounts.models import Address
 from accounts.forms import FogotPasswordForm
-from .forms import AddressForm
+from .forms import AddressForm, ReviewForm
 from .utils import calculate_discounted_price, format_phone_number, generate_invoice, get_best_offer_name,send_otp_email,converter
 from accounts.utils import send_otp,validate_otp
 from django.contrib import messages
 from cart.models import Order, OrderItem, Payment,ShippingAddress
 from django.template.loader import render_to_string
-from .models import Wishlist,WishlistItem
+from .models import Wishlist,WishlistItem,Review
 from cart.models import Cart , CartItem , Wallet , ReturnRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
@@ -130,9 +130,20 @@ def product_details(request, slug):
             discounted_price = product.price - Decimal(discount_value)
             return discounted_price, best_offer.offer.name
         return product.price, None
-
     discounted_price, offer_name = calculate_discounted_price(product)
-
+    
+    #fetch all the user revies
+    reveiw = Review.objects.filter(product = product)
+    #averge rating 
+    total_revie_len= len(reveiw)
+    star_count = 0
+    average = 0
+    for i in reveiw :
+        star_count+= i.rating
+    if total_revie_len > 0 :
+      average = int(star_count/total_revie_len)
+    nonstar = 5-average
+    li=[average,nonstar]
     # Pass data to the template
     context = {
         'product': product,
@@ -140,6 +151,8 @@ def product_details(request, slug):
         'wishlist': if_product_exists,
         'discounted_price': discounted_price,
         'offer_name': offer_name,
+        'review':reveiw,
+        'avg_rating':li
     }
     return render(request, 'home/product/product_details.html', context)
 #profile views 
@@ -325,7 +338,7 @@ def reset_password(request):
     
 @login_required
 def order_list(request):
-    order = Order.objects.filter(user = request.user,payment__status = 2).order_by('status','created_at')
+    order = Order.objects.filter(user = request.user).order_by('status').order_by('-created_at')
     context = {'order':order}
     return render(request,'order/order_list.html',context)
 
@@ -359,6 +372,8 @@ def order_details(request,id):
         offer = True
     shipaddressaddress = ShippingAddress.objects.get(order = order)
     user_cancel = ReturnRequest.objects.filter(order = order)
+    product_ids = Review.objects.filter(user=request.user).values_list('product__id', flat=True)
+    print(product_ids)
     context = {
                   'order':order,
                   'order_item':order_item,
@@ -367,10 +382,10 @@ def order_details(request,id):
                   'is_offer':offer,
                   'offered':offered_value,
                   'cancel_order':user_cancel,
-                  'actual_amount':total_sum
+                  'actual_amount':total_sum,
+                  'review_product_id':product_ids
                }
     return render(request ,'order/order_details.html',context)
-
 
 #wishlist add page
 def product_detalls(request,slug):
@@ -378,12 +393,54 @@ def product_detalls(request,slug):
     product = Product.objects.filter(slug = slug).first()
     wishlistitem = WishlistItem.objects.filter(wishlist = wishlist)
     if_product_exists = wishlistitem.filter(product = product).exists()
+    print('what is happening here')
     if not  if_product_exists :
        WishlistItem.objects.create(wishlist = wishlist,product = product)
     else :
        messages.warning(request,'already in wishlist')
     product_images = [p.image.url for p in  product.images.all()]
-    context = {'product':product,'product_images':product_images,'wishlist':True}
+    def calculate_discounted_price(product):
+        offers = product.product_offers.all()
+        if offers:
+            best_offer = max(
+                offers,
+                key=lambda o: (
+                    product.price * o.offer.discount_value / 100
+                    if o.offer.offer_type == 1
+                    else o.offer.discount_value
+                )
+            )
+            discount_value = (
+                product.price * best_offer.offer.discount_value / 100
+                if best_offer.offer.offer_type == 1
+                else best_offer.offer.discount_value
+            )
+            discounted_price = product.price - Decimal(discount_value)
+            return discounted_price, best_offer.offer.name
+        return product.price, None
+    discounted_price, offer_name = calculate_discounted_price(product)
+    
+    #fetch all the user revies
+    reveiw = Review.objects.filter(product = product)
+    #averge rating 
+    total_revie_len= len(reveiw)
+    star_count = 0
+    average = 0
+    for i in reveiw :
+        star_count+= i.rating
+    if total_revie_len > 0 :
+      average = int(star_count/total_revie_len)
+    nonstar = 5-average
+    li=[average,nonstar]
+    context = {
+        'product':product,
+        'product_images':product_images,
+        'wishlist':True,
+        'review':reveiw,
+        'avg_rating':li,
+        'discounted_price': discounted_price,
+        'offer_name': offer_name,
+    }
     return render(request,'home/product/product_details.html',context)
 
 #wishlist remove page
@@ -393,7 +450,48 @@ def product_detoils(request,slug):
     WishlistItem.objects.filter(wishlist = wishlist ,product = product).delete()
     print('wishlist item deleted successfull')
     product_images = [p.image.url for p in  product.images.all()]
-    context = {'product':product,'product_images':product_images,'wishlist':False}
+    def calculate_discounted_price(product):
+        offers = product.product_offers.all()
+        if offers:
+            best_offer = max(
+                offers,
+                key=lambda o: (
+                    product.price * o.offer.discount_value / 100
+                    if o.offer.offer_type == 1
+                    else o.offer.discount_value
+                )
+            )
+            discount_value = (
+                product.price * best_offer.offer.discount_value / 100
+                if best_offer.offer.offer_type == 1
+                else best_offer.offer.discount_value
+            )
+            discounted_price = product.price - Decimal(discount_value)
+            return discounted_price, best_offer.offer.name
+        return product.price, None
+    discounted_price, offer_name = calculate_discounted_price(product)
+    
+    #fetch all the user revies
+    reveiw = Review.objects.filter(product = product)
+    #averge rating 
+    total_revie_len= len(reveiw)
+    star_count = 0
+    average = 0
+    for i in reveiw :
+        star_count+= i.rating
+    if total_revie_len > 0 :
+      average = int(star_count/total_revie_len)
+    nonstar = 5-average
+    li=[average,nonstar]
+    context = {
+        'product':product,
+        'product_images':product_images,
+        'wishlist':False,
+        'review':reveiw,
+        'avg_rating':li,
+        'discounted_price': discounted_price,
+        'offer_name': offer_name,
+    }
     return render(request,'home/product/product_details.html',context)
 
 def wishlist(request):
@@ -552,5 +650,18 @@ def failed_order_info_page(request):
 
 #review submition review 
 def review_submition(request):
-    id = request.POST.get('id')
+    id = request.POST.get('id',0)
+    product_id = request.POST.get('singleProduct',0)
+    form = ReviewForm(request.POST)
+    if form.is_valid():
+        Review.objects.create(
+            user = request.user,
+            product = OrderItem.objects.get(id = product_id).product,
+            content = form.cleaned_data.get('review_text','nothing to show'),
+            rating = form.cleaned_data.get('rating',0)
+        )
+        messages.success(request,'thank you for your response')
+    else :
+        error = list(form.errors.values())[0]
+        messages.error(request,error)
     return redirect('home:order_details', id)

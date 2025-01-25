@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -295,18 +296,17 @@
                         <!-- Ratings -->
                         <div class="d-flex align-items-center my-3">
                             <div class="rating">
+                                {% for i in avg_rating.0|range_filter %}
                                 <span class="text-warning fs-5">&#9733;</span>
-                                <span class="text-warning fs-5">&#9733;</span>
-                                <span class="text-warning fs-5">&#9733;</span>
-                                <span class="text-warning fs-5">&#9733;</span>
+                                {%endfor%}
+                                {%if avg_rating.1 > 0%}
+                                {% for i in avg_rating.1|range_filter %}
                                 <span class="text-muted fs-5">&#9734;</span>
+                                {%endfor%}
+                                {%endif%}
                             </div>
-                            <span class="ms-3 text-secondary">(4.5 / 5)</span>
+                            <span class="ms-3 text-secondary">({{avg_rating.0}} / 5)</span>
                         </div>
-                
-                        <!-- <p class="text-muted">Over <span class="text-primary fw-bold">1,200</span> users have bought this product.</p> -->
-                
-                        <!-- Add to Cart Button -->
                         <a href="{% url 'cart:product_to_cart' product.slug %}">
                             <button class="btn btn-danger btn-lg">Add to Cart</button>
                         </a>
@@ -316,13 +316,13 @@
                 
                         <!-- Wishlist Button -->
                         {% if not wishlist %}
-                        <a href="{% url 'home:product_details' product.slug %}">
+                        <a href="{% url 'home:product_detalls' product.slug %}">
                             <button class="btn btn-outline-primary btn-lg ms-2">
                                 <i class="bi bi-heart"></i> Add to Wishlist
                             </button>
                         </a>
                         {% else %}
-                        <a href="{% url 'home:product_details' product.slug %}">
+                        <a href="{% url 'home:product_detoils' product.slug %}">
                             <button class="btn btn-outline-primary btn-lg ms-2">
                                 <i class="bi bi-heart"></i> Remove from Wishlist
                             </button>
@@ -337,7 +337,34 @@
             <p class="text-muted fs-5">{{product.cultural_background.description}}</p>
         </div>
     </div>
+            <!-- User Reviews Section -->
+            <div class="mt-5">
+                <h2>User Reviews</h2>
+                {% if review%}
+                {% for i in review%}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{i.user.name}}</h5>
+                        <p class="card-text">{{i.content}}</p>
+                        <p class="text-muted">Rating: <span class="text-warning">
+                            {% for i in i.rating|range_filter %}
+                            &#9733;
+                            {% endfor %}
+                            {% if star_difference > 0 %}
+                            {% for i in star_difference|range_filter %}
+                            &#9734;
+                            {% endfor %}
+                            {%endif%}
+                        </span></p>
+                    </div>
+                </div>
+                {% endfor %}
+                {%else%}
+                No Reviews yet
+                {% endif %}
+                </div>
     </div>
+    
 
     <!-- Footer -->
     <footer class="footer text-center py-4">

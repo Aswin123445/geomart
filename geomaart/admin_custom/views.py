@@ -71,12 +71,11 @@ def dashboard(request):
         .annotate(total_sales=Sum('total_amount'))
         .order_by('day')
     )
-    if sales_datas:  # Ensure sales_datas is not empty
+    if sales_datas:  
         # Get the date of the first and last order
         first_order_date = sales_datas.first()['day']
         last_order_date = sales_datas.last()['day']
         
-        # Generate 15-day intervals from the first order date
         interval_dates = []
         current_date = first_order_date
         while current_date <= last_order_date:
@@ -499,7 +498,7 @@ def order_listing(request):
           return render(request,'admin_template/admin_ordermanagement/oder_management.html',context)
         else :
             messages.error(request,'there is no orders with the specified id')
-    orders_list = Order.objects.filter(payment__status = 2).order_by('-created_at').order_by('status')
+    orders_list = Order.objects.all().order_by('status').order_by('-created_at')
     if request.method == 'POST':
       user_order =  orders_list.get(id = int(request.POST.get('order_id')))
       previous_status = user_order.status
@@ -654,7 +653,6 @@ def sales_report(request):
         if form.is_valid():
             start_date = form.cleaned_data.get('start_date')
             end_date = form.cleaned_data.get('end_date')
-
             if start_date and end_date:
                 # Custom date range
                 total_orders = total_orders.filter(created_at__date__range=(start_date, end_date))
@@ -675,7 +673,9 @@ def sales_report(request):
                 start_date = date_ranges.get(timeline, now().date() - timedelta(days=1))
                 total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
         else:
-            print(form.errors)
+            error = list(form.errors.values())[0]
+            print(error)
+            messages.error(request,error)
 
     # Query completed orders and aggregate sales data
     completed_orders = total_orders.filter(status=4)
@@ -1060,7 +1060,7 @@ def delete_category_offer(request,id):
 
 #admin return order list
 def return_orders_list(request):
-    all_list = ReturnRequest.objects.all()
+    all_list = ReturnRequest.objects.all().order_by('-requested_date')
     context= {'all_request':all_list}
     return render(request,'admin_template/admin_ordermanagement/return_order.html',context)
 

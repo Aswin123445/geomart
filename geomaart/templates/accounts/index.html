@@ -101,12 +101,8 @@
           <li class="nav-item">
             <a class="nav-link px-3" href="{% url 'home:homepage' %}">Home</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link px-3" href="#">About</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link px-3" href="#">Contact</a>
-          </li>
+          <li class="nav-item"><a class="nav-link px-3" href="{% url 'home:about_page' %}">About</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="{% url 'home:contact_page' %}">Contact</a></li>
         </ul>
       </div>
     </div>
@@ -138,26 +134,26 @@
             <form id="registrationForm" method="post" action="{% url 'accounts:register' %}">
               {% csrf_token %}
               <div class="mb-3">
-                <input type="text" class="form-control fs-6" id="name" name="name" placeholder="Enter your name" required>
+                <input type="text" class="form-control fs-6" id="name" value="{{errors.name}}" name="name" placeholder="Enter your name" required>
                 <div class="invalid-feedback">Name is required.</div>
               </div>
               <div class="mb-3">
-                <input type="email" class="form-control fs-6" id="email" name="email" placeholder="Enter your email" required>
+                <input type="email" class="form-control fs-6" id="email" value="{{errors.email}}" name="email" placeholder="Enter your email" required>
                 <div class="invalid-feedback">Please enter a valid email address.</div>
               </div>
               <div class="mb-3">
                 <div class="input-group">
                   <span class="input-group-text">+91</span>
-                  <input type="tel" class="form-control" id="phone" name="phone_number" placeholder="Enter your phone number" required pattern="[0-9]{10}">
+                  <input type="tel" class="form-control" id="phone" name="phone_number" value="{{errors.phone_number}}" placeholder="Enter your phone number" required pattern="[0-9]{10}">
                 </div>
                 <div class="invalid-feedback">Please enter a valid 10-digit phone number.</div>
               </div>
               <div class="mb-3">
-                <input type="password" class="form-control" id="password" name="password1" placeholder="Create a password" required>
+                <input type="password" class="form-control" value="{{errors.password1}}" id="password" name="password1" placeholder="Create a password" required>
                 <div class="invalid-feedback">Password must be at least 6 characters.</div>
               </div>
               <div class="mb-3">
-                <input type="password" class="form-control" id="confirm_password" name="password2" placeholder="Confirm your password" required>
+                <input type="password" class="form-control" id="confirm_password" value="{{errors.password2}}" name="password2" placeholder="Confirm your password" required>
                 <div class="invalid-feedback">Passwords do not match.</div>
               </div>
               <button type="submit" class="btn btn-primary w-100">Create Account</button>

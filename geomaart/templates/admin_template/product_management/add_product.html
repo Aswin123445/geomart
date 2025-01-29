@@ -102,31 +102,31 @@
             <!-- Product Name -->
             <div class="mb-3">
                 <label for="productName" class="form-label">Product Name</label>
-                <input type="text" class="form-control" id="productName" name="name" placeholder="Enter product name" required>
+                <input type="text" class="form-control" value="{{errors.name}}" id="productName" name="name" placeholder="Enter product name" required>
             </div>
             
             <!-- Product Description -->
             <div class="mb-3">
                 <label for="productDescription" class="form-label">Description</label>
-                <textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Enter product description" required></textarea>
+                <textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Enter product description" required>{{errors.description}}</textarea>
             </div>
             
             <!-- Product Price -->
             <div class="mb-3">
                 <label for="productPrice" class="form-label">Price</label>
-                <input type="number" name="price" class="form-control" id="productPrice" placeholder="Enter product price" required>
+                <input type="number" name="price" value="{{errors.price}}" class="form-control" id="productPrice" placeholder="Enter product price" required>
             </div>
 
             <!-- Product Stock -->
             <div class="mb-3">
                 <label for="productStock" class="form-label">Stock</label>
-                <input type="number" name="stock" class="form-control" id="productStock" placeholder="Enter product stock" required>
+                <input type="number" value="{{errors.stock}}" name="stock" class="form-control" id="productStock" placeholder="Enter product stock" required>
             </div>
             <!-- Product Category -->
             <div class="mb-3">
                 <label for="productCategory" class="form-label">Category</label>
                 <select class="form-select" name="category" id="productCategory" required>
-                    <option selected>Select Category</option>
+                    <option value="{{default_category.id}}"  selected>{% if default_category %} {{default_category.name}} {%else%} Add category {%endif%}</option>
                     {% for cat in category %}
                        <option value="{{ cat.id }}">{{ cat.name }}</option>
                     {% endfor %}
@@ -136,13 +136,12 @@
             <div class="mb-3">
                 <label for="productLocation" class="form-label">Location</label>
                 <select class="form-select" name="location" id="productLocation" required>
-                    <option selected>Select Location</option>
+                    <option value="{{default_location.id}}"  selected>{% if default_location %} {{default_location.district}} {%else%} Add Location {%endif%}</option>
                     {% for loc in location %}
                       <option value="{{ loc.id }}">{{ loc.district }}</option>
                     {% endfor %}
                 </select>
             </div>
-
             <!-- Product Images -->
             <div class="mb-3">
                 <label for="productImages" class="form-label">Product Images</label>
@@ -154,7 +153,7 @@
             <!-- Cultural Background -->
             <div class="mb-3">
                 <label for="culturalBackground" class="form-label">Cultural Background</label>
-                <textarea class="form-control" name="culturalbackground" id="culturalBackground" rows="3" placeholder="Describe the cultural background of the product"></textarea>
+                <textarea class="form-control" name="culturalbackground" id="culturalBackground" rows="3" placeholder="Describe the cultural background of the product">{{errors.culturalbackground}}</textarea>
             </div>
 
             <!-- Is Active Checkbox -->
@@ -237,7 +236,7 @@
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.classList.add('img-thumbnail', 'm-2');
-                    img.style.width = '100px'; // Adjust the image size as needed
+                    img.style.width = '100px'; 
                     preview.appendChild(img);
                 };
                 reader.readAsDataURL(file);

@@ -78,7 +78,7 @@
       <!-- Coupon Code -->
       <div class="mb-3">
         <label for="couponCode" class="form-label">Coupon Code <span class="text-danger">*</span></label>
-        <input type="text" id="couponCode" name="coupon_code" class="form-control" placeholder="eg: ABC007 should be 6 charaters only letters and numbers allowed" required>
+        <input type="text" id="couponCode" value="{{errors.coupon_code}}" name="coupon_code" class="form-control" placeholder="eg: ABC007 should be 6 charaters only letters and numbers allowed" required>
       </div>
       <!-- Discount Type -->
       <div class="mb-3">
@@ -93,25 +93,25 @@
       <!-- Coupon Cap -->
       <div class="mb-3" id="couponCapContainer" style="display: none;">
         <label for="couponCap" class="form-label">Coupon Cap (Maximum Discount Amount)</label>
-        <input type="number" id="couponCap" name="coupon_cap" class="form-control" placeholder="Enter maximum discount amount">
+        <input type="number" id="couponCap" value="{{errors.coupon_cap}}" name="coupon_cap" class="form-control" placeholder="Enter maximum discount amount">
       </div>
 
 
       <!-- Discount Value -->
       <div class="mb-3">
         <label for="discountValue" class="form-label">Discount Value</label>
-        <input type="number" name="discount_value" id="discountValue" class="form-control" placeholder="Enter discount value (e.g., 10 for 10%)">
+        <input type="number" name="discount_value" id="discountValue" value="{{errors.discount_value}}" class="form-control" placeholder="Enter discount value (e.g., 10 for 10%)">
       </div>
 
       <!-- Validity Period -->
       <div class="row">
         <div class="col-md-6 mb-3">
           <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
-          <input type="date" id="startDate" name="start_date" class="form-control" required>
+          <input type="date" id="startDate" value="{{errors.start_date}}" name="start_date" class="form-control" required>
         </div>
         <div class="col-md-6 mb-3">
           <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
-          <input type="date" id="endDate" name="enddate" class="form-control" required>
+          <input type="date" id="endDate" value="{{errors.enddate}}" name="enddate" class="form-control" required>
         </div>
       </div>
 
@@ -119,18 +119,18 @@
       <div class="row">
         <div class="col-md-6 mb-3">
           <label for="usageLimit" class="form-label">Usage Limit (Global)</label>
-          <input type="number" id="usageLimit" name="coupon_limit" class="form-control" placeholder="Total number of times this coupon can be used">
+          <input type="number" id="usageLimit" value="{{errors.coupon_limit}}" name="coupon_limit" class="form-control" placeholder="Total number of times this coupon can be used">
         </div>
         <div class="col-md-6 mb-3">
           <label for="usagePerUser"  class="form-label">Usage Limit (Per User)</label>
-          <input type="number" name="limit_per_user" id="usagePerUser" class="form-control" placeholder="Number of times a user can use this coupon">
+          <input type="number" name="limit_per_user" value="{{errors.limit_per_user}}" id="usagePerUser" class="form-control" placeholder="Number of times a user can use this coupon">
         </div>
       </div>
 
       <!-- Minimum Purchase -->
       <div class="mb-3">
         <label for="minPurchase" class="form-label">Minimum Purchase Amount</label>
-        <input type="number" name="min_purchase_amount" id="minPurchase" class="form-control" placeholder="Enter minimum order amount to apply this coupon">
+        <input type="number" value="{{errors.min_purchase_amount}}" name="min_purchase_amount" id="minPurchase" class="form-control" placeholder="Enter minimum order amount to apply this coupon">
       </div>
 
       <!-- Status -->

@@ -47,6 +47,25 @@
         nav.navbar {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Added shadow to navbar */
         }
+        .notification {
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 16px; 
+    position: fixed; 
+    top: 10vh; 
+    right: 20px; 
+    width: 350px; 
+    border-radius: 5px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    z-index: 1000; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    }
+    .error-notification {
+       background-color: red;
+       color: white;
+    }
     </style>
 </head>
 <body>
@@ -78,7 +97,14 @@
             </ul>
         </div>
     </nav>
-
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+       {{ message }}
+        <button class="close-btn" onclick="closeNotification()">X</button>
+    </div>
+    {% endfor %}
+    {% endif %}
     <div class="container mt-5 form-container shadow mb-5">
         <h2 class="text-center">Edit Product</h2>
         <form method="POST">
@@ -213,6 +239,14 @@
         </div>
     </footer>
     <script>
+            function closeNotification() {
+        document.getElementById("notification").style.display = "none";
+    }
+    document.querySelectorAll('.notification').forEach(notification => {
+       setTimeout(() => {
+          notification.style.display = "none";
+       }, 5000); // 5000 milliseconds = 4 seconds
+    });
 function previewImages() {
     const preview = document.getElementById('imagePreview');
     const files = document.getElementById('productImages').files;

@@ -108,11 +108,10 @@
       <form method="POST">
         <!-- CSRF Token -->
         {% csrf_token %}
-
         <!-- Offer Name -->
         <div class="mb-3">
           <label for="offerName" class="form-label">Offer Name</label>
-          <input type="text" class="form-control" id="offerName" name="name" placeholder="Enter offer name" required>
+          <input type="text" value="{{errors.name}}" class="form-control" id="offerName" name="name" placeholder="Enter offer name" required>
           <div class="form-text">The name of the offer (e.g., Summer Sale, Winter Discount).</div>
         </div>
 
@@ -130,21 +129,21 @@
         <!-- Discount Value -->
         <div class="mb-3">
           <label for="discountValue" class="form-label">Discount Value</label>
-          <input type="number" class="form-control" id="discountValue" name="discount_value" min="0" step="0.01" placeholder="Enter discount value" required>
+          <input type="number" value="{{errors.discount_value}}" class="form-control" id="discountValue" name="discount_value" min="0" step="0.01" placeholder="Enter discount value" required>
           <div class="form-text">Specify the discount amount (e.g., 10 for 10% or $10).</div>
         </div>
 
         <!-- Start Date -->
         <div class="mb-3">
           <label for="startDate" class="form-label">Start Date</label>
-          <input type="date" class="form-control" id="startDate" name="start_date" required>
+          <input type="date" value="{{errors.start_date}}" class="form-control" id="startDate" name="start_date" required>
           <div class="form-text">The date when the offer becomes active.</div>
         </div>
 
         <!-- End Date -->
         <div class="mb-3">
           <label for="endDate" class="form-label">End Date</label>
-          <input type="date" class="form-control" id="endDate" name="end_date" required>
+          <input type="date" value="{{errors.end_date}}" class="form-control" id="endDate" name="end_date" required>
           <div class="form-text">The date when the offer expires.</div>
         </div>
 

@@ -28,9 +28,10 @@ urlpatterns = [
     
     #user info
     path('failed_order_info_page/',views.failed_order_info_page,name='failed_order_info_page'),
-    
     #review form 
-    path('review_submition/',views.review_submition ,name='review_submition')
-
+    path('review_submition/',views.review_submition ,name='review_submition'),
+    
+    path('about_page/',views.about_page ,name='about_page'),
+    path('contact_page/',views.contact_page ,name='contact_page'),
 
 ]

@@ -156,7 +156,7 @@
             <td>{{coup.discount_value}}</td>
             <td>{{coup.usage_limit}}</td>
             <td>{{coup.usage_count}}</td>
-            <td><span class="badge bg-success">{{coup.status}}</span></td>
+            <td><span class="{% if coup.status%}badge bg-success{%else%}badge bg-danger{%endif%}">{%if coup.status%}Active{%else%}Inactive{% endif %}</span></td>
             <td>{{coup.end_date}}</td>
             <td>
               <div class="dropdown">

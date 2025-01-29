@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Sales Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #555;
+        }
+        .report-details {
+            margin-bottom: 20px;
+        }
+        .report-details table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .report-details th, .report-details td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .report-details th {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .totals {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .metrics {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        {{today_date}}
+        <h1>GeoMaart Sales Report</h1>
+        <p>Generated on: {{ today_date|date:"Y-m-d" }}</p>
+    </header>
+
+    <section class="report-details">
+        <h2>Summary</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Customer Name</th>
+                    <th>date</th>
+                    <th>Amount</th>
+                    <th>Discount</th>
+                    <th>coupon</th>
+                    <th>Final Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in list %}
+                <tr>
+                    <td>{{forloop.counter}}</td>
+                    <td>{{ item.customer }}</td>
+                    <td>{{ item.date|date:"Y-m-d" }}</td>
+                    <td>{{ item.amount|floatformat:2 }}</td>
+                    <td>{{ item.discount|floatformat:2 }}</td>
+                    <td class="fw-semibold text-success">{{item.coupon}}</td>
+                    <td>{{item.final_amount}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="metrics">
+        <p><strong>Overall Sales Count:</strong> {{over_sales_count}}</p>
+        <p><strong>Overall Order Amount:</strong>{{order_amount}}</p>
+        <p><strong>Conversion Rate:</strong> {{conversion_rate|floatformat:2}} %</p>
+        <p><strong>Coupon Deductions:</strong>{{coupon_deduction|floatformat:2}}</p>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Geomaart. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

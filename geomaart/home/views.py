@@ -1,5 +1,4 @@
 from decimal import Decimal
-import json
 import razorpay
 from weasyprint import HTML
 import os
@@ -23,9 +22,10 @@ from .models import Wishlist,WishlistItem,Review
 from cart.models import Cart , CartItem , Wallet , ReturnRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
+import pdfkit
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 
 # Create your views here.
-
 razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_ID'], os.environ['RAZORPAY_SECRET_KEY']))
 @never_cache
 def hemepage(request):
@@ -64,17 +64,17 @@ def hemepage(request):
         return render(request,'home/home_page.html',context)
  
 
-@login_required
+@never_cache
 def home_user_search(request):
         if request.method == 'GET':
                 if query := request.GET.get('query', ''):
                         names_set = Product.objects.filter(name__icontains = query,is_active = True,stock__gt = 0)
                 else:
                         names_set = Product.objects.none()
-                        print('something bad happend here')
                 datas=[{'name':[product_data.slug,product_data.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
-@login_required
+        
+        
 @never_cache
 def product_listing(request, name=None):
     current_page_number = request.GET.get('page', 1)
@@ -93,7 +93,6 @@ def product_listing(request, name=None):
         }
         for product in results
     }
-    print(product_prices)
     paginator = Paginator(results, 3)
     page_obj = paginator.get_page(current_page_number)
     location = Location.objects.all()
@@ -105,6 +104,8 @@ def product_listing(request, name=None):
         'product_prices': product_prices,
     }
     return render(request, 'home/product/product_list.html', context)
+@never_cache
+@login_required
 def product_details(request, slug):
     wishlist = Wishlist.objects.filter(user=request.user).first()
     wishlistitem = WishlistItem.objects.filter(wishlist=wishlist)
@@ -188,7 +189,6 @@ def user_profile(request):
                 messages.error(request,data)
                 return redirect('home:user_profile')
         elif 'userName' in request.POST :
-            print('user name is here')
             if is_id :
                 user_data = UserData.objects.get(id = request.user)
                 user_data.name = request.POST.get('userName')
@@ -219,6 +219,7 @@ def user_profile(request):
     return render(request,'home/profile/user_profile.html',context)
 
 @login_required
+@never_cache
 def email_verification(request):
     if request.method == 'GET':
        email = UserData.objects.get(id=request.user.id).email
@@ -242,7 +243,8 @@ def email_verification(request):
         return redirect('home:user_profile')
     return redirect('home:user_profile')
 
-@login_required  
+@login_required
+@never_cache 
 def new_address(request):
     if request.method == 'POST' :
         form = AddressForm(request.POST)
@@ -271,6 +273,7 @@ def new_address(request):
     return render(request,'home/profile/address.html')
 
 @login_required
+@never_cache
 def set_primary_address(request,id):
     existing_primary= Address.objects.filter(user = request.user.id , is_primary = True).first()
     address= Address.objects.get(id=id)
@@ -297,6 +300,7 @@ def delete_address(request,id):
             return JsonResponse({"success": False, "message": "User not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
 @login_required
+@never_cache
 def edit_address(request , id):
     if request.method == 'POST':
         form = AddressForm(request.POST)
@@ -320,6 +324,7 @@ def edit_address(request , id):
 
 #reset password by the user 
 @login_required
+@never_cache
 def reset_password(request):
     error = False
     if request.method == 'POST':
@@ -337,14 +342,15 @@ def reset_password(request):
     return render(request,'accounts/forgot_password_form.html',{'error':error})
     
 @login_required
+@never_cache
 def order_list(request):
     order = Order.objects.filter(user = request.user).order_by('status').order_by('-created_at')
     context = {'order':order}
     return render(request,'order/order_list.html',context)
 
+@login_required
+@never_cache
 def order_details(request,id):
-    if request.method == 'POST':
-        print(request.POST['rating'])
     discount = None
     offer = False
     order = Order.objects.filter(id = id).first()
@@ -352,7 +358,6 @@ def order_details(request,id):
        typ = order.coupon.discount_type
        if typ == 1 :
            price =(order.total_amount / (100 - order.coupon.discount_value)) * order.coupon.discount_type*10
-           print(order.coupon.discount_value)
            discount ={ 
                     'value':price,
                     'original_amount':order.total_amount + price   
@@ -373,7 +378,6 @@ def order_details(request,id):
     shipaddressaddress = ShippingAddress.objects.get(order = order)
     user_cancel = ReturnRequest.objects.filter(order = order)
     product_ids = Review.objects.filter(user=request.user).values_list('product__id', flat=True)
-    print(product_ids)
     context = {
                   'order':order,
                   'order_item':order_item,
@@ -387,13 +391,14 @@ def order_details(request,id):
                }
     return render(request ,'order/order_details.html',context)
 
+@login_required
+@never_cache
 #wishlist add page
 def product_detalls(request,slug):
     wishlist = Wishlist.objects.filter(user = request.user).first()
     product = Product.objects.filter(slug = slug).first()
     wishlistitem = WishlistItem.objects.filter(wishlist = wishlist)
     if_product_exists = wishlistitem.filter(product = product).exists()
-    print('what is happening here')
     if not  if_product_exists :
        WishlistItem.objects.create(wishlist = wishlist,product = product)
     else :
@@ -443,12 +448,13 @@ def product_detalls(request,slug):
     }
     return render(request,'home/product/product_details.html',context)
 
+@login_required
+@never_cache
 #wishlist remove page
 def product_detoils(request,slug):
     wishlist = Wishlist.objects.filter(user = request.user).first()
     product = Product.objects.filter(slug = slug).first()
     WishlistItem.objects.filter(wishlist = wishlist ,product = product).delete()
-    print('wishlist item deleted successfull')
     product_images = [p.image.url for p in  product.images.all()]
     def calculate_discounted_price(product):
         offers = product.product_offers.all()
@@ -494,24 +500,32 @@ def product_detoils(request,slug):
     }
     return render(request,'home/product/product_details.html',context)
 
+
+@login_required
+@never_cache
 def wishlist(request):
     wishlist = Wishlist.objects.filter(user = request.user).first()
     wishlistitems = WishlistItem.objects.filter(wishlist = wishlist)
     context = {'wishlist':wishlistitems}
     return render(request,'home/wishlist/wishlist.html',context)
+
+
 @login_required
+@never_cache
 def wishlist_delete(request,id):
     if request.method == 'POST' :
         try :
             wishlist = WishlistItem.objects.get(id = id)
             name= wishlist.product.name
             wishlist.delete()
-            print('wishlist deleted ')
             return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "wishlist not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})  
+
+
 @login_required
+@never_cache
 def move_to_cart(request,id):
     wishlistitem = WishlistItem.objects.filter(id  = id)
     cart = Cart.objects.filter(user = request.user).first()
@@ -521,16 +535,14 @@ def move_to_cart(request,id):
     if CartItem.objects.filter(product = wishlistitem.first().product , cart = cart).exists():
         messages.warning(request,'product already in cart page')
     else :
-         print(cart)
-         print(wishlistitem.first().product)
          cart_item = CartItem.objects.create(cart = cart,product = wishlistitem.first().product)
          cart.total_price += cart_item.product.price
          cart.save()
-         
          messages.success(request,'moved to the cart page')
     return redirect('home:wishlist')
 
-
+@login_required
+@never_cache
 #user invoice for orders
 def order_user_invoice(request,id):
         # Render the template into HTML
@@ -565,15 +577,13 @@ def order_user_invoice(request,id):
         'invoice':invoice,
         'product_details':product_details
     }
-    os.add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
     html_content = render_to_string('order/order_invoice.html',context)
-    # Generate the PDF
-    pdf_file = HTML(string=html_content).write_pdf()
-    #Create HTTP response with PDF
+    pdf_file = pdfkit.from_string(html_content, False, configuration=PDFKIT_CONFIG)
     response = HttpResponse(pdf_file, content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="order_invoice.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
     return response
-
+@login_required
+@never_cache
 #payment razorpay create order
 def create_order(request,id):
     order = Order.objects.get(id = id)
@@ -597,13 +607,17 @@ def create_order(request,id):
             "currency": currency,
             "order_id_with_payment_pending":order.id,
         })  
+        
+        
 @login_required
+@never_cache
 def failed_orders(request  ):
    orders_with_status_1 = Order.objects.filter(payment__status=1,user= request.user)
-   print(orders_with_status_1)
    context = {'order':orders_with_status_1}
    return render(request,'order/failed_orders.html',context)
 
+@login_required
+@never_cache
 def failed_order_payment(request,id):
     discount = None
     offer = False
@@ -612,7 +626,6 @@ def failed_order_payment(request,id):
        typ = order.coupon.discount_type
        if typ == 1 :
            price =(order.total_amount / (100 - order.coupon.discount_value)) * order.coupon.discount_type*10
-           print(order.coupon.discount_value)
            discount ={ 
                     'value':price,
                     'original_amount':order.total_amount + price   
@@ -644,10 +657,14 @@ def failed_order_payment(request,id):
                }
     return render(request,'order/failed_order_payment.html',context)
 
+@login_required
+@never_cache
 #failed order infor page
 def failed_order_info_page(request):
     return render(request,'order/user_info_page/failed_payment_page.html')
 
+@login_required
+@never_cache
 #review submition review 
 def review_submition(request):
     id = request.POST.get('id',0)
@@ -665,3 +682,9 @@ def review_submition(request):
         error = list(form.errors.values())[0]
         messages.error(request,error)
     return redirect('home:order_details', id)
+
+def about_page(request):
+    return render(request,'home/static_page/about.html')
+
+def contact_page(request):
+    return render(request,'home/static_page/contact.html')

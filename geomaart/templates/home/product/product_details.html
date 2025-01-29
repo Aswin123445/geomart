@@ -134,13 +134,13 @@
                 <ul class="navbar-nav me-auto">
                     <!-- Left Aligned Links -->
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="#">Home</a>
+                        <a class="nav-link px-3" href="{% url 'home:homepage' %}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="#">About</a>
+                        <a class="nav-link px-3" href="{% url 'home:about_page' %}">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="#">Contact</a>
+                        <a class="nav-link px-3" href="{% url 'home:contact_page' %}">Contact</a>
                     </li>
                 </ul>
     
@@ -198,6 +198,15 @@
             </div>
         </div>
     </nav>
+    <div id="searchResultContainer" class="container mt-3" style="display: none; position: absolute; top: 38px; left: 37%; width: 30%; z-index: 10;">
+        <div class="card">
+            <div class="card-body ca">
+                <ul id="searchResultsList" class="list-group list-group-flush">
+                    <!-- Search results will be appended here dynamically -->
+                </ul>
+            </div>
+        </div>
+    </div>
     {% if messages %}
     {% for message in messages %}
     <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
@@ -311,9 +320,6 @@
                             <button class="btn btn-danger btn-lg">Add to Cart</button>
                         </a>
                 
-                        <!-- Buy Now Button -->
-                        <button class="btn btn-outline-success btn-lg ms-2">Buy Now</button>
-                
                         <!-- Wishlist Button -->
                         {% if not wishlist %}
                         <a href="{% url 'home:product_detalls' product.slug %}">
@@ -337,35 +343,50 @@
             <p class="text-muted fs-5">{{product.cultural_background.description}}</p>
         </div>
     </div>
-            <!-- User Reviews Section -->
-            <div class="mt-5">
-                <h2>User Reviews</h2>
-                {% if review%}
-                {% for i in review%}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">{{i.user.name}}</h5>
-                        <p class="card-text">{{i.content}}</p>
-                        <p class="text-muted">Rating: <span class="text-warning">
-                            {% for i in i.rating|range_filter %}
-                            &#9733;
-                            {% endfor %}
-                            {% if star_difference > 0 %}
-                            {% for i in star_difference|range_filter %}
-                            &#9734;
-                            {% endfor %}
-                            {%endif%}
-                        </span></p>
+<!-- User Reviews Section -->
+<div class="mt-5">
+    <h2 class="mb-4">User Reviews</h2>
+    {% if review %}
+        <div class="row gy-4">
+            {% for i in review %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px;">
+                                    {{ i.user.name|slice:":1" }}
+                                </div>
+                                <h5 class="mb-0">{{ i.user.name }}</h5>
+                            </div>
+                            <p class="card-text">{{ i.content }}</p>
+                            <div class="d-flex align-items-center">
+                                <div class="text-warning me-2">
+                                    {% for star in i.rating|range_filter %}
+                                        &#9733;
+                                    {% endfor %}
+                                    {% if star_difference > 0 %}
+                                        {% for empty_star in star_difference|range_filter %}
+                                            &#9734;
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Rating: {{ i.rating }}/5</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light text-muted small">
+                            <i class="bi bi-clock me-1"></i>{{ i.created_at|date:"M d, Y" }}
+                        </div>
                     </div>
                 </div>
-                {% endfor %}
-                {%else%}
-                No Reviews yet
-                {% endif %}
-                </div>
-    </div>
-    
-
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center">
+            No reviews yet. make your purchase  and  be the first one to review
+        </div>
+    {% endif %}
+</div>
+</div>
     <!-- Footer -->
     <footer class="footer text-center py-4">
         <div class="container">
@@ -452,6 +473,53 @@
             initializeZoom(); // Initialize zoom on the active image
             handleCarouselSlide(); // Set up carousel slide transition handling
         });
+        document.getElementById('searchInput').addEventListener('input', function () {
+        let debounceTimer;
+        debounceTimer = setTimeout(() => {
+            fetchResult(this.value)
+        }, 200);
+    });
+    const fetchResult = (query) => {
+        const resultContainer = document.getElementById('searchResultContainer');
+        const resultList = document.getElementById('searchResultsList');
+        
+        if (query.trim().length < 3) {
+            resultContainer.style.display = 'none';
+            return;
+        } else {
+            const queryUrl = "{% url 'home:home_user_search' %}?query=" + encodeURIComponent(query);
+            fetch(queryUrl)  // Replace with your actual API URL
+                .then(response => response.json())
+                .then(data => {
+                    resultList.innerHTML = '';  // Clear previous results
+
+                    if (data.results.length > 0) {
+                        data.results.forEach(result => {
+                            const listItem = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.style.textDecoration='none'
+                            link.style.color='black'
+                            link.href = `/product_details/${result.name[0]}`; 
+                            link.textContent = result.name[1];
+                            listItem.classList.add('list-group-item');
+                            listItem.appendChild(link);
+                            // listItem.textContent = result.name[1];
+                            resultList.appendChild(listItem);
+                        });
+                    } else {
+                        const noResultItem = document.createElement('li');
+                        noResultItem.classList.add('list-group-item');
+                        noResultItem.textContent = 'No matching data found';  // Corrected typo
+                        resultList.appendChild(noResultItem);
+                    }
+
+                    resultContainer.style.display = 'block';  // Show the result container
+                })
+                .catch(error => {
+                    console.error('Error fetching search result', error);
+                });
+        }
+    };
     </script>
     
 

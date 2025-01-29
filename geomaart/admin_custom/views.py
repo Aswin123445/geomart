@@ -9,29 +9,34 @@ from admin_custom.models import Category,Location,Product
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .forms import CouponUpdateForm, UserDataUpdation
+from .forms import CategoryEditForm, CouponUpdateForm, UserDataUpdation,LocationEditForm
 from django.contrib import messages
 from .forms import AdminUserAddForm,LocationValidation,ProductUpdateForm
 from .forms import categoryValidation,ProductValidation,CouponCreationForm,OfferForm,OfferEdit
 from django.views.decorators.cache import never_cache
 from cart.models import Order, OrderItem, Wallet,ReturnRequest
 from .models import Coupon
-from .forms import CouponFilterForm
 from django.db.models import Q
-from .forms import DateValidations
+from .forms import DateValidations, CouponFilterForm
 from django.utils.timezone import now, timedelta
 from django.db.models import Sum
 from django.db.models.functions import TruncDay
-from datetime import timedelta
+from datetime import timedelta 
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from .models import Offer,ProductOffer,CategoryOffer
 from django.db.models import Sum,Count
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+import pdfkit
+from datetime import date as da
 
+
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 # Create your views here.
-
 @login_required
+@never_cache
 def dashboard(request):
     total_orders = Order.objects.filter(Q(status=4) | Q(status=5),payment__status = 2)
     users_date = None
@@ -42,7 +47,6 @@ def dashboard(request):
     top_category = OrderItem.objects.values('product__category__name') \
     .annotate(order_count=Count('order')) \
     .order_by('-order_count')[:5]
-    print(top_category)
     for cat in top_category :
         dictionary_of_category_selling[cat['product__category__name']] = cat['order_count']
     top_products = Product.objects.annotate(total_sales = Sum('items_order__quantity')).order_by('-total_sales')[:5]
@@ -113,22 +117,21 @@ def dashboard(request):
     }
     response = render(request,'admin_template/dashboard.html',context)
     return prevent_cache_view(response)
+
 @login_required
 def logout(request):
     log(request)  # Logout the user and clear the session
-
     # Set HTTP headers to prevent caching of the login page and authenticated views
     response = redirect('accounts:signin')  # Adjust to your login URL
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
-
     return response
 
 #user management logic
 
-
 @login_required
+@never_cache
 def user_list(request):
     current_page_number=request.GET.get('page',1)
     all_user = UserData.objects.all()
@@ -139,27 +142,25 @@ def user_list(request):
     return prevent_cache_view(response)
 
 @login_required
+@never_cache
 def delete_user(request,id):
     if request.method == 'POST' :
         try :
             user = UserData.objects.get(id = id)
             name= user.name
             user.delete()
-            print('user deleted')
             return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
         except User.DoesNotExist :
             return JsonResponse({"success": False, "message": "User not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 
 @login_required
+@never_cache
 def edit_user(request, id):
     # Ensure the user is logged in
     if 'user' not in request.session:
         return redirect('accounts:signin')
-
     # Get the user instance
     user = get_object_or_404(UserData, id=id)
 
@@ -182,9 +183,9 @@ def edit_user(request, id):
     return render(request, 'admin_template/user_management/edit_user.html', context)
 
 @login_required
+@never_cache
 def add_user(request):
     if request.method =='POST':
-            print(request.POST)
             form = AdminUserAddForm(request.POST)
             if form.is_valid():
                 if 'admin' in form.cleaned_data['role'] :
@@ -195,7 +196,6 @@ def add_user(request):
                     form.cleaned_data['is_staff'] = False
                     form.cleaned_data['is_delivary_boy'] = False
                 form.cleaned_data['is_active'] = form.cleaned_data['status'] == 'active' 
-                print(form.cleaned_data)
 
                 user = UserData.objects.create_user(
                     name=form.cleaned_data['name'],
@@ -208,9 +208,8 @@ def add_user(request):
                 messages.success(request,'new user data is created sucessfully')
                 return redirect('custom_admin:user_list')
             else:
-                    print(form.errors)
-                    handle_form_errors(request,form)
-
+                handle_form_errors(request,form)
+                return render(request,'admin_template/user_management/add_user.html',{'errors':request.POST})
     return render(request,'admin_template/user_management/add_user.html')
 
 
@@ -239,21 +238,18 @@ def category_delete(request,id):
             catgory = Category.objects.get(id = id)
             name= catgory.name
             catgory.delete()
-            print('category deleted ')
             return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
         except User.DoesNotExist :
             return JsonResponse({"success": False, "message": "User not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
-
 @login_required
 @never_cache
 def category_edit(request,id) :
     error = False
     category = Category.objects.filter(id=id).first()
     if request.method == 'POST' :
-        forms= categoryValidation(request.POST)
+        forms= CategoryEditForm(request.POST,instance=category)
         if forms.is_valid():
-            print(forms.cleaned_data)
             category.name=forms.cleaned_data['categoryName']
             category.description = forms.cleaned_data['categoryDescription']
             category.status=int(forms.cleaned_data['categoryStatus'])
@@ -264,7 +260,6 @@ def category_edit(request,id) :
             error_message=list(forms.errors.values())
             messages.error(request,error_message[0][0])
             error=True
-    print(category.status)
     return render(request,'admin_template/category_management/edit_category.html',context={'category':category,'error':error})
 
 @login_required
@@ -282,10 +277,11 @@ def new_category(request):
             messages.success(request,'new category created add products to it')
             return redirect('custom_admin:category_list')
         else :
-            print('hello')
-            print(form.errors)
             error_message = list(form.errors.values())
             messages.error(request,error_message[0][0])
+            context = {'errors':request.POST}
+            error=True
+            return render(request,'admin_template/category_management/add_category.html',context)
     return render(request,'admin_template/category_management/add_category.html')
 
 @login_required
@@ -295,7 +291,6 @@ def search_category(request):
                         names_set = Category.objects.filter(name__icontains = query)
                 else:
                         names_set = Category.objects.none()
-                        print('something bad happend here')
                 datas=[{'name':[category.id,category.name]} for category in names_set]
                 return JsonResponse({'results':datas})
             
@@ -326,18 +321,18 @@ def location_delete(request,id):
             location = Location.objects.get(id = id)
             name= location.district
             location.delete()
-            print('category deleted ')
             return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
+
+@login_required
 @never_cache
 def location_edit(request,name ):
     error = False
     data = Location.objects.filter(slug=name).first()
-    print(f'data printed outside method {data}')
     if request.method == 'POST' :
-        forms = LocationValidation(request.POST)
+        forms = LocationEditForm(request.POST,instance= data)
         if forms.is_valid() :
             data.district = forms.cleaned_data['district']
             data.description = forms.cleaned_data['description']
@@ -360,21 +355,21 @@ def new_location(request):
                 )
             data.save()
             messages.success(request,'Location data saved to database')
-            print('data saved successfully to the data base')
             return redirect('custom_admin:location_list')
         else :
             error_message=list(forms.errors.values())
             messages.error(request,error_message[0][0])
-            
+            context = {'errors':request.POST}
+            return render(request,'admin_template/location_management/add_location.html',context)
     return render(request,'admin_template/location_management/add_location.html')
 
+@login_required
 def search_location(request):
         if request.method == 'GET':
                 if query := request.GET.get('query', ''):
                         names_set = Location.objects.filter(district__icontains = query)
                 else:
                         names_set = Category.objects.none()
-                        print('something bad happend here')
                 datas=[{'name':[location.id,location.district]} for location in names_set]
                 return JsonResponse({'results':datas})
 
@@ -399,22 +394,34 @@ def addproduct(request):
     all_category = Category.objects.all()
     all_location = Location.objects.all()
     list_temp_image =request.FILES.getlist('productImages')
-    if not list_temp_image :
-      messages.error(request,'please select images')
-      context={'category':all_category,'location':all_location}
-      return render(request,'admin_template/product_management/add_product.html',context)
     if request.method == 'POST':
-        print(request.POST['culturalbackground'])
+        list_temp_image =request.FILES.getlist('productImages')
+        if not list_temp_image :
+          messages.error(request,'please select images')
+          context={
+              'category':all_category,
+              'location':all_location,
+              'errors':request.POST,
+              'default_category':Category.objects.get(id = int(request.POST['category'])) if int(request.POST['category']) else None,
+              'default_location':Location.objects.get(id = int(request.POST['location'])) if int(request.POST['location']) else None,
+            }
+          return render(request,'admin_template/product_management/add_product.html',context)
         forms = ProductValidation(request.POST)
-
         if forms.is_valid():
-            print(f'{forms.cleaned_data} called in the view ')
             creating_product_instance(forms, request, list_temp_image)
             messages.success(request,'added new product')
             return redirect('custom_admin:product_listing')   
         else:
             error_message=list(forms.errors.values())
             messages.error(request,error_message[0][0])
+            errors = request.POST
+            return render(request,'admin_template/product_management/add_product.html',{
+                'errors':errors,
+                'category':all_category,
+                'location':all_location,
+                'default_category':Category.objects.get(id = int(request.POST['category'])) if int(request.POST['category']) else None,
+                'default_location':Location.objects.get(id = int(request.POST['location'])) if int(request.POST['location']) else None,
+            })
     context={'category':all_category,'location':all_location}
     return render(request,'admin_template/product_management/add_product.html',context)
 
@@ -425,7 +432,6 @@ def delete_product(request,id):
             product = Product.objects.get(id = id)
             name = product.name
             product.delete()
-            print('category deleted ')
             return JsonResponse({'success':True,'message':f'{name} \'s record was successfully deleted'})
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
@@ -438,16 +444,10 @@ def edit_product(request,name):
     category = Category.objects.all()
     location=Location.objects.all()
     data = Product.objects.select_related('location','category','cultural_background').get(slug = name)
-    # image_url = [image.image.url for image in data.images.all()]
-    # print(image_url)
-    # for image in data1.images.all():
-    #    print(image.image.url)
     if request.method == 'POST' :
         error = False
-        print(request.POST['location'])
         forms = ProductUpdateForm(request.POST)
         if forms.is_valid() :
-            print(forms.cleaned_data)
             product = Product.objects.get(slug = name)
             product.name = forms.cleaned_data['name']
             product.description = forms.cleaned_data['description']
@@ -462,7 +462,6 @@ def edit_product(request,name):
             messages.success(request,'product data updated successfully successfully')
             return redirect('custom_admin:product_listing')
         else :
-            print(forms.errors)
             messages.error(request,list(forms.errors.values())[0]) 
             error = True
     context = {'product':data,'error':error,'data_category':category,'data_location':location}
@@ -475,14 +474,14 @@ def search_product(request):
                         names_set = Product.objects.filter(name__icontains = query)
                 else:
                         names_set = Product.objects.none()
-                        print('something bad happend here')
                 datas=[{'name':[product_data.slug,product_data.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
             
 @login_required
+@never_cache
 def product_details(request,slug):
     data = Product.objects.select_related('category','location','cultural_background').get(slug = slug)
-    image_url = [ image.image.url for image in data.images.all()]
+    image_url = [ image for image in data.images.all()]
     context={'product':data,'image_url':image_url}
     return render(request,'admin_template/product_management/product_details.html',context)
 
@@ -538,20 +537,24 @@ def delete_order(request,id):
 
 
 #coupen management
+@login_required
+@never_cache
 def coupon_list(request,id=None):
     current_page_number=request.GET.get('page',1)
     if request.method == 'POST':
         form = CouponFilterForm(request.POST)
         if form.is_valid():
             query = {}
-            if not form.cleaned_data['status'] == None :
-                query['status'] = form.cleaned_data['status']
-            if  not form.cleaned_data['discount_type'] == None:
+            if  not form.cleaned_data['discount_type'] == 0:
                 query['discount_type'] = form.cleaned_data['discount_type']
+            if form.cleaned_data['status']:
+                query['status'] = form.cleaned_data['status']
+            else :
+                query['status'] = form.cleaned_data['status']
+            if query['status'] == None:
+                del query['status']
             coupons = Coupon.objects.filter(**query)
             paginator = Paginator(coupons,3)
-        else :
-            print(form.errors)
     elif id is None :
        coupons = Coupon.objects.all().order_by('-start_date')
        paginator = Paginator(coupons,3)
@@ -561,7 +564,8 @@ def coupon_list(request,id=None):
     page_obj=paginator.get_page(current_page_number)
     context = {'coupons':page_obj}
     return render(request,'admin_template/coupon_management/coup_list.html',context)
-
+@login_required
+@never_cache
 def create_coupon(request):
     if request.method == 'POST' :
         forms = CouponCreationForm(request.POST)
@@ -580,11 +584,12 @@ def create_coupon(request):
               coup = Coupon.objects.get(code = forms.cleaned_data['coupon_code'] )
               coup.cap_amount = request.POST['coupon_cap']
               coup.save()
+              messages.success(request,'your coupon created successfully congragulations')
             return redirect('custom_admin:coupon_list')
         else :
-            print(forms.errors)
             error = list(forms.errors.values())[0][0]
             messages.error(request,error)
+            return render(request,'admin_template/coupon_management/coupon_create.html',{'errors':request.POST})
     return render(request,'admin_template/coupon_management/coupon_create.html')
 
 #serach coupons
@@ -595,11 +600,11 @@ def search_coupons(request):
                     names_set = Coupon.objects.filter(code__icontains = query)
             else:
                     names_set = Product.objects.none()
-                    print('something bad happend here')
             datas=[{'name':[coupon_data.id,coupon_data.code]} for coupon_data in names_set]
             return JsonResponse({'results':datas})
             
 @login_required
+@never_cache
 def coupon_edit(request,id):
     get_coupnon = Coupon.objects.filter(id = id).first()
     if request.method == 'POST':
@@ -608,8 +613,6 @@ def coupon_edit(request,id):
             if Coupon.objects.filter(code = form.cleaned_data['coupon_type']).exclude(id = get_coupnon.id).count() > 0 :
                 messages.error(request,'this code already exist')
                 return redirect('custom_admin:coupon_edit')
-            print(form.cleaned_data)
-            print(request.POST['coupon_type'])
             get_coupnon.code = form.cleaned_data['coupon_code']
             get_coupnon.discount_type = form.cleaned_data['coupon_type']
             get_coupnon.discount_value = form.cleaned_data['discount_value']
@@ -618,29 +621,31 @@ def coupon_edit(request,id):
             get_coupnon.usage_limit = form.cleaned_data['coupon_limit']
             get_coupnon.usage_limit_per_user = form.cleaned_data['limit_per_user']
             get_coupnon.min_purchase_amount = form.cleaned_data['min_purchase_amount']
+            get_coupnon.status = form.cleaned_data['status']
             get_coupnon.save()
             messages.success(request,'coupon updated successfully')
             return redirect('custom_admin:coupon_list')
         else :
-            print(form.errors)
             error = list(form.errors.values())[0][0]
             messages.error(request,error)
     context = {'coupon':get_coupnon}
     return render(request,'admin_template/coupon_management/coupon_edit.html',context)
     
 @login_required
+@never_cache
 def delete_coupon(request,id):
     if request.method == 'POST' :
         try :
             coupon = Coupon.objects.get(id = id)
             code = coupon.code
             coupon.delete()
-            print('deleted the record')
             return JsonResponse({'success':True,'message':f'{code} \'s record was successfully deleted'})
         except Location.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
+@login_required
+@never_cache
 def sales_report(request):
     # Initial data setup
     total_orders = Order.objects.filter(Q(status=4) | Q(status=5),payment__status = 2)
@@ -674,7 +679,6 @@ def sales_report(request):
                 total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
         else:
             error = list(form.errors.values())[0]
-            print(error)
             messages.error(request,error)
 
     # Query completed orders and aggregate sales data
@@ -735,10 +739,13 @@ def sales_report(request):
         'labels': json.dumps(labels),
         'sales_data': json.dumps((sales_data)),
     }
+
     return render(request, 'admin_template/sales_report/salesreport.html', context)
 
 
 #admin sales pdf generator funtion
+@login_required
+@never_cache
 def download_sales_report_pdf(request):
     # Initial data setup
     total_orders = Order.objects.filter(Q(status=4) | Q(status=5))
@@ -771,11 +778,8 @@ def download_sales_report_pdf(request):
                 }
                 start_date = date_ranges.get(timeline, now().date() - timedelta(days=1))
                 total_orders = total_orders.filter(created_at__date__range=(start_date, now().date()))
-        else:
-            print(form.errors)
-
     # Query completed orders and aggregate sales data
-    completed_orders = total_orders.filter(status=4)
+    completed_orders = total_orders.filter(status=4).order_by('-created_at')
     total_orders_count = total_orders.count()
     # Prepare sales data grouped by day
     sales_datas = (
@@ -819,9 +823,9 @@ def download_sales_report_pdf(request):
     total_amount = sum(completed_orders.values_list('total_amount', flat=True))
     table_data, total_coupon_deductions = build_table_data(completed_orders)
     order_conversion_rate = calculate_order_conversion_rate(completed_orders.count(), total_orders_count)
-    
     # Context data for the template
     context = {
+        'today_date':da.today(),
         'over_sales_count': completed_orders.count(),
         'order_amount': total_amount,
         'coupon_deduction': total_coupon_deductions,
@@ -832,20 +836,16 @@ def download_sales_report_pdf(request):
         'labels': json.dumps(labels),
         'sales_data': json.dumps((sales_data)),
     }
-
-    # Render the template into HTML
-    os.add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
-    html_content = render_to_string('admin_template/sales_report/salesreport.html', context)
-    # Generate the PDF
-    pdf_file = HTML(string=html_content).write_pdf()
-
-    # Create HTTP response with PDF
+    # # Create HTTP response with PDF
+    html_content = render_to_string('admin_template/sales_report/sales_pdf.html', context)
+    pdf_file = pdfkit.from_string(html_content, False, configuration=PDFKIT_CONFIG)
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
-
     return response
 
 #offers imlementation
+@login_required
+@never_cache
 def offers(request,id = None):
     current_page_number=request.GET.get('page',1)
     if id is None :
@@ -858,6 +858,8 @@ def offers(request,id = None):
     context = {'offers':page_obj}
     return render (request,'admin_template/offer/offer.html',context)
 
+@login_required
+@never_cache
 def create_offer(request):
     if request.method == 'POST':
         form = OfferForm(request.POST)
@@ -877,27 +879,27 @@ def create_offer(request):
         else :
             errors = list(form.errors.values())[0]
             messages.error(request,errors)
+            return render(request,'admin_template/offer/offer_create.html',{'errors':request.POST})
     return render(request,'admin_template/offer/offer_create.html')
 
 @login_required
 def delete_offer(request,id):
     if request.method == 'POST' :
-        print('helo')
         try :
             offer = Offer.objects.get(id = id)
             offer_name = offer.name
             offer.delete()
-            print('deleted the record')
             return JsonResponse({'success':True,'message':f'{offer_name} \'s record was successfully deleted'})
         except Offer.DoesNotExist :
             return JsonResponse({"success": False, "message": "Location not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
 @login_required
+@never_cache
 def edit_offer(request,id):
     offer_data = Offer.objects.get(id = id)
     if request.method == 'POST':
-        form = OfferEdit(request.POST)
+        form = OfferEdit(request.POST,instance =offer_data)
         if form.is_valid():
             cleaned_data = form.cleaned_data
             cheking = Offer.objects.filter(name = cleaned_data['name']).exclude(name = offer_data.name)
@@ -928,7 +930,6 @@ def search_offer(request):
                         names_set = Offer.objects.filter(name__icontains = query)
                 else:
                         names_set = Offer.objects.none()
-                        print('something bad happend here')
                 datas=[{'name':[product_data.id,product_data.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
 def product_offer(request,id = None):
@@ -943,6 +944,8 @@ def product_offer(request,id = None):
     context = {'product_offers':page_obj}
     return render(request,'admin_template/offer/product_offer/listing.html',context)
 
+@login_required
+@never_cache
 def create_product_offer(request):
     offers = Offer.objects.all()
     if request.method == 'POST':
@@ -952,7 +955,6 @@ def create_product_offer(request):
         instance_checker = ProductOffer.objects.filter(offer = offers.get(id = int(request.POST.get('offer'))),product = product.first()).exists()
         if checker  and not instance_checker:
             is_active = 'on' == request.POST.get('is_active')
-            print(is_active)
             instance = product.first()
             offer = offers.get(id = int(request.POST.get('offer')))
             product_offer = ProductOffer.objects.create(
@@ -993,11 +995,13 @@ def search_product_offer(request):
                 return JsonResponse({'results':datas})
             
 @login_required
+@never_cache
 def edit_product_offer(request,id):
     product_offer = ProductOffer.objects.get(id = id)
     context = {'product_offer':product_offer}
     return render(request,'admin_template/offer/product_offer/edit.html',context)
-
+@login_required
+@never_cache
 def category_offer(request,id = None):
     current_page_number=request.GET.get('page',1)
     if id is None :
@@ -1010,6 +1014,8 @@ def category_offer(request,id = None):
     context = {'product_offers':page_obj}
     return render(request,'admin_template/offer/category/listing.html',context)
 
+@login_required
+@never_cache
 def create_category_offer(request):
     offers = Offer.objects.all()
     if request.method == 'POST':
@@ -1019,7 +1025,6 @@ def create_category_offer(request):
         instance_checker = CategoryOffer.objects.filter(offer = offers.get(id = int(request.POST.get('offer'))),category = category.first()).exists()
         if checker  and not instance_checker:
             is_active = 'on' == request.POST.get('is_active')
-            print(is_active)
             instance = category.first()
             offer = offers.get(id = int(request.POST.get('offer')))
             category_offer = CategoryOffer.objects.create(
@@ -1059,20 +1064,22 @@ def delete_category_offer(request,id):
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
 #admin return order list
+@login_required
+@never_cache
 def return_orders_list(request):
     all_list = ReturnRequest.objects.all().order_by('-requested_date')
     context= {'all_request':all_list}
     return render(request,'admin_template/admin_ordermanagement/return_order.html',context)
 
+@login_required
+@never_cache
 def approve_return_request(request,id):
     cancel_request = ReturnRequest.objects.get(id = id)
     cancel_request.approve()
     if cancel_request.status == 2 :
         amount = cancel_request.order.total_amount
-        print(amount)
         wallet = Wallet.objects.get(user = cancel_request.user)
         wallet.add_amount(amount)
-        print(f'{wallet.balance} this is my balance')
         wallet.save()
         #increase the stock of the inventory
         for ord in cancel_request.order.items.all():
@@ -1085,6 +1092,8 @@ def approve_return_request(request,id):
         
     return redirect('custom_admin:return_orders_list')
 
+@login_required
+@never_cache
 def reject_return_request(request,id):
     return_request = ReturnRequest.objects.get(id = id)
     return_request.reject()

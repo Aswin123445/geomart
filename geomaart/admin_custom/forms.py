@@ -9,7 +9,14 @@ from admin_custom.models import Category
 from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
 from .validationslogic import location_name_validations_check,product_integer_value_negative_check
 from .validationslogic import location_valid_check,category_valid_check
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import Location, Product  ,Coupon
+import re
+import datetime
 from .models import Offer
+from django import forms
+from datetime import date
 class UserDataUpdation(forms.Form):
     name = forms.CharField(
         max_length=150,
@@ -278,11 +285,78 @@ class categoryValidation(forms.Form):
         
         return cleaned_data
 
-    
-from django import forms
-from django.core.exceptions import ValidationError
-from .models import Location, Product  # Assuming there's a Location model
-import re
+
+class CategoryEditForm(forms.Form):
+    categoryName = forms.CharField(
+        required=True,
+        min_length=5,
+        max_length=50,
+        strip=True,
+        label="Category Name",
+        error_messages={
+            'required': 'Category name is required.',
+            'min_length': 'Minimum 5 characters are required for the category name.',
+            'max_length': 'Category name cannot exceed 50 characters.',
+        }
+    )
+    categoryDescription = forms.CharField(
+        required=True,
+        min_length=5,
+        max_length=400,
+        label="Category Description",
+        widget=forms.Textarea(attrs={'placeholder': 'Enter a detailed category description'}),
+        error_messages={
+            'required': 'Category description is required.',
+            'min_length': 'Category description must be at least 5 characters long.',
+            'max_length': 'Category description cannot exceed 400 characters.',
+        }
+    )
+    categoryStatus = forms.IntegerField(
+        min_value=1,
+        max_value=3,
+        required=True,
+        label="Category Status",
+        error_messages={
+            'required': 'Category status is required.',
+            'min_value': 'Invalid category status. It must be between 1 and 3.',
+            'max_value': 'Invalid category status. It must be between 1 and 3.',
+        }
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)  # Instance of the category being edited
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            # Pre-populate form fields with the existing data
+            self.fields['categoryName'].initial = self.instance.name
+            self.fields['categoryDescription'].initial = self.instance.description
+            self.fields['categoryStatus'].initial = self.instance.status
+
+    def clean_categoryName(self):
+        category_name = self.cleaned_data.get('categoryName')
+        # Skip validation if the name is unchanged
+        if self.instance and category_name.lower() == self.instance.name.lower():
+            return category_name
+        # Check for case-insensitive duplicates
+        if Category.objects.filter(name__iexact=category_name).exists():
+            raise ValidationError(f"The category '{category_name}' already exists.")
+        return category_name
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category_name = cleaned_data.get('categoryName')
+        category_description = cleaned_data.get('categoryDescription')
+
+        # Cross-field validation
+        if category_name and category_description:
+            if category_name.lower() in category_description.lower():
+                self.add_error(
+                    'categoryDescription',
+                    'Category description should not contain the category name.'
+                )
+        
+        return cleaned_data
+
 
 class LocationValidation(forms.Form):
     district = forms.CharField(
@@ -357,6 +431,84 @@ class LocationValidation(forms.Form):
             )
 
         return cleaned_data
+    
+class LocationEditForm(forms.Form):
+    district = forms.CharField(
+        max_length=100,
+        min_length=3,
+        strip=True,
+        required=True,
+        validators=[location_name_validations_check],  # Custom validator
+        error_messages={
+            'required': 'District name is required.',
+            'min_length': 'The district name is too short, please increase the length.',
+            'max_length': 'The district name exceeds the maximum limit of 100 characters.',
+        },
+    )
+    description = forms.CharField(
+        max_length=500,
+        min_length=3,
+        required=True,
+        validators=[location_name_validations_check],  # Custom validator
+        error_messages={
+            'required': 'Description is required.',
+            'min_length': 'The description is too short, please increase the length.',
+            'max_length': 'The description exceeds the maximum limit of 500 characters.',
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)  # Expecting an instance of the Location model
+        super().__init__(*args, **kwargs)
+
+    def clean_district(self):
+        """
+        Ensure district name is unique for other entries, case-insensitive, and valid.
+        """
+        district = self.cleaned_data['district'].strip().lower()
+
+        # Check for special characters and numbers
+        if re.search(r'[^a-z\s]', district):  # Allows only letters and spaces
+            raise ValidationError('District name should contain only letters and spaces.')
+
+        # Exclude current instance when checking for uniqueness
+        if Location.objects.filter(district__iexact=district).exclude(id=self.instance.id).exists():
+            raise ValidationError(f"A district with the name '{district}' already exists.")
+
+        return district
+
+    def clean_description(self):
+        """
+        Validate that the description is meaningful and doesn't contain invalid characters.
+        """
+        description = self.cleaned_data['description'].strip()
+
+        # Ensure description has at least two words
+        if len(description.split()) < 2:
+            raise ValidationError('Description must contain at least two words.')
+
+        # Check for invalid characters
+        if re.search(r'[^\w\s.,]', description):  # Allows letters, numbers, spaces, commas, and periods
+            raise ValidationError('Description contains invalid characters.')
+
+        return description
+
+    def clean(self):
+        """
+        Perform cross-field validation.
+        """
+        cleaned_data = super().clean()
+
+        district = cleaned_data.get('district')
+        description = cleaned_data.get('description')
+
+        if district and description and district.lower() in description.lower():
+            self.add_error(
+                'description', 'Description should not merely repeat the district name.'
+            )
+
+        return cleaned_data
+
 
 
 class ProductValidation(forms.Form):
@@ -547,62 +699,129 @@ class ProductUpdateForm(forms.Form):
 
         return cleaned_data
 
-from django import forms
-from django.core.exceptions import ValidationError
-from datetime import date
-from .models import Coupon  # Replace with the actual model name
 
 class CouponCreationForm(forms.Form):
     coupon_code = forms.CharField(
         max_length=6,
         min_length=6,
-        validators=[coupon_special_character_check]
+        required=True,
+        validators=[coupon_special_character_check],
+        error_messages={
+            "required": "Coupon code is required.",
+            "max_length": "Coupon code cannot exceed 6 characters.",
+            "min_length": "Coupon code must be at least 6 characters."
+        }
     )
     coupon_type = forms.IntegerField(
         min_value=1,
-        max_value=3
+        max_value=3,
+        required=True,
+        error_messages={
+            "required": "Coupon type is required.",
+            "min_value": "Coupon type must be between 1 and 3.",
+            "max_value": "Coupon type must be between 1 and 3."
+        }
     )
-    start_date = forms.DateField()
-    enddate = forms.DateField()
+    start_date = forms.DateField(
+        required=True,
+        error_messages={
+            "required": "Start date is required.",
+            "invalid": "Enter a valid date in YYYY-MM-DD format."
+        }
+    )
+    enddate = forms.DateField(
+        required=True,
+        error_messages={
+            "required": "End date is required.",
+            "invalid": "Enter a valid date in YYYY-MM-DD format."
+        }
+    )
     coupon_limit = forms.IntegerField(
         min_value=1,
+        required=True,
+        error_messages={
+            "required": "Coupon limit is required.",
+            "min_value": "Coupon limit must be at least 1."
+        }
     )
-    discount_value = forms.IntegerField(min_value=1)
+    discount_value = forms.IntegerField(
+        min_value=1,
+        required=True,
+        error_messages={
+            "required": "Discount value is required.",
+            "min_value": "Discount value must be at least 1."
+        }
+    )
     limit_per_user = forms.IntegerField(
-        min_value=1
+        min_value=1,
+        required=True,
+        error_messages={
+            "required": "Limit per user is required.",
+            "min_value": "Limit per user must be at least 1."
+        }
     )
-    min_purchase_amount = forms.IntegerField()
-    status = forms.IntegerField(min_value=0, max_value=1)
-    
+    min_purchase_amount = forms.IntegerField(
+        required=True,
+        error_messages={
+            "required": "Minimum purchase amount is required."
+        }
+    )
+    status = forms.IntegerField(
+        min_value=0,
+        max_value=1,
+        required=True,
+        error_messages={
+            "required": "Status is required.",
+            "min_value": "Status must be 0 or 1.",
+            "max_value": "Status must be 0 or 1."
+        }
+    )
+
     def clean_coupon_code(self):
         """Ensure the coupon code is unique and converted to uppercase."""
-        data = self.cleaned_data['coupon_code']
+        data = self.cleaned_data.get('coupon_code')
         if data:
             data = data.upper()  # Convert to uppercase
             # Check uniqueness against the database
             if Coupon.objects.filter(code=data).exists():
                 raise ValidationError("A coupon with this code already exists.")
         else:
-            raise ValidationError("This field cannot be empty.")
+            raise ValidationError("Coupon code is required.")
         return data
 
     def clean(self):
-        """Ensure start date is less than end date."""
+        """Custom validations for the form."""
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         enddate = cleaned_data.get('enddate')
-        
+        coupon_type = cleaned_data.get('coupon_type')
+        discount_value = cleaned_data.get('discount_value')
+        today = datetime.date.today()
+
+        # Check that enddate is not in the past
+        if enddate and enddate < today:
+            self.add_error('enddate', "The end date cannot be in the past.")
+
         # Check that start_date is less than enddate
         if start_date and enddate:
             if start_date >= enddate:
-                raise ValidationError(
-                    "Start date must be earlier than the end date."
+                self.add_error(
+                    'start_date', "Start date must be earlier than the end date."
                 )
-        
+
+        # If coupon type is 1, ensure discount value is less than 100
+        if coupon_type == 1 and discount_value and discount_value >= 100:
+            self.add_error(
+                'discount_value', "For percentage coupons, the value must be less than 100."
+            )
+
         # Optional: Check start date is not in the past
-        if start_date and start_date < date.today():
-            raise ValidationError("Start date cannot be in the past.")
+        if start_date and start_date < today:
+            self.add_error('start_date', "Start date cannot be in the past.")
+
         return cleaned_data
+
+
 class CouponUpdateForm(forms.Form):
     coupon_code = forms.CharField(
         max_length=6,
@@ -635,23 +854,40 @@ class CouponUpdateForm(forms.Form):
         return data
 
     def clean(self):
-        """Ensure start date is less than end date."""
+        """Ensure start date is less than end date and other custom validations."""
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         enddate = cleaned_data.get('enddate')
-        
+        coupon_type = cleaned_data.get('coupon_type')
+        discount_value = cleaned_data.get('discount_value')
+        today = datetime.date.today()
+
         # Check that start_date is less than enddate
         if start_date and enddate:
             if start_date >= enddate:
                 raise ValidationError(
                     "Start date must be earlier than the end date."
                 )
+
+        # Check that enddate is not in the past
+        if enddate and enddate < today:
+            raise ValidationError("The end date cannot be in the past.")
+
+        # If coupon type is 1, ensure discount value is less than 100
+        if coupon_type == 1 and discount_value >= 100:
+            raise ValidationError(
+                "for percentage coupon the value should be less than 100"
+            )
+
+        return cleaned_data
+
+
         
 
 
 class CouponFilterForm(forms.Form):
     status = forms.NullBooleanField()
-    type = forms.IntegerField()
+    discount_type = forms.IntegerField()
     def clean_type(self):
         data = self.cleaned_data['type']
         if data == 0 :
@@ -736,31 +972,44 @@ class OfferForm(forms.Form):
         return cleaned_data
 
 class OfferEdit(forms.Form):
-    name = forms.CharField(max_length=255, required=True)
-    offer_type = forms.ChoiceField(choices=[('1', 'Percentage'), ('2', 'Fixed Amount')], required=True)
-    discount_value = forms.DecimalField(min_value=0, required=True)
-    start_date = forms.DateField(required=True)
-    end_date = forms.DateField(required=True)
+    name = forms.CharField(max_length=255, required=False)
+    offer_type = forms.ChoiceField(
+        choices=[('1', 'Percentage'), ('2', 'Fixed Amount')],
+        required=False
+    )
+    discount_value = forms.DecimalField(min_value=0, required=False)
+    start_date = forms.DateField(required=False)
+    end_date = forms.DateField(required=False)
     is_active = forms.BooleanField(required=False)
 
+    def __init__(self, *args, **kwargs):
+        # Accept the instance of the current offer being edited
+        self.offer_instance = kwargs.pop('instance', None)
+        super().__init__(*args, **kwargs)
+
     def clean_name(self):
-        # Capitalize the name field value
-        name = self.cleaned_data['name'].capitalize()
+        name = self.cleaned_data.get('name', '').capitalize()
+
+        # Skip if name is not provided
+        if not name:
+            return name
+
+        # Check for duplicate names, excluding the current instance
+        if Offer.objects.filter(name=name).exclude(id=self.offer_instance.id).exists():
+            raise forms.ValidationError("This offer name already exists.")
+
         return name
 
     def clean_start_date(self):
-        start_date = self.cleaned_data['start_date']
-        today = date.today()
-
-        if start_date < today:
-            raise forms.ValidationError("Start date cannot be in the past.")
+        start_date = self.cleaned_data.get('start_date')
         return start_date
 
     def clean_end_date(self):
-        end_date = self.cleaned_data['end_date']
+        end_date = self.cleaned_data.get('end_date')
         today = date.today()
 
-        if end_date < today:
+        # Allow empty end_date since it's optional for editing
+        if end_date and end_date < today:
             raise forms.ValidationError("End date cannot be in the past.")
         return end_date
 
@@ -772,10 +1021,6 @@ class OfferEdit(forms.Form):
         # Validate that start_date is earlier than or equal to end_date
         if start_date and end_date and start_date > end_date:
             raise forms.ValidationError("Start date must be earlier than or equal to the end date.")
+
         return cleaned_data
 
-
-    
-        
-  
-        

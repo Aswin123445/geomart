@@ -74,17 +74,16 @@
                 <form  method="POST">
                     <!-- CSRF Token -->
                     {% csrf_token %}
-
                     <!-- District (Location) -->
                     <div class="mb-3">
                         <label for="district" class="form-label fw-bold">District</label>
-                        <input type="text" id="district" name="district" class="form-control" placeholder="Enter the district name" required>
+                        <input type="text" id="district" name="district" value="{{errors.district}}" class="form-control" placeholder="Enter the district name" required>
                     </div>
 
                     <!-- Description -->
                     <div class="mb-3">
                         <label for="description" class="form-label fw-bold">Description</label>
-                        <textarea id="description" name="description" class="form-control" rows="4" placeholder="Enter a description for this district"></textarea>
+                        <textarea id="description" name="description" class="form-control" rows="4" placeholder="Enter a description for this district">{{errors.description}}</textarea>
                     </div>
 
                     <!-- Submit Button -->

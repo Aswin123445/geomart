@@ -32,7 +32,6 @@ def product_to_cart(request, slug):
         messages.error(request, 'Out of stock. Please stay tuned; the product will be added soon.')
         return redirect('home:product_details')
     cart, created = Cart.objects.get_or_create(user=request.user)
-    print('cart eidher created or fetched')
     cart_item, created = CartItem.objects.update_or_create(
         cart=cart,
         product=product,
@@ -44,17 +43,12 @@ def product_to_cart(request, slug):
         }
     )
     if cart_item :
-        print(type(cart.total_price))
-        print(type(cart_item.product.price))
         cart.total_price +=  cart_item.product.price
         cart.save()
     #quantity checking
-    print('total price increment')
     checker = Cart.objects.filter(user=request.user).first().items.filter(product = product).first()
 
     if checker and not checker.quantity<=product.stock  :
-        print('then how this implemented')
-        print(created)
         if not created :
             cart.total_price -= cart_item.product.price
             cart_item.quantity -= 1
@@ -76,12 +70,12 @@ def product_to_cart(request, slug):
     else:
         messages.info(request, 'already in cart added quatity by 1')
     return redirect('home:product_details',slug)
+
 @never_cache
 @login_required
 def cart_page(request):
     offer = None
     coupen_details_context = None
-    print(request.POST.get('coupon_code',0))
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart.discount_amount = Decimal('0.00')
     cart.temporary_coupon_code = ''
@@ -93,10 +87,10 @@ def cart_page(request):
            component =  ca.product.product_offers.all()
            if component.exists():
                offer.append(component)
-        print(f'let check the offer is null{offer}')
     if request.method == 'POST' and  'coupon_code' in request.POST  :
         #validate coupon
         coupon_code = Coupon.objects.filter(code = request.POST['coupon_code'],status = True).first()
+        print(coupon_code.code)
         if coupon_code and not offer :
            status =  validate_coupon(coupon_code,cart)
            if status['is_valid'] :
@@ -114,12 +108,9 @@ def cart_page(request):
                      is_coupon_valid['status'] = False
                      is_coupon_valid['message'] = 'you have exeeded the limit for this coupon'   
                  if not is_coupon_valid['status'] :    
-                    print('something bad happend here')      
                     messages.error(request,is_coupon_valid['message'])
                     return redirect('cart:cart_page')
              if coupon_code.discount_type == 1 :
-                 print('why so serious')
-                 print(coupon_code.cap_amount)
                  cart.discount_amount = min(cart.total_price*coupon_code.discount_value*Decimal('0.01'),coupon_code.cap_amount)
              else :
                  cart.discount_amount = coupon_code.discount_value
@@ -130,7 +121,6 @@ def cart_page(request):
               messages.warning(request,status['message'])  
         else :
             if offer :
-                print(offer)
                 messages.warning(request,'can\'t apply offers  coupons discounts is already applied to this product')
             else :
                 messages.error(request,'sorry no such coupen exists')
@@ -147,19 +137,15 @@ def cart_page(request):
               if difference < 0 :
                   cart.total_price += (abs(difference)*cart_item.product.price)
                   cart_item.offer_price += (abs(difference)*calculate_discounted_price(cart_item.product))
-                  print(f'offer pirce {cart_item.offer_price}')
               elif difference > 0 :
                   cart.total_price -= (abs(difference)*cart_item.product.price)
                   cart_item.offer_price -= (abs(difference)*calculate_discounted_price(cart_item.product))
-                  print(f'offer pirce {cart_item.offer_price}')
               else :
                  print('total_price is not updated')
               cart.discount_amount = Decimal('0.00') 
               cart.save()
-              print(cart.items.all().count())
               cart_item.quantity = form.cleaned_data['quantity'] 
               cart_item.save()
-              print(cart.discount_amount)
               messages.success(request,'quantity changed successfully')
               return redirect('cart:cart_page')
            else :
@@ -187,10 +173,7 @@ def cart_page(request):
         })
         item.offer_price = discounted_price * item.quantity
         item.save()
-        print(item.offer_price)
     cart.total_price = sum(cart_all_items.values_list('offer_price',flat=True))
-    print(cart.total_price)
-    print(f'yeah something {cart_all_items_with_discount}')
     context = {
         'cartitem':cart_all_items,
         'sub_toal':rounde_value,
@@ -206,7 +189,6 @@ def cart_page(request):
 def delete_cart_item(request,id):
     if request.method == 'POST' :
         try :
-            print(id)
             cart_item = CartItem.objects.get(id = id)
             cart = Cart.objects.get(user = request.user)
             cart.total_price -= cart_item.offer_price
@@ -214,8 +196,6 @@ def delete_cart_item(request,id):
             cart.save()
             cart_item.delete()
             cart_price = cart.total_price
-            print('record is deleted')
-            print(cart_price)
             return JsonResponse({'success':True,'message':f'record was successfully deleted','total_price_json':cart_price})
         except Exception :
             return JsonResponse({"success": False, "message": "User not found."})
@@ -223,6 +203,7 @@ def delete_cart_item(request,id):
 
 #checkout page 
 @login_required
+@never_cache
 def checkout(request , id):
     original_price = 0
     coupon_applied = False
@@ -231,14 +212,10 @@ def checkout(request , id):
     # if not cart.user.is_phone_number_verified :
     #     messages.warning(request,'please verify your phonenumber before checkout')
     #     return redirect('home:user_profile')
-    print(f'helo this is aswin{cart.discount_amount}')
     cart_item = CartItem.objects.filter(cart = cart)
-    print(cart.total_price)
-    print(f'that amount {cart.discount_amount}')
     for elements in cart_item :
         original_price += elements.product.price*elements.quantity
     discount_price = original_price - cart.discount_amount
-    print(discount_price)
     if not discount_price == original_price :
         coupon_applied = True
     address =  Address.objects.filter(user = request.user)
@@ -246,7 +223,6 @@ def checkout(request , id):
     #     messages.error(request,'please add a address to shop')
     #     return redirect('home:user_profile')
     amount_saved =original_price - cart.total_price
-    print(f'amount saved {amount_saved}')
     wallet_amount = Wallet.objects.get(user = request.user).balance
     if not amount_saved == 0:
         offers = True
@@ -264,6 +240,8 @@ def checkout(request , id):
         'amount_saved':amount_saved
     }
     return render(request,'checkout/checkout.html',context)
+@login_required
+@never_cache
 def add_address_checkout(request,id):
     if request.method == 'POST' :
         form = AddressForm(request.POST)
@@ -310,18 +288,15 @@ def placeorder(request, id=None):
             new_order = process_order_transaction(cart, request.user, address_id, payment_method, payment_status)
             if new_order and request.POST.get('action') == 'wallet' :
                 Wallet.objects.get(user = request.user).deduct_amount(new_order.total_amount)
-            print('why it\' not printed')
-            print(new_order.total_amount)
-            print(new_order.id)
             messages.success(request, 'Order successfully placed')
             return redirect('cart:order_success_page')
 
         except Exception as e:
-            print(e)
             return redirect('cart:cart_page')
     return redirect('checkout')
 
 @login_required
+@never_cache
 def order_success_page(request):
     return render(request,'order/user_info_page/order_success.html')
 
@@ -353,6 +328,7 @@ def cancelorder(request , id):
 
 
 #payment razorpay create order
+@login_required
 def create_order(request,id = None):
     address =  Address.objects.filter(user = request.user)
     if not address.exists():
@@ -366,7 +342,6 @@ def create_order(request,id = None):
         payment_method = 2
         payment_status = 1
         body = json.loads(request.body)
-        print(body)
         address_id = body.get('address_id')
         currency = "INR"
         # Create Razorpay order
@@ -398,7 +373,6 @@ def verify_payment(request):
                 "razorpay_signature": razorpay_signature
             })
             #change the payment status to success
-            print('new order created cart also updated')
             # Payment successful
             order = Order.objects.get(id = order_id)
             order.payment.status = 2
@@ -409,7 +383,7 @@ def verify_payment(request):
             # Payment verification failed
             return HttpResponse("Payment verification failed.", status=400)
         
-
+@login_required
 def update_cart_item_ajax(request):
     if request.method == 'POST':
         try:
@@ -436,11 +410,9 @@ def update_cart_item_ajax(request):
 
             # Calculate the difference in quantity
             difference = quantity - cart_item.quantity
-            print(f'discounted price {difference}')
 
             # Update cart total price based on the difference
             discount_price = calculate_discounted_price(cart_item.product)
-            print(f'this is discounted price{discount_price}')
             with transaction.atomic():
                 if difference > 0:
                     cart.total_price += (difference * discount_price)
@@ -476,10 +448,10 @@ def update_cart_item_ajax(request):
 
 
 #user return option
+@login_required
 def user_return(request):
     order_id = None
     if request.method == 'POST':
-        print(request.POST)
         order_id = request.POST.get('order_id',0)
         ReturnRequest.objects.create(
             order = Order.objects.get(id = order_id),

@@ -58,28 +58,21 @@
             <!-- Left Section -->
             <div class="col-md-6">
                 <h5 id="productName">{{product.name}}
-                    <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                       onclick="enableEdit('productName')"></i>
                 </h5>
                 <p id="productDescription">{{product.description}}
-                    <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                       onclick="enableEdit('productDescription')"></i>
+                    
                 </p>
                 <ul class="list-group">
                     <li class="list-group-item">
                         <strong>Price:</strong> <span id="priceValue">{{product.price}}</span>
-                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                           onclick="enableEdit('priceValue')"></i>
+                        
                     </li>
                     <li class="list-group-item">
                         <strong>Stock:</strong> <span id="stockValue">{{product.stock}} units</span>
-                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                           onclick="enableEdit('stockValue')"></i>
+
                     </li>
                     <li class="list-group-item">
                         <strong>Category:</strong> <span id="categoryValue">{{product.category.name}}</span>
-                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                           onclick="enableEdit('categoryValue')"></i>
                     </li>
                 </ul>
             </div>
@@ -88,20 +81,16 @@
                 <ul class="list-group">
                     <li class="list-group-item">
                         <strong>Location:</strong> <span id="locationValue">{{product.location.district}}</span>
-                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                           onclick="enableEdit('locationValue')"></i>
+                       
                     </li>
                     <li class="list-group-item">
                         <strong>Status:</strong> <span id="statusValue">{% if product.is_active %} product is live{% else %} product not visible{% endif %}</span>
-                        <i class="bi bi-pencil-square text-primary ms-2" style="cursor: pointer;" 
-                           onclick="enableEdit('statusValue')"></i>
                     </li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
-
         <!-- Product Images Section -->
         <div class="card mb-4" style="height: 50vh;">
             <div class="card-header bg-danger text-white">
@@ -111,10 +100,9 @@
                 <div class="row">
                     <!-- Image 1 -->
                      {% for image in image_url %}
-                    <div class="col-md-4 text-center ">
+                    <div class="col-md-4 text-center">
                         <div class="ima img-style">
-                            <img src="{{image}}" alt="Product Image 1" class="img-thumbnail  mb-2" height="20vh">
-                            <button class="btn btn-sm btn-success w-100" onclick="updateImage(1)">Update Image</button>
+                            <img src="{{image.image.url}}" alt="Product Image 1" class="img-thumbnail  mb-2" height="20vh">
                             <input type="file" class="form-control mt-2 d-none" id="imageInput1" onchange="previewImage(1)">
                         </div>
                     </div>

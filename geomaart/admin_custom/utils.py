@@ -62,7 +62,6 @@ def build_table_data(orders):
         discount_data = calculate_discount(order)
         discount = discount_data['discount']
         total_coupon_deductions += discount
-
         table_data.append({
             'orderid': order.id,
             'customer': order.user.name,
@@ -72,7 +71,6 @@ def build_table_data(orders):
             'amount': order.total_amount + discount,
             'final_amount': order.total_amount,
         })
-        print(total_coupon_deductions)
 
     return table_data, total_coupon_deductions
 

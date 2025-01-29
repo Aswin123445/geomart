@@ -49,7 +49,7 @@ class Location(models.Model):
                 slug = f"{slug}- {counter}"
                 counter += 1
             self.slug = slug
-        self.district = self.name.upper()
+        self.district = self.district.upper()
         super().save(*args, **kwargs) 
       
     def __str__(self):

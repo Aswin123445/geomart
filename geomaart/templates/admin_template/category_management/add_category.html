@@ -91,22 +91,33 @@
                      {% csrf_token %}
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Category Name</label>
-                        <input type="text" class="form-control" id="categoryName" name="categoryName" placeholder="Enter category name" required>
+                        <input type="text" class="form-control" id="categoryName" value="{{errors.categoryName}}" name="categoryName" placeholder="Enter category name" required>
                         <div class="invalid-feedback">Category name is required and cannot be just spaces.</div>
                     </div>
 
                     <!-- Category Description -->
                     <div class="mb-3">
                         <label for="categoryDescription" class="form-label">Category Description</label>
-                        <textarea class="form-control" id="categoryDescription" name="categoryDescription" rows="4" placeholder="Enter category description" required></textarea>
+                        <textarea class="form-control"  id="categoryDescription" name="categoryDescription" rows="4" placeholder="Enter category description" required>{{errors.categoryDescription}}</textarea>
                         <div class="invalid-feedback">Category description is required and cannot be just spaces.</div>
                     </div>
-
                     <!-- Category Status -->
                     <div class="mb-3">
                         <label for="categoryStatus" class="form-label">Status</label>
-                        <select class="form-select" id="categoryStatus" name="categoryStatus" required>
+                        <select class="form-select" id="categoryStatus"  name="categoryStatus" required>
+                            {% if errors %}
+                              <option selected value="{{errors.status}}">
+                                {%if errors.categoryStatus == '1'%}
+                                   Active
+                                {% elif errors.categoryStatus == '2' %}
+                                   Coming Soon
+                                {%else%}
+                                   Inactive
+                                {%endif%}
+                              </option>
+                            {%else%}
                             <option value="">Select Status</option>
+                            {%endif%}
                             <option value="1">Active</option>
                             <option value="3">Inactive</option>
                             <option value="2">Coming Soon</option>

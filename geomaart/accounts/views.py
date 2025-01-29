@@ -24,7 +24,6 @@ def register(request):
             else :
                 messages.warning(request,"already registered verify phone number")
                 user=UserData.objects.get(phone_number=form.cleaned_data['otp_verification'])
-                print("helo")
             data = send_otp(user.phone_number)
             if 'is_forgot_otp_send' in request.session :
                 del request.session['is_forgot_otp_send']
@@ -33,17 +32,15 @@ def register(request):
             context['phone']=user.phone_number
             return render(request , 'accounts/otp_verification.html',context)
         else:
-            print(form.errors)
-            print('form is not validated')
             l = list(form.errors.values())
             messages.error(request,l[0][0])
-            context={'error' : True}
+            context={'error' : True,'errors':request.POST}
+            return render(request, 'accounts/index.html',context)
     return render(request, 'accounts/index.html',context)
 @never_cache
 def otp_verification(request):
     context={'error':False}
     if 'phone_number' not in request.session :
-        print('helo')
         return redirect('home:homepage')
     if request.method == "POST":
         otp_code = request.POST.get('otp')
@@ -52,10 +49,8 @@ def otp_verification(request):
             messages.error(request, "Session expired. Please register again.")
             return redirect('accounts:register') 
         data = validate_otp(phone_number, otp_code)
-        print(data)
         if data  == True :
             if 'is_forgot_otp_send' in request.session:
-                print('password reset form')
                 request.session['is_forgot_password'] = True
                 messages.warning(request,'Enter new password ')
                 context['error'] = True
@@ -64,7 +59,6 @@ def otp_verification(request):
                 user = UserData.objects.get(phone_number=phone_number)  # Fetch the user
                 user.is_active = True  # Activate user after successful OTP verification
                 user.is_phone_number_verified = True
-                print(f' {user.is_active}')
                 user.save()
                 messages.success(request, "OTP verified successfully. You can now log in.")
                 return redirect('accounts:signin')
@@ -80,7 +74,6 @@ def signin(request):
     context = {'error':False}
     if request.method == "POST":
         form=SignInForm(request.POST)
-        print(form.errors)
         if form.is_valid() :
             user=authenticate(email=form.cleaned_data['email_or_phone'],password=form.cleaned_data['password'])
             if user is not None :
@@ -94,7 +87,8 @@ def signin(request):
         else :
             error_list = list(form.errors.values())
             messages.error(request,error_list[0][0])
-            context={'error':True}   
+            context={'error':True,'errors':request.POST}   
+            return render(request,'accounts/signin.html',context)
     return render(request,'accounts/signin.html',context)
 
 def signout(request):
@@ -105,19 +99,18 @@ def signout(request):
 @never_cache
 def forgot_password(request):
     context={'error':False}
+    if request.user.is_authenticated:
+        return redirect('home:homepage')
     if request.method == 'POST' :
         form = ForgotPassword(request.POST)
         if form.is_valid():
            
            user=UserData.objects.filter(phone_number = form.cleaned_data.get('phone_number')).first()
-           print(user)
            if not user:
               context['error']=True
-              print("not registered")
               messages.error(request, "Phone number not registered.")
               return render(request,'accounts/forgot_password.html',context)
            else :
-               print('user data found')
                data =send_otp(form.cleaned_data.get('phone_number'))
                request.session['phone_number'] = form.cleaned_data.get('phone_number')
                request.session['is_forgot_otp_send'] = True
@@ -125,7 +118,6 @@ def forgot_password(request):
                context['phone']=user.phone_number
                return render(request , 'accounts/otp_verification.html',context)
         else :
-            print(form.errors)
             context['error']=True
     return render(request,'accounts/forgot_password.html',context)
 
@@ -135,9 +127,7 @@ def forget_password_form(request):
         return redirect('home:homepage')
     if request.method == 'POST' :
         phone_number = request.session['phone_number']
-        print('helo')
         form = FogotPasswordForm(request.POST)
-        print(form)
         if form.is_valid():
             try:
                 user = UserData.objects.get(phone_number=phone_number)  
@@ -150,8 +140,6 @@ def forget_password_form(request):
                 messages.error(request, "User not found.")
                 return redirect('accounts:signin')  
         else:
-            print(form.errors)
-            print('form is not validated')
             l = list(form.errors.values())
             messages.error(request,l[0][0])
     return render(request,'accounts/forgot_password_form.html')

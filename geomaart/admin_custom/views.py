@@ -22,7 +22,6 @@ from django.utils.timezone import now, timedelta
 from django.db.models import Sum
 from django.db.models.functions import TruncDay
 from datetime import timedelta 
-from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from .models import Offer,ProductOffer,CategoryOffer

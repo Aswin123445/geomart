@@ -140,16 +140,29 @@
     <div class="container my-5">
         <h1 class="text-center mb-4 fw-bold" > EXPLORE {{ category_name }}</h1>
         <!-- Location Options -->
-        <form class="d-flex align-items-center"  method="get" style="margin-bottom: 5vh;" id="locationSortForm">
-            <label for="locationDropdown" class="me-2 fw-bold">Sort By Location:</label>
-            <select id="locationDropdown" name="location" class="form-select w-auto me-2">
-                <option value="all"  selected>All Locations</option>
-                {% for loc in location %}
-                <option  value="{{ loc.id }}">{{ loc.district }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit"  class="btn btn-primary btn-danger" onclick="sortByLocation()">Sort</button>
-        </form>
+        <div class="d-flex">
+            <form class="d-flex align-items-center me-4"  method="get" style="margin-bottom: 5vh;" id="locationSortForm">
+                <label for="locationDropdown" class="me-2 fw-bold">Sort By Location:</label>
+                <select id="locationDropdown" name="location" class="form-select w-auto me-2">
+                    <option value="all"  selected>All Locations</option>
+                    {% for loc in location %}
+                    <option  value="{{ loc.id }}">{{ loc.district }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit"  class="btn btn-primary btn-danger " onclick="sortByLocation()">Sort</button>
+            </form>
+            <form class="d-flex align-items-center "  method="get" style="margin-bottom: 5vh;" id="locationSortForm">
+                <label for="locationDropdown" class="me-2 fw-bold">Sort By Price (less to large):</label>
+                <select id="productDropdown" name="product_price" class="form-select w-auto me-2">
+                    <option value="all"  selected>All price</option>
+                    <option  value="300"><300</option>
+                    <option  value="500"><500</option>
+                    <option  value="1000"><1000</option>
+                    <option  value="1001">>1000</option>
+                </select>
+                <button type="submit"  class="btn btn-primary btn-danger" onclick="sortByLocation()">Sort</button>
+            </form>
+        </div>
 <!-- Product Grid -->
 <div id="product-list" class="row justify-content-center row-cols-1 row-cols-md-3 g-4">
     {% for product in product_list %}

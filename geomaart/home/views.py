@@ -1,6 +1,5 @@
 from decimal import Decimal
 import razorpay
-from weasyprint import HTML
 import os
 from django.http import JsonResponse
 from django.shortcuts import render,redirect,HttpResponse
@@ -82,7 +81,16 @@ def product_listing(request, name=None):
     results = Product.objects.filter(category=category, is_active=True, stock__gt=0).prefetch_related('product_offers__offer')
     if 'location' in request.GET and request.GET.get('location') != 'all':
         results = results.filter(location=request.GET.get('location'))
-    
+    if 'product_price' in request.GET and request.GET.get('product_price') != 'all':
+        value = int(request.GET.get('product_price'))
+        if value == 300 :
+            results = results.filter(price__lt = value).order_by('-price')
+        elif value == 500 :
+            results = results.filter(price__lt = value).order_by('-price')
+        elif value == 1000 :
+            results = results.filter(price__lt = value).order_by('-price')
+        else  :
+            results = results.filter(price__gt = value).order_by('-price')
     product_images = {product.id: product.images.all().first().image.url for product in results}
     product_prices = {
         product.id: {
@@ -561,7 +569,9 @@ def order_user_invoice(request,id):
       'invoice_number': invoice_number,
       'date':order.created_at,
       'payment_instance':Payment.objects.get(order = order),
-      'name':request.user.name
+      'name':request.user.name,
+      'email':request.user.email,
+      'phone':request.user.phone_number
     }
     #purchase related data
     total_price = sum(OrderItem.objects.filter(order= order).values_list('price',flat=True))

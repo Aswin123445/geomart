@@ -1,7 +1,6 @@
 from django import forms
 from accounts.models import UserData
 import re
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .validationslogic import coupon_special_character_check
@@ -9,14 +8,14 @@ from admin_custom.models import Category
 from .validationslogic import category_id_valid_check,category_description_empty_check,category_name_validations_check
 from .validationslogic import location_name_validations_check,product_integer_value_negative_check
 from .validationslogic import location_valid_check,category_valid_check
-from django import forms
-from django.core.exceptions import ValidationError
 from .models import Location, Product  ,Coupon
-import re
 import datetime
 from .models import Offer
-from django import forms
 from datetime import date
+from django.core.exceptions import ValidationError
+from django.utils.timezone import now
+
+
 class UserDataUpdation(forms.Form):
     name = forms.CharField(
         max_length=150,
@@ -66,7 +65,6 @@ class UserDataUpdation(forms.Form):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         # Exclude the current user's record while checking for duplicates
-        print(self.current_user_id)
         query=UserData.objects.filter(email=email).exclude(id=self.current_user_id).exists()
         if query:
             raise forms.ValidationError("A user with this email already exists.")
@@ -135,7 +133,6 @@ class AdminUserAddForm(forms.Form):
         label="Status",
     )
     def clean_password1(self):
-        print('helo')
         password = self.cleaned_data.get('password1')
         try:
             # Use Django's built-in password validators
@@ -762,8 +759,10 @@ class CouponCreationForm(forms.Form):
     )
     min_purchase_amount = forms.IntegerField(
         required=True,
+        min_value=20,
         error_messages={
-            "required": "Minimum purchase amount is required."
+            "required": "Minimum purchase amount is required.",
+            "min_value": "minmum value should be greater than 20"
         }
     )
     status = forms.IntegerField(
@@ -841,7 +840,7 @@ class CouponUpdateForm(forms.Form):
     limit_per_user = forms.IntegerField(
         min_value=1
     )
-    min_purchase_amount = forms.IntegerField()
+    min_purchase_amount = forms.IntegerField(min_value=20)
     status = forms.IntegerField(min_value=0, max_value=1)
     
     def clean_coupon_code(self):
@@ -872,13 +871,11 @@ class CouponUpdateForm(forms.Form):
         # Check that enddate is not in the past
         if enddate and enddate < today:
             raise ValidationError("The end date cannot be in the past.")
-
         # If coupon type is 1, ensure discount value is less than 100
-        if coupon_type == 1 and discount_value >= 100:
+        if discount_value and coupon_type == 1 and discount_value >= 100:
             raise ValidationError(
                 "for percentage coupon the value should be less than 100"
             )
-
         return cleaned_data
 
 
@@ -893,12 +890,6 @@ class CouponFilterForm(forms.Form):
         if data == 0 :
             data = None
         return data
-from django import forms
-from django.core.exceptions import ValidationError
-
-from django import forms
-from django.core.exceptions import ValidationError
-from django.utils.timezone import now
 
 class DateValidations(forms.Form):
     start_date = forms.DateField(required=False)
@@ -965,10 +956,13 @@ class OfferForm(forms.Form):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
-
+        discount_value = cleaned_data.get('discount_value')
+        offer_type = cleaned_data.get('offer_type')
         # Validate that start_date is earlier than or equal to end_date
         if start_date and end_date and start_date > end_date:
             raise forms.ValidationError("Start date must be earlier than or equal to the end date.")
+        if offer_type == '1' and (discount_value < 0 or discount_value > 100) :
+            raise forms.ValidationError("for discount offer value should be between 0 and 100")
         return cleaned_data
 
 class OfferEdit(forms.Form):
@@ -989,7 +983,6 @@ class OfferEdit(forms.Form):
 
     def clean_name(self):
         name = self.cleaned_data.get('name', '').capitalize()
-
         # Skip if name is not provided
         if not name:
             return name
@@ -1017,10 +1010,12 @@ class OfferEdit(forms.Form):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
-
+        discount_value = cleaned_data.get('discount_value')
+        offer_type = cleaned_data.get('offer_type')
         # Validate that start_date is earlier than or equal to end_date
         if start_date and end_date and start_date > end_date:
             raise forms.ValidationError("Start date must be earlier than or equal to the end date.")
-
+        if offer_type == '1' and (discount_value < 0 or discount_value > 100) :
+            raise forms.ValidationError("for discount offer value should be between 0 and 100")
         return cleaned_data
 

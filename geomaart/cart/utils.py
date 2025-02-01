@@ -58,16 +58,15 @@ def process_order_transaction(cart, user, address_id, payment_method, payment_st
             coupon.save()
             user_coupen.save()
             new_order.save()
-            print('coupon field updated before saving the coupon')
-            print(user_coupen)
-            print(coupon)
         # Delete Cart
         cart.delete()
         return new_order
     
     
 def validate_coupon(coupon_code,cart):
-    if not coupon_code.is_valid():
+    if not coupon_code:
+        return {'is_valid':False,'message':'invalid coupon number'}
+    elif not coupon_code.is_valid():
         return {'is_valid':False,'message':'coupon expired'}
     elif coupon_code.usage_limit < coupon_code.usage_count :
         return {'is_valid':False,'message':'sorry usage limit exeeded'}

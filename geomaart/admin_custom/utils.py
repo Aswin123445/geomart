@@ -44,7 +44,6 @@ def creating_product_instance(forms, request, list_temp_image):
                 id=forms.cleaned_data['location']),
         )
         product_instance.save()
-        print(list_temp_image)
         for image in list_temp_image :
             ProductImage.objects.create(
                 product = product_instance,

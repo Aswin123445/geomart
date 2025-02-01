@@ -224,15 +224,17 @@
                 <div class="text-end fw-bold" style="width: 25%;">{{actual_price}}</div>
               </div>
               <div class="d-flex justify-content-between">
-                <div class="fw-bold text-success" style="width: 25%;">DISCOUNTS</div>
+                <div class="fw-bold text-success" style="width: 25%;">Discounts</div>
                 <div class="text-end fw-bold text-success" style="width: 25%;">- {{amount_saved}}</div>
               </div>
               {% endif %}
-              {% if coupon_applied %}
+              {% if coupon_applied  %}
+              {% if  not amount_saved > 0%}
               <div class="d-flex justify-content-between fw-bold">
                 <span>sub total</span>
                 <span class="text-success">{{total_sum}}</span>
               </div>
+              {% endif %}
               <div class="d-flex justify-content-between fw-bold text-success">
                 <span>coupen applied</span>
                 <span>-{{discounted_amount}}</span>

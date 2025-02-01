@@ -90,8 +90,7 @@ def cart_page(request):
     if request.method == 'POST' and  'coupon_code' in request.POST  :
         #validate coupon
         coupon_code = Coupon.objects.filter(code = request.POST['coupon_code'],status = True).first()
-        print(coupon_code.code)
-        if coupon_code and not offer :
+        if coupon_code or offer :
            status =  validate_coupon(coupon_code,cart)
            if status['is_valid'] :
              cart.temporary_coupon_code = coupon_code.code
@@ -219,9 +218,6 @@ def checkout(request , id):
     if not discount_price == original_price :
         coupon_applied = True
     address =  Address.objects.filter(user = request.user)
-    # if not address.exists():
-    #     messages.error(request,'please add a address to shop')
-    #     return redirect('home:user_profile')
     amount_saved =original_price - cart.total_price
     wallet_amount = Wallet.objects.get(user = request.user).balance
     if not amount_saved == 0:
@@ -443,7 +439,6 @@ def update_cart_item_ajax(request):
 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 

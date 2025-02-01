@@ -1097,3 +1097,20 @@ def reject_return_request(request,id):
     return_request = ReturnRequest.objects.get(id = id)
     return_request.reject()
     return redirect('custom_admin:return_orders_list')
+
+
+@login_required
+@never_cache
+def change_product_featur(request,id):
+    if request.method == 'POST':
+        try :
+           product = Product.objects.filter(id = int(id)).first()
+           if product.is_featured :
+               product.is_featured = False
+           else :
+               product.is_featured = True
+           product.save()
+           return JsonResponse({"success": True, "is_featured": product.is_featured})
+        except product.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Product not found"})
+    return JsonResponse({"success": False, "error": "Invalid request"})        

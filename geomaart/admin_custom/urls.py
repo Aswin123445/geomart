@@ -37,6 +37,7 @@ urlpatterns = [
     path('edit_product/<slug:name>/',views.edit_product,name='edit_product'),
     path('search_product/',views.search_product,name='search_product'),
     path('product_details/<slug:slug>',views.product_details,name='product_details'),
+    path('change_product_featur/<int:id>',views.change_product_featur,name = 'change_product_featur'),
     
     #order management section
     path('order_listing/',views.order_listing,name='order_listing'),

@@ -33,7 +33,6 @@ def validate_otp(phone_number, otp_code):
        if verification_check.status == "approved" :
            return True
        else :
-           print(verification_check.status)
            return "OTP verification failed Please try again"
     except TwilioRestException  as e :
         if e.status == 404:

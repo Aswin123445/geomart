@@ -32,7 +32,7 @@ import pdfkit
 from datetime import date as da
 
 
-PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'/usr/bin/wkhtmltopdf')
 # Create your views here.
 @login_required
 @never_cache

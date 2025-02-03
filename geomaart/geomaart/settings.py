@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-aai5ldix75qa2-1w6t*8#c7+merzp*lndq)@(&+^7e+ttkz431
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['geomaart.shop','www.geomaart.shop']
 
 
 # Application definition

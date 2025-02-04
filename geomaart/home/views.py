@@ -23,11 +23,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 import pdfkit
 PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+from geomaart.settings import STATIC_URL
 
 # Create your views here.
 razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_ID'], os.environ['RAZORPAY_SECRET_KEY']))
 @never_cache
 def hemepage(request):
+    print(os.environ)
     location_based_product  = None
     if request.user.is_authenticated and UserData.objects.get(id=request.user.id).is_staff:
         return redirect('custom_admin:dashboard')

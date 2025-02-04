@@ -25,7 +25,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 SECRET_KEY = 'django-insecure-aai5ldix75qa2-1w6t*8#c7+merzp*lndq)@(&+^7e+ttkz431'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['geomaart.shop','www.geomaart.shop']
 

@@ -27,7 +27,11 @@ SECRET_KEY = 'django-insecure-aai5ldix75qa2-1w6t*8#c7+merzp*lndq)@(&+^7e+ttkz431
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+<<<<<<< HEAD
 ALLOWED_HOSTS = ['geomaart.shop','www.geomaart.shop']
+=======
+ALLOWED_HOSTS = ['geomaart.shop','www.geomaart.shop','*']
+>>>>>>> a4aec7f6da08d7ef6d12ed1011a898a5716bc937
 
 
 # Application definition
@@ -186,9 +190,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+<<<<<<< HEAD
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'static'
 print(BASE_DIR)
+=======
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+>>>>>>> a4aec7f6da08d7ef6d12ed1011a898a5716bc937
 
 
 # Default primary key field type

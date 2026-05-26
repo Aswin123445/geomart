@@ -27,7 +27,8 @@ WKHTMLTOPDF_PATH = os.environ.get("WKHTMLTOPDF_PATH")
 if WKHTMLTOPDF_PATH:
     PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 else:
-    PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+    PDFKIT_CONFIG = None
+# PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 from geomaart.settings import STATIC_URL
 
 # Create your views here.

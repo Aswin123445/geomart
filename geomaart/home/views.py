@@ -30,7 +30,9 @@ else:
     PDFKIT_CONFIG = None
 # PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 from geomaart.settings import STATIC_URL
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 if not User.objects.filter(username="admin").exists():
     User.objects.create_superuser(

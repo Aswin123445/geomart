@@ -22,7 +22,12 @@ from cart.models import Cart , CartItem , Wallet , ReturnRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 import pdfkit
-PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+import os
+WKHTMLTOPDF_PATH = os.environ.get("WKHTMLTOPDF_PATH")
+if WKHTMLTOPDF_PATH:
+    PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+else:
+    PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 from geomaart.settings import STATIC_URL
 
 # Create your views here.
@@ -63,7 +68,7 @@ def hemepage(request):
             top_products = products
         context = {'product':products,'category':category,'recommended':location_based_product,'top_products':top_products}
         return render(request,'home/home_page.html',context)
- 
+
 
 @never_cache
 def home_user_search(request):
@@ -74,8 +79,8 @@ def home_user_search(request):
                         names_set = Product.objects.none()
                 datas=[{'name':[product_data.slug,product_data.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
-        
-        
+
+
 @never_cache
 def product_listing(request, name=None):
     current_page_number = request.GET.get('page', 1)
@@ -166,7 +171,7 @@ def product_details(request, slug):
         'avg_rating':li
     }
     return render(request, 'home/product/product_details.html', context)
-#profile views 
+# profile views
 @never_cache
 @login_required
 def user_profile(request):
@@ -332,7 +337,7 @@ def edit_address(request , id):
     context = {'address':address}
     return render(request,'home/profile/edit_address.html',context)
 
-#reset password by the user 
+# reset password by the user
 @login_required
 @never_cache
 def reset_password(request):
@@ -350,7 +355,7 @@ def reset_password(request):
            errors=list(form.errors.values())[0][0]
            messages.error(request,errors)
     return render(request,'accounts/forgot_password_form.html',{'error':error})
-    
+
 @login_required
 @never_cache
 def order_list(request):
@@ -403,7 +408,7 @@ def order_details(request,id):
 
 @login_required
 @never_cache
-#wishlist add page
+# wishlist add page
 def product_detalls(request,slug):
     wishlist = Wishlist.objects.filter(user = request.user).first()
     product = Product.objects.filter(slug = slug).first()
@@ -460,7 +465,7 @@ def product_detalls(request,slug):
 
 @login_required
 @never_cache
-#wishlist remove page
+# wishlist remove page
 def product_detoils(request,slug):
     wishlist = Wishlist.objects.filter(user = request.user).first()
     product = Product.objects.filter(slug = slug).first()
@@ -553,7 +558,7 @@ def move_to_cart(request,id):
 
 @login_required
 @never_cache
-#user invoice for orders
+# user invoice for orders
 def order_user_invoice(request,id):
         # Render the template into HTML
     order = Order.objects.get(id = id)
@@ -596,7 +601,7 @@ def order_user_invoice(request,id):
     return response
 @login_required
 @never_cache
-#payment razorpay create order
+# payment razorpay create order
 def create_order(request,id):
     order = Order.objects.get(id = id)
     total_prize = order.total_amount
@@ -619,8 +624,8 @@ def create_order(request,id):
             "currency": currency,
             "order_id_with_payment_pending":order.id,
         })  
-        
-        
+
+
 @login_required
 @never_cache
 def failed_orders(request  ):
@@ -671,13 +676,13 @@ def failed_order_payment(request,id):
 
 @login_required
 @never_cache
-#failed order infor page
+# failed order infor page
 def failed_order_info_page(request):
     return render(request,'order/user_info_page/failed_payment_page.html')
 
 @login_required
 @never_cache
-#review submition review 
+# review submition review
 def review_submition(request):
     id = request.POST.get('id',0)
     product_id = request.POST.get('singleProduct',0)

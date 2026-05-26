@@ -133,7 +133,7 @@ def logout(request):
     response['Expires'] = '0'
     return response
 
-#user management logic
+# user management logic
 
 @login_required
 @never_cache
@@ -218,8 +218,7 @@ def add_user(request):
     return render(request,'admin_template/user_management/add_user.html')
 
 
-#category management logic
-
+# category management logic
 
 
 @login_required
@@ -298,10 +297,8 @@ def search_category(request):
                         names_set = Category.objects.none()
                 datas=[{'name':[category.id,category.name]} for category in names_set]
                 return JsonResponse({'results':datas})
-            
-#location management logic
 
-
+# location management logic
 
 
 @never_cache
@@ -377,7 +374,6 @@ def search_location(request):
                         names_set = Category.objects.none()
                 datas=[{'name':[location.id,location.district]} for location in names_set]
                 return JsonResponse({'results':datas})
-
 
 
 @login_required
@@ -481,7 +477,7 @@ def search_product(request):
                         names_set = Product.objects.none()
                 datas=[{'name':[product_data.slug,product_data.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
-            
+
 @login_required
 @never_cache
 def product_details(request,slug):
@@ -541,7 +537,7 @@ def delete_order(request,id):
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
 
-#coupen management
+# coupen management
 @login_required
 @never_cache
 def coupon_list(request,id=None):
@@ -597,7 +593,7 @@ def create_coupon(request):
             return render(request,'admin_template/coupon_management/coupon_create.html',{'errors':request.POST})
     return render(request,'admin_template/coupon_management/coupon_create.html')
 
-#serach coupons
+# serach coupons
 @login_required
 def search_coupons(request):
     if request.method == 'GET':
@@ -607,7 +603,7 @@ def search_coupons(request):
                     names_set = Product.objects.none()
             datas=[{'name':[coupon_data.id,coupon_data.code]} for coupon_data in names_set]
             return JsonResponse({'results':datas})
-            
+
 @login_required
 @never_cache
 def coupon_edit(request,id):
@@ -635,7 +631,7 @@ def coupon_edit(request,id):
             messages.error(request,error)
     context = {'coupon':get_coupnon}
     return render(request,'admin_template/coupon_management/coupon_edit.html',context)
-    
+
 @login_required
 @never_cache
 def delete_coupon(request,id):
@@ -748,7 +744,7 @@ def sales_report(request):
     return render(request, 'admin_template/sales_report/salesreport.html', context)
 
 
-#admin sales pdf generator funtion
+# admin sales pdf generator funtion
 @login_required
 @never_cache
 def download_sales_report_pdf(request):
@@ -848,7 +844,7 @@ def download_sales_report_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
     return response
 
-#offers imlementation
+# offers imlementation
 @login_required
 @never_cache
 def offers(request,id = None):
@@ -998,7 +994,7 @@ def search_product_offer(request):
                         names_set = ProductOffer.objects.none()
                 datas=[{'name':[product_data.id,product_data.offer.name]} for product_data in names_set]
                 return JsonResponse({'results':datas})
-            
+
 @login_required
 @never_cache
 def edit_product_offer(request,id):
@@ -1068,7 +1064,7 @@ def delete_category_offer(request,id):
             return JsonResponse({"success": False, "message": "Offer not found not found."})
     return JsonResponse({"success": False, "message": "Invalid request method."})
 
-#admin return order list
+# admin return order list
 @login_required
 @never_cache
 def return_orders_list(request):

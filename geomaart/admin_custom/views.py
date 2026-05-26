@@ -30,9 +30,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 import pdfkit
 from datetime import date as da
+import os 
+WKHTMLTOPDF_PATH = os.environ.get("WKHTMLTOPDF_PATH")
 
+if WKHTMLTOPDF_PATH:
+    PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+else:
+    PDFKIT_CONFIG = None
 
-PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+# PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 # Create your views here.
 @login_required
 @never_cache

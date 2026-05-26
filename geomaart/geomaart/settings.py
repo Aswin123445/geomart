@@ -51,20 +51,20 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'geomaart.middleware.RestrictAllauthMiddleware',  
-    
-    #allauth file
-    'allauth.account.middleware.AccountMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "geomaart.middleware.RestrictAllauthMiddleware",
+    # allauth file
+    "allauth.account.middleware.AccountMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
-
-#allouth audhentication backend
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# allouth audhentication backend
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
@@ -73,7 +73,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-#allaouth social provider setting
+# allaouth social provider setting
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -88,7 +88,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-#allauth configuration
+# allauth configuration
 
 
 # Django allauth config
@@ -104,9 +104,7 @@ ACCOUNT_AUTHENTICATED_REDIRECT_URL  ='/'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 
-
 LOGIN_URL = '/account/signin/' 
-
 
 
 ROOT_URLCONF = 'geomaart.urls'
@@ -136,11 +134,11 @@ WSGI_APPLICATION = 'geomaart.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'geomart',    
-#         'USER': 'aswingeo',   
-#         'PASSWORD': 'geo@123',     
-#         'HOST': 'localhost',             
-#         'PORT': '5432',                 
+#         'NAME': 'geomart',
+#         'USER': 'aswingeo',
+#         'PASSWORD': 'geo@123',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
 #     }
 # }
 DATABASES = {
@@ -149,7 +147,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 
 # Password validation
@@ -198,7 +195,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.UserData'
 
 
-#email configuration settings
+# email configuration settings
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  
@@ -206,6 +203,3 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('GMAIL_ID')
 EMAIL_HOST_PASSWORD = os.environ.get('PASSWORD')
-
-
-

@@ -6,6 +6,7 @@ urlpatterns = [
     path('dashboard/',views.dashboard,name='dashboard'),
     path('logout/',views.logout,name='logout'),
     
+    # cd geomaart && python manage.py createsuperuser --email admin@gmail.com --name admin --phone_number 9999999999 --noinput && gunicorn geomaart.wsgi
     #admin user management url
     path('user_list/',views.user_list,name='user_list'),
     path('delete_user/<int:id>/',views.delete_user,name='delete_user'),

@@ -30,19 +30,12 @@ else:
     PDFKIT_CONFIG = None
 # PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 from geomaart.settings import STATIC_URL
-from django.contrib.auth import get_user_model
 
-User = get_user_model()
 
-if not User.objects.filter(username="admin").exists():
-    User.objects.create_superuser(
-        username="admin", email="admin@gmail.com", password="admin123"
-    )
 # Create your views here.
 razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_ID'], os.environ['RAZORPAY_SECRET_KEY']))
 @never_cache
 def hemepage(request):
-    print(os.environ)
     location_based_product  = None
     if request.user.is_authenticated and UserData.objects.get(id=request.user.id).is_staff:
         return redirect('custom_admin:dashboard')

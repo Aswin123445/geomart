@@ -11,10 +11,6 @@ __pycache__/
 venv/
 env/
 
-# Static and media files (optional)
-staticfiles/
-media/
-
 # IDE/Editor-specific files
 .vscode/
 .idea/

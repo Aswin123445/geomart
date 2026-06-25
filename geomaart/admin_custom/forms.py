@@ -86,7 +86,7 @@ class UserDataUpdation(forms.Form):
             raise forms.ValidationError("A user with this phone number already exists.")
         
         return phone_number
-    
+
 class AdminUserAddForm(forms.Form):
     ROLE_CHOICES = [
         ('admin', 'Admin'),
@@ -198,7 +198,6 @@ class AdminUserAddForm(forms.Form):
 #         validators=[category_description_empty_check]
 #     )
 #     categoryStatus=forms.IntegerField(min_value=1,max_value=3)
-
 
 
 class categoryValidation(forms.Form):
@@ -428,7 +427,7 @@ class LocationValidation(forms.Form):
             )
 
         return cleaned_data
-    
+
 class LocationEditForm(forms.Form):
     district = forms.CharField(
         max_length=100,
@@ -505,7 +504,6 @@ class LocationEditForm(forms.Form):
             )
 
         return cleaned_data
-
 
 
 class ProductValidation(forms.Form):
@@ -837,12 +835,13 @@ class CouponUpdateForm(forms.Form):
         min_value=1,
     )
     discount_value = forms.IntegerField(min_value=1)
+    cap_amount = forms.IntegerField(min_value=0, required=False)
     limit_per_user = forms.IntegerField(
         min_value=1
     )
     min_purchase_amount = forms.IntegerField(min_value=20)
     status = forms.IntegerField(min_value=0, max_value=1)
-    
+
     def clean_coupon_code(self):
         """Ensure the coupon code is unique and converted to uppercase."""
         data = self.cleaned_data['coupon_code']
@@ -857,6 +856,7 @@ class CouponUpdateForm(forms.Form):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         enddate = cleaned_data.get('enddate')
+        cap_amount = cleaned_data.get("cap_amount")
         coupon_type = cleaned_data.get('coupon_type')
         discount_value = cleaned_data.get('discount_value')
         today = datetime.date.today()
@@ -876,10 +876,9 @@ class CouponUpdateForm(forms.Form):
             raise ValidationError(
                 "for percentage coupon the value should be less than 100"
             )
+        if coupon_type == 2:
+            cleaned_data["cap_amount"] = 0
         return cleaned_data
-
-
-        
 
 
 class CouponFilterForm(forms.Form):
@@ -1018,4 +1017,3 @@ class OfferEdit(forms.Form):
         if offer_type == '1' and (discount_value < 0 or discount_value > 100) :
             raise forms.ValidationError("for discount offer value should be between 0 and 100")
         return cleaned_data
-

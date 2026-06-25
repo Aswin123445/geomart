@@ -153,8 +153,19 @@
         <div class="card-body">
             <!-- Profile Picture and Name -->
             <div class="text-center mb-4">
-                    <img src="https://via.placeholder.com/120" alt="User Avatar" class="rounded-circle shadow-sm mb-3">
-                    <div class="d-flex justify-content-center align-items-center mb-3">
+<!-- Profile Picture Display -->
+{% if userdetails.profile.profile_picture %}
+    <img src="{{ userdetails.profile.profile_picture.url }}" alt="User Avatar" class="rounded-circle shadow-sm mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+{% else %}
+    <img src="https://ui-avatars.com/api/?name={{ userdetails.name }}&background=random" alt="User Avatar" class="rounded-circle shadow-sm mb-3" style="width: 120px; height: 120px;">
+{% endif %}
+
+<!-- Add a camera/pencil icon right below or next to it to trigger the new modal -->
+<div class="mb-3">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#myModal_image">
+        <i class="bi bi-camera"></i> Change Photo
+    </button>
+</div>                    <div class="d-flex justify-content-center align-items-center mb-3">
                         <h3 class="mb-0 " id="userNumber" style="margin-left: 30px;">{{userdetails.name}}</h3>
 
             <!-- Small Button with Pencil Icon -->
@@ -471,6 +482,29 @@
             </div>
         </div>
     </div>
+    <!-- Edit Profile Image Modal -->
+<div class="modal fade" id="myModal_image" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Update Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form to update image -->
+                <form id="imageForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label Skinner for="profileImage" class="form-label">Choose an image file</label>
+                        <input type="file" class="form-control" id="profileImage" name="profile_image" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055" data-bs-delay="5000">
         <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">

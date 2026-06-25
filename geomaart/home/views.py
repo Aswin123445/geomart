@@ -23,6 +23,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 import pdfkit
 import os
+# from dotenv import load_dotenv
+
+# load_dotenv()
 WKHTMLTOPDF_PATH = os.environ.get("WKHTMLTOPDF_PATH")
 if WKHTMLTOPDF_PATH:
     PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
@@ -148,17 +151,18 @@ def product_details(request, slug):
             return discounted_price, best_offer.offer.name
         return product.price, None
     discounted_price, offer_name = calculate_discounted_price(product)
-    
-    #fetch all the user revies
+
+
+    # fetch all the user revies
     reveiw = Review.objects.filter(product = product)
-    #averge rating 
+    # averge rating
     total_revie_len= len(reveiw)
     star_count = 0
     average = 0
     for i in reveiw :
         star_count+= i.rating
     if total_revie_len > 0 :
-      average = int(star_count/total_revie_len)
+        average = int(star_count/total_revie_len)
     nonstar = 5-average
     li=[average,nonstar]
     # Pass data to the template
@@ -176,63 +180,70 @@ def product_details(request, slug):
 @never_cache
 @login_required
 def user_profile(request):
-    is_id = False
-    if type(request.user) == int :
-        is_id = True
-    if request.method == 'POST' :
-        if 'phoneNumber' in request.POST :
-            number = format_phone_number(request.POST.get('phoneNumber'))
-            status=send_otp(number)
-            if status['status'] == True :
-                messages.success(request,status['message'])
-                context={'number':number}
-                return render(request,'home/profile/otp.html',context)
-            else :
-                messages.error(request,status['message'])
-                return redirect('home:user_profile')
-        elif 'otp' in request.POST :
-            data = validate_otp(request.POST['number'],request.POST['otp'])
-            if data == True :
-                if is_id:
-                    user = UserData.objects.get(id = request.user)
-                else :
-                    user = UserData.objects.get(email = request.user)
-                user.phone_number = request.POST['number']
-                user.is_phone_number_verified = True
-                user.save()
-                return redirect('home:user_profile')
-            else :
-                messages.error(request,data)
-                return redirect('home:user_profile')
-        elif 'userName' in request.POST :
-            if is_id :
-                user_data = UserData.objects.get(id = request.user)
-                user_data.name = request.POST.get('userName')
-                user_data.save()
-                return redirect('home:user_profile')
-            else :
-                user_data = UserData.objects.get(email = request.user)
-                user_data.name = request.POST.get('userName')
-                user_data.save()
-                return redirect('home:user_profile')
-        elif 'dob' in request.POST :
-            user_data = UserData.objects.get(id = request.user.id)
-            user_data.profile.date_of_birth = converter(request.POST.get('dob'))
-            user_data.profile.save()
-            return redirect('home:user_profile')
-        elif 'bio' in request.POST :
-            user_data = UserData.objects.get(id = request.user.id)
-            user_data.profile.bio = request.POST.get('bio')
-            user_data.profile.save()
-            return redirect('home:user_profile')
-    if type(request.user) == int :
-      userdetails = UserData.objects.get(id = request.user)
-    else :
-      userdetails = UserData.objects.get(email = request.user)
+    # 1. Standardize fetching userdetails immediately so it's safely available everywhere
+    if isinstance(request.user, int):
+        userdetails = UserData.objects.get(id=request.user)
+    elif hasattr(request.user, "id"):
+        userdetails = UserData.objects.get(id=request.user.id)
+    else:
+        userdetails = UserData.objects.get(email=str(request.user))
+
+    if request.method == "POST":
+        if "phoneNumber" in request.POST:
+            number = format_phone_number(request.POST.get("phoneNumber"))
+            status = send_otp(number)
+            if status["status"] == True:
+                messages.success(request, status["message"])
+                return render(request, "home/profile/otp.html", {"number": number})
+            else:
+                messages.error(request, status["message"])
+                return redirect("home:user_profile")
+
+        elif "otp" in request.POST:
+            data = validate_otp(request.POST["number"], request.POST["otp"])
+            if data == True:
+                userdetails.phone_number = request.POST["number"]
+                userdetails.is_phone_number_verified = True
+                userdetails.save()
+                return redirect("home:user_profile")
+            else:
+                messages.error(request, data)
+                return redirect("home:user_profile")
+
+        elif "userName" in request.POST:
+            userdetails.name = request.POST.get("userName")
+            userdetails.save()
+            return redirect("home:user_profile")
+
+        elif "dob" in request.POST:
+            userdetails.profile.date_of_birth = converter(request.POST.get("dob"))
+            userdetails.profile.save()
+            return redirect("home:user_profile")
+
+        elif "bio" in request.POST:
+            userdetails.profile.bio = request.POST.get("bio")
+            userdetails.profile.save()
+            return redirect("home:user_profile")
+
+        elif "profile_image" in request.FILES:
+            profile = userdetails.profile
+            profile.profile_picture = request.FILES["profile_image"]
+            profile.save()
+            messages.success(request, "Profile picture updated successfully!")
+            return redirect("home:user_profile")  # Fixed missing redirect
+
+    # GET requests fetch additional context
     address = userdetails.addresses.all()
-    wallet = Wallet.objects.get(user = request.user)
-    context = {'userdetails':userdetails,'address':address,'wallet':wallet}
-    return render(request,'home/profile/user_profile.html',context)
+
+    # Try to safely get the wallet using the correct user identifier
+    try:
+        wallet = Wallet.objects.get(user=request.user)
+    except Wallet.DoesNotExist:
+        wallet = None
+
+    context = {"userdetails": userdetails, "address": address, "wallet": wallet}
+    return render(request, "home/profile/user_profile.html", context)
+
 
 @login_required
 @never_cache

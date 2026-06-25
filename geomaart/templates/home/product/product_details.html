@@ -5,19 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-
     <style>
-        /* Custom Styles */
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f8f9fa;
         }
 
-        /* Navbar */
         .navbar-brand {
             font-family: 'Georgia', serif;
             font-size: 2rem;
@@ -31,12 +27,39 @@
             color: #DB4444 !important;
         }
 
-        /* Product Section */
-        .main-image {
-            max-height: 400px;
-            object-fit: cover;
+        /* ─── ZOOM FIX ─────────────────────────────────────────────────────────
+           1. Give the wrapper an explicit height so the plugin can calculate
+              the zoom ratio (image-natural-size vs displayed-size).
+           2. overflow: hidden clips the shifted zoomImg inside the box — correct.
+           3. Remove the zoomImg override that was forcing width/height to auto;
+              let the plugin control those values entirely.
+        ─────────────────────────────────────────────────────────────────────── */
+        .zoom-wrapper {
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
             border-radius: 10px;
+            width: 100%;
+            height: 400px;          /* explicit height — critical */
         }
+
+        .zoom-wrapper > img.main-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Let the plugin own .zoomImg — do NOT force width/height/max-width */
+        .zoom-wrapper img.zoomImg {
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .zoom-wrapper:hover img.zoomImg {
+            opacity: 1;
+        }
+        /* ─────────────────────────────────────────────────────────────────── */
 
         .thumbnail-container img {
             max-height: 80px;
@@ -61,7 +84,6 @@
             margin-right: 4px;
         }
 
-        /* Cultural Section */
         .cultural-container {
             background-color: #ffffff;
             border-radius: 10px;
@@ -70,7 +92,6 @@
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* Footer */
         .footer {
             margin-top: 10vh;
             background: #111111;
@@ -99,40 +120,39 @@
         .footer i:hover {
             transform: scale(1.2);
         }
+
         .notification {
-        background-color: #4CAF50;
-        color: white;
-        padding: 16px;
-        position: fixed;
-        top: 10vh;
-        right: 20px;
-        width: 350px;
-        border-radius: 5px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .error-notification {
-        background-color: red;
-        color: white;
-    }
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            position: fixed;
+            top: 10vh;
+            right: 20px;
+            width: 350px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .error-notification {
+            background-color: red;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <!-- Brand Name -->
             <a class="navbar-brand fw-bold fs-3" href="{% url 'home:homepage' %}" style="color: #DB4444;">GeoMaart</a>
-            <!-- Toggler for Mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-    
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <!-- Left Aligned Links -->
                     <li class="nav-item">
                         <a class="nav-link px-3" href="{% url 'home:homepage' %}">Home</a>
                     </li>
@@ -143,28 +163,24 @@
                         <a class="nav-link px-3" href="{% url 'home:contact_page' %}">Contact</a>
                     </li>
                 </ul>
-    
-                <!-- Search Bar in the Middle -->
+
                 <form class="d-flex mx-auto w-50">
                     <input class="form-control me-2" type="search" id="searchInput" placeholder="Search for products" aria-label="Search">
                 </form>
-                
-                <!-- Right Aligned Links -->
+
                 <ul class="navbar-nav ms-auto">
-                    <!-- Cart Icon -->
                     <li class="nav-item">
                         <a class="nav-link px-3" href="{% url 'cart:cart_page' %}">
                             <i class="bi bi-cart me-2"></i>Cart
                         </a>
                     </li>
                     {% if user.is_authenticated %}
-                        <!-- Dropdown for Account -->
                         <li class="nav-item">
-                            <a class="nav-link px-3" href="{% url 'home:wishlist' %}" >
+                            <a class="nav-link px-3" href="{% url 'home:wishlist' %}">
                                 <i class="bi bi-heart" style="padding-right: 5px;"></i>Wishlist
                             </a>
                         </li>
-                        <li class="nav-item dropdown ">
+                        <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle px-3 d-flex align-items-center" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle me-2"></i>Account
                             </a>
@@ -187,7 +203,6 @@
                             </ul>
                         </li>
                     {% else %}
-                        <!-- Sign in Button for Non-Authenticated Users -->
                         <li class="nav-item">
                             <a class="nav-link px-3" href="{% url 'accounts:signin' %}">
                                 <i class="bi bi-box-arrow-in-right me-2"></i>Sign in
@@ -198,57 +213,60 @@
             </div>
         </div>
     </nav>
+
     <div id="searchResultContainer" class="container mt-3" style="display: none; position: absolute; top: 38px; left: 37%; width: 30%; z-index: 10;">
         <div class="card">
             <div class="card-body ca">
-                <ul id="searchResultsList" class="list-group list-group-flush">
-                    <!-- Search results will be appended here dynamically -->
-                </ul>
+                <ul id="searchResultsList" class="list-group list-group-flush"></ul>
             </div>
         </div>
     </div>
+
     {% if messages %}
     {% for message in messages %}
-    <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+    <div class="{% if error %} notification error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
          {{ message }}
           <button class="close-btn" onclick="closeNotification()">X</button>
     </div>
     {% endfor %}
     {% endif %}
-    <!-- Main Content -->
+
     <div class="container my-5">
-        <!-- Product Title -->
         <div class="row">
             <div class="col-12 text-center">
-                <h2 class="fw-bold mb-4">{{product.name}}</h2>
+                <h2 class="fw-bold mb-4">{{ product.name }}</h2>
             </div>
         </div>
-        <!-- Product Details Section -->
+
         <div class="row product-info">
-            <!-- Main Product Image -->
+            <!-- Main Product Image Column -->
             <div class="col-md-6">
                 <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-inner">
                         {% if product_images %}
                             {% for image in product_images %}
                             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <img id="mainImage-{{ forloop.counter }}" 
-                                     data-zoom-image="{{ image }}" 
-                                     src="{{ image }}" 
-                                     alt="Product Image" 
-                                     class="d-block w-100 main-image">
+                                <div class="zoom-wrapper">
+                                    <img id="mainImage-{{ forloop.counter }}"
+                                         data-zoom-image="{{ image }}"
+                                         src="{{ image }}"
+                                         alt="Product Image"
+                                         class="main-image">
+                                </div>
                             </div>
                             {% endfor %}
                         {% else %}
                             <div class="carousel-item active">
-                                <img src="/static/images/placeholder.png" 
-                                     alt="No Product Image Available" 
-                                     class="d-block w-100">
+                                <div class="zoom-wrapper">
+                                    <img src="/static/images/placeholder.png"
+                                         data-zoom-image="/static/images/placeholder.png"
+                                         alt="No Product Image Available"
+                                         class="main-image">
+                                </div>
                             </div>
                         {% endif %}
                     </div>
-            
-                    <!-- Carousel Controls -->
+
                     <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
@@ -258,135 +276,135 @@
                         <span class="visually-hidden">Next</span>
                     </button>
                 </div>
+
+                <!-- Thumbnails -->
                 <div class="row mt-3 thumbnail-container text-center">
                     {% for image in product_images %}
                     <div class="col-4">
-                        <img src="{{image}}" alt="Thumbnail" class="img-fluid" onclick="updateMainImage(this)">
+                        <img src="{{ image }}" alt="Thumbnail" class="img-fluid {% if forloop.first %}active{% endif %}" onclick="updateMainImage(this)">
                     </div>
                     {% endfor %}
                 </div>
             </div>
+
+            <!-- Product Details Column -->
             <div class="col-md-6 position-relative">
-                <!-- Wishlist Icon -->
                 {% if wishlist %}
                 <a href="{% url 'home:product_detoils' product.slug %}" class="position-absolute top-0 end-0 me-3 mt-3 text-danger" title="Remove from Wishlist">
                     <i class="bi bi-heart-fill fs-3"></i>
                 </a>
                 {% else %}
-                <a href="{% url 'home:product_detalls' product.slug %}" class="position-absolute top-0 end-0 me-3 mt-3 text-danger" title="Remove from Wishlist">
+                <a href="{% url 'home:product_detalls' product.slug %}" class="position-absolute top-0 end-0 me-3 mt-3 text-danger" title="Add to Wishlist">
                     <i class="bi bi-heart fs-3"></i>
                 </a>
                 {% endif %}
-            
+
                 <div class="product-details">
-                
-                    <div class="product-info">
-                        <h1>{{ product.name }}</h1>
-                        <p class="text-secondary">{{ product.description }}</p>
-                        <p class="text-muted">Category: <span class="text-dark fw-semibold">{{ product.category.name }}</span></p>
-                        <p class="text-muted">Location: <span class="text-primary">{{ product.location.district }}</span></p>
-                        <p class="text-muted">Stock Left: <span class="text-danger fw-bold">{{ product.stock }}</span></p>
-                
-                        <!-- Price Section -->
-                         {%if not product.price == discounted_price%}
-                        <h4 class="text-muted">
-                            <del>₹{{ product.price }}</del>
-                        </h4>
-                         {% endif %}
-                        <h3 class="text-success fw-bold">₹{{ discounted_price }}</h3>
-                
-                        <!-- Offer Name -->
-                        {% if offer_name %}
-                        <span class="badge bg-warning text-dark">Offer: {{ offer_name }}</span>
-                        {% else %}
-                        <span class="text-muted">No current offers</span>
-                        {% endif %}
-                
-                        <!-- Ratings -->
-                        <div class="d-flex align-items-center my-3">
-                            <div class="rating">
-                                {% for i in avg_rating.0|range_filter %}
-                                <span class="text-warning fs-5">&#9733;</span>
-                                {%endfor%}
-                                {%if avg_rating.1 > 0%}
-                                {% for i in avg_rating.1|range_filter %}
-                                <span class="text-muted fs-5">&#9734;</span>
-                                {%endfor%}
-                                {%endif%}
-                            </div>
-                            <span class="ms-3 text-secondary">({{avg_rating.0}} / 5)</span>
+                    <h1>{{ product.name }}</h1>
+                    <p class="text-secondary">{{ product.description }}</p>
+                    <p class="text-muted">Category: <span class="text-dark fw-semibold">{{ product.category.name }}</span></p>
+                    <p class="text-muted">Location: <span class="text-primary">{{ product.location.district }}</span></p>
+                    <p class="text-muted">Stock Left: <span class="text-danger fw-bold">{{ product.stock }}</span></p>
+
+                    {% if not product.price == discounted_price %}
+                    <h4 class="text-muted">
+                        <del>₹{{ product.price }}</del>
+                    </h4>
+                    {% endif %}
+                    <h3 class="text-success fw-bold">₹{{ discounted_price }}</h3>
+
+                    {% if offer_name %}
+                    <span class="badge bg-warning text-dark">Offer: {{ offer_name }}</span>
+                    {% else %}
+                    <span class="text-muted">No current offers</span>
+                    {% endif %}
+
+                    <div class="d-flex align-items-center my-3">
+                        <div class="rating">
+                            {% for i in avg_rating.0|range_filter %}
+                            <span class="text-warning fs-5">&#9733;</span>
+                            {% endfor %}
+                            {% if avg_rating.1 > 0 %}
+                            {% for i in avg_rating.1|range_filter %}
+                            <span class="text-muted fs-5">&#9734;</span>
+                            {% endfor %}
+                            {% endif %}
                         </div>
-                        <a href="{% url 'cart:product_to_cart' product.slug %}">
-                            <button class="btn btn-danger btn-lg">Add to Cart</button>
-                        </a>
-                
-                        <!-- Wishlist Button -->
-                        {% if not wishlist %}
-                        <a href="{% url 'home:product_detalls' product.slug %}">
-                            <button class="btn btn-outline-primary btn-lg ms-2">
-                                <i class="bi bi-heart"></i> Add to Wishlist
-                            </button>
-                        </a>
-                        {% else %}
-                        <a href="{% url 'home:product_detoils' product.slug %}">
-                            <button class="btn btn-outline-primary btn-lg ms-2">
-                                <i class="bi bi-heart"></i> Remove from Wishlist
-                            </button>
-                        </a>
-                        {% endif %}
+                        <span class="ms-3 text-secondary">({{ avg_rating.0 }} / 5)</span>
                     </div>
+
+                    <a href="{% url 'cart:product_to_cart' product.slug %}">
+                        <button class="btn btn-danger btn-lg">Add to Cart</button>
+                    </a>
+
+                    {% if not wishlist %}
+                    <a href="{% url 'home:product_detalls' product.slug %}">
+                        <button class="btn btn-outline-primary btn-lg ms-2">
+                            <i class="bi bi-heart"></i> Add to Wishlist
+                        </button>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'home:product_detoils' product.slug %}">
+                        <button class="btn btn-outline-primary btn-lg ms-2">
+                            <i class="bi bi-heart"></i> Remove from Wishlist
+                        </button>
+                    </a>
+                    {% endif %}
                 </div>
-                        </div>
-        <!-- Cultural Background Section -->
+            </div>
+        </div>
+
+        <!-- Cultural Background -->
         <div class="cultural-container">
             <h4 class="fw-bold text-center mb-4" style="color: #DB4444;">Cultural Background</h4>
-            <p class="text-muted fs-5">{{product.cultural_background.description}}</p>
+            <p class="text-muted fs-5">{{ product.cultural_background.description }}</p>
+        </div>
+
+        <!-- User Reviews -->
+        <div class="mt-5">
+            <h2 class="mb-4">User Reviews</h2>
+            {% if review %}
+                <div class="row gy-4">
+                    {% for i in review %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px;">
+                                            {{ i.user.name|slice:":1" }}
+                                        </div>
+                                        <h5 class="mb-0">{{ i.user.name }}</h5>
+                                    </div>
+                                    <p class="card-text">{{ i.content }}</p>
+                                    <div class="d-flex align-items-center">
+                                        <div class="text-warning me-2">
+                                            {% for star in i.rating|range_filter %}
+                                                &#9733;
+                                            {% endfor %}
+                                            {% if star_difference > 0 %}
+                                                {% for empty_star in star_difference|range_filter %}
+                                                    &#9734;
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">Rating: {{ i.rating }}/5</small>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-light text-muted small">
+                                    <i class="bi bi-clock me-1"></i>{{ i.created_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning text-center">
+                    No reviews yet. Make your purchase and be the first one to review!
+                </div>
+            {% endif %}
         </div>
     </div>
-<!-- User Reviews Section -->
-<div class="mt-5">
-    <h2 class="mb-4">User Reviews</h2>
-    {% if review %}
-        <div class="row gy-4">
-            {% for i in review %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px;">
-                                    {{ i.user.name|slice:":1" }}
-                                </div>
-                                <h5 class="mb-0">{{ i.user.name }}</h5>
-                            </div>
-                            <p class="card-text">{{ i.content }}</p>
-                            <div class="d-flex align-items-center">
-                                <div class="text-warning me-2">
-                                    {% for star in i.rating|range_filter %}
-                                        &#9733;
-                                    {% endfor %}
-                                    {% if star_difference > 0 %}
-                                        {% for empty_star in star_difference|range_filter %}
-                                            &#9734;
-                                        {% endfor %}
-                                    {% endif %}
-                                </div>
-                                <small class="text-muted">Rating: {{ i.rating }}/5</small>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-light text-muted small">
-                            <i class="bi bi-clock me-1"></i>{{ i.created_at|date:"M d, Y" }}
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-warning text-center">
-            No reviews yet. make your purchase  and  be the first one to review
-        </div>
-    {% endif %}
-</div>
-</div>
+
     <!-- Footer -->
     <footer class="footer text-center py-4">
         <div class="container">
@@ -414,116 +432,132 @@
             <p class="mt-3">&copy; 2024 GeoMaart. All Rights Reserved.</p>
         </div>
     </footer>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-zoom/1.7.21/jquery.zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Function to close the notification
         function closeNotification() {
             document.getElementById("notification").style.display = "none";
         }
-    
-        // Automatically hide notifications after a specified time
-        function autoHideNotifications() {
-            document.querySelectorAll('.notification').forEach(notification => {
-                setTimeout(() => {
-                    notification.style.display = "none";
-                }, 5000); // 5000 milliseconds = 5 seconds
-            });
-        }
-    
-        // Initialize zoom on the active image
-        function initializeZoom() {
-            const activeImage = document.querySelector('.carousel-item.active img');
-            if (activeImage) {
-                $(activeImage).zoom(); 
-            }
-        }
-    
-        // Destroy zoom on all images
-        function destroyZoom() {
-            $('.main-image').trigger('zoom.destroy');
-        }
-    
-        // Handle carousel slide transition for updating zoom
-        function handleCarouselSlide() {
-            $('#productCarousel').on('slid.bs.carousel', function () {
-                destroyZoom(); // Destroy zoom on previous image
-                initializeZoom(); // Initialize zoom on the new active image
-            });
-        }
-    
-        // Update the main image when a thumbnail is clicked
-        function updateMainImage(thumbnail) {
-            const mainImage = document.querySelector('.carousel-item.active img');
-            if (mainImage) {
-                mainImage.src = thumbnail.src; // Update main image source
-                mainImage.setAttribute('data-zoom-image', thumbnail.src); // Update zoom data
-    
-                // Update active class for thumbnails
-                document.querySelectorAll('.thumbnail-container img').forEach(img => {
-                    img.classList.remove('active');
-                });
-                thumbnail.classList.add('active');
-            }
-        }
-    
-        // Initialize functionality when the document is ready
-        $(document).ready(function () {
-            autoHideNotifications(); // Auto-hide notifications
-            initializeZoom(); // Initialize zoom on the active image
-            handleCarouselSlide(); // Set up carousel slide transition handling
-        });
-        document.getElementById('searchInput').addEventListener('input', function () {
-        let debounceTimer;
-        debounceTimer = setTimeout(() => {
-            fetchResult(this.value)
-        }, 200);
-    });
-    const fetchResult = (query) => {
-        const resultContainer = document.getElementById('searchResultContainer');
-        const resultList = document.getElementById('searchResultsList');
-        
-        if (query.trim().length < 3) {
-            resultContainer.style.display = 'none';
-            return;
-        } else {
-            const queryUrl = "{% url 'home:home_user_search' %}?query=" + encodeURIComponent(query);
-            fetch(queryUrl)  // Replace with your actual API URL
-                .then(response => response.json())
-                .then(data => {
-                    resultList.innerHTML = '';  // Clear previous results
 
-                    if (data.results.length > 0) {
-                        data.results.forEach(result => {
-                            const listItem = document.createElement('li');
-                            const link = document.createElement('a');
-                            link.style.textDecoration='none'
-                            link.style.color='black'
-                            link.href = `/product_details/${result.name[0]}`; 
-                            link.textContent = result.name[1];
+        function autoHideNotifications() {
+            document.querySelectorAll('.notification').forEach(function(notification) {
+                setTimeout(function() {
+                    notification.style.display = "none";
+                }, 5000);
+            });
+        }
+
+        /*
+         * initializeZoom
+         * ──────────────
+         * Key fixes vs original:
+         *   1. Target only the ACTIVE slide's wrapper (not all wrappers).
+         *   2. Pass `magnify: 1.5` so the plugin enlarges the image — without
+         *      this it defaults to 1 (no magnification) when the natural image
+         *      size equals the displayed size.
+         *   3. Do NOT override .zoomImg CSS; the plugin must control those props.
+         */
+        function initializeZoom() {
+            var $wrapper = $('.carousel-item.active .zoom-wrapper');
+            var zoomUrl  = $wrapper.find('img.main-image').attr('data-zoom-image');
+
+            $wrapper.zoom({
+                url:     zoomUrl,
+                magnify: 1.5   /* increase for stronger zoom, e.g. 2 or 2.5 */
+            });
+        }
+
+        function destroyZoom() {
+            $('.zoom-wrapper').trigger('zoom.destroy');
+        }
+
+        function handleCarouselSlide() {
+            $('#productCarousel').on('slid.bs.carousel', function() {
+                destroyZoom();
+                initializeZoom();
+            });
+        }
+
+        /*
+         * updateMainImage
+         * ───────────────
+         * Thumbnail click: swap src on the ACTIVE slide's image, then
+         * re-initialise zoom so the new image is used as the zoom source.
+         */
+        function updateMainImage(thumbnail) {
+            var $activeImg = $('.carousel-item.active .zoom-wrapper img.main-image');
+            if ($activeImg.length) {
+                destroyZoom();
+                $activeImg.attr('src', thumbnail.src);
+                $activeImg.attr('data-zoom-image', thumbnail.src);
+
+                $('.thumbnail-container img').removeClass('active');
+                $(thumbnail).addClass('active');
+
+                initializeZoom();
+            }
+        }
+
+        $(document).ready(function() {
+            autoHideNotifications();
+            initializeZoom();
+            handleCarouselSlide();
+        });
+
+        /* ── Search ─────────────────────────────────────────────────────────── */
+        var debounceTimer;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            var val = this.value;
+            debounceTimer = setTimeout(function() {
+                fetchResult(val);
+            }, 200);
+        });
+
+        function fetchResult(query) {
+            var resultContainer = document.getElementById('searchResultContainer');
+            var resultList      = document.getElementById('searchResultsList');
+
+            if (query.trim().length < 3) {
+                resultContainer.style.display = 'none';
+                return;
+            }
+
+            var queryUrl = "{% url 'home:home_user_search' %}?query=" + encodeURIComponent(query);
+            fetch(queryUrl)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    resultList.innerHTML = '';
+
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(function(result) {
+                            var listItem = document.createElement('li');
+                            var link     = document.createElement('a');
+                            link.style.textDecoration = 'none';
+                            link.style.color          = 'black';
+                            link.href                 = '/product_details/' + result.name[0];
+                            link.textContent          = result.name[1];
                             listItem.classList.add('list-group-item');
                             listItem.appendChild(link);
-                            // listItem.textContent = result.name[1];
                             resultList.appendChild(listItem);
                         });
                     } else {
-                        const noResultItem = document.createElement('li');
+                        var noResultItem = document.createElement('li');
                         noResultItem.classList.add('list-group-item');
-                        noResultItem.textContent = 'No matching data found';  // Corrected typo
+                        noResultItem.textContent = 'No matching data found';
                         resultList.appendChild(noResultItem);
                     }
 
-                    resultContainer.style.display = 'block';  // Show the result container
+                    resultContainer.style.display = 'block';
                 })
-                .catch(error => {
+                .catch(function(error) {
                     console.error('Error fetching search result', error);
                 });
         }
-    };
     </script>
-    
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

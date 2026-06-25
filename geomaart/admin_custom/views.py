@@ -615,6 +615,7 @@ def coupon_edit(request,id):
                 messages.error(request,'this code already exist')
                 return redirect('custom_admin:coupon_edit')
             get_coupnon.code = form.cleaned_data['coupon_code']
+            get_coupnon.cap_amount = form.cleaned_data["cap_amount"]
             get_coupnon.discount_type = form.cleaned_data['coupon_type']
             get_coupnon.discount_value = form.cleaned_data['discount_value']
             get_coupnon.start_date = form.cleaned_data['start_date']

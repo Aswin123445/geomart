@@ -4,159 +4,518 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales Report</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
 <style>
-      .notification {
-        background-color: #4CAF50;
-        color: white;
-        padding: 16px;
-        position: fixed;
-        top: 10vh;
-        right: 20px;
-        width: 350px;
-        border-radius: 5px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .error-notification {
-        background-color: red;
-        color: white;
-    }
+  :root {
+    --sidebar-bg:     #0F172A;
+    --sidebar-width:  260px;
+    --accent:         #6366F1;
+    --accent-hover:   #818CF8;
+    --surface:        #FFFFFF;
+    --bg:             #F1F5F9;
+    --text-primary:   #0F172A;
+    --text-muted:     #64748B;
+    --border:         #E2E8F0;
+    --radius:         12px;
+    --shadow-sm:      0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:      0 4px 16px rgba(0,0,0,.10);
+    --transition:     0.2s ease;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background-color: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-width);
+    z-index: 1045;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    transition: transform var(--transition);
+  }
+
+  .sidebar-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar-brand {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: #F1F5F9;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .sidebar h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #475569;
+    padding: 24px 24px 12px;
+    margin: 0;
+  }
+
+  .sidebar .nav { padding: 0 12px; gap: 2px; flex: 1; overflow-y: auto; }
+
+  .sidebar a {
+    color: #94A3B8;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+    border-left: 3px solid transparent;
+  }
+
+  .sidebar a i { font-size: 1rem; flex-shrink: 0; opacity: 0.75; transition: opacity var(--transition); }
+
+  .sidebar a:hover,
+  .sidebar a.active {
+    background-color: rgba(99,102,241,0.12);
+    color: #E2E8F0;
+    border-left-color: var(--accent);
+  }
+
+  .sidebar a:hover i, .sidebar a.active i { opacity: 1; }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    z-index: 1040;
+  }
+
+  .sidebar-backdrop.show { display: block; }
+
+  /* ── Topbar Navbar ── */
+  nav.navbar {
+    z-index: 1040;
+    background-color: var(--sidebar-bg) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    height: 60px;
+    position: fixed;
+    top: 0; width: 100%;
+    padding-left: var(--sidebar-width);
+  }
+
+  nav.navbar .navbar-brand {
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  nav.navbar .nav-link {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #94A3B8 !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px !important;
+    border-radius: 8px;
+    transition: color var(--transition), background var(--transition);
+  }
+
+  nav.navbar .nav-link:hover {
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* ── Main content ── */
+  .main-content {
+    margin-left: var(--sidebar-width);
+    padding: 28px 32px;
+    margin-top: 60px;
+    flex: 1;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .page-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .btn-new {
+    background: #EF4444;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: background var(--transition), box-shadow var(--transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-new:hover {
+    background: #DC2626;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.25);
+  }
+
+  /* ── Cards & Metric Widgets ── */
+  .filter-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .filter-card .form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .filter-card .form-select,
+  .filter-card .form-control {
+    font-size: 0.875rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+  }
+
+  .filter-card .form-select:focus,
+  .filter-card .form-control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 20px;
+    text-align: center;
+    transition: transform var(--transition);
+  }
+  .metric-card:hover { transform: translateY(-2px); }
+  .metric-card h5 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+  .metric-card p { font-size: 1.5rem; font-weight: 700; color: #10B981; margin: 0; }
+
+  .btn-filter {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    transition: opacity var(--transition);
+  }
+  .btn-filter:hover { background: var(--accent-hover); color: #fff; }
+
+  /* ── Table UI ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-top: 16px;
+  }
+
+  .table-card .card-header {
+    background: #FFFFFF;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table { margin: 0; font-size: 0.875rem; }
+
+  .table thead th {
+    background: #1E293B;
+    color: #94A3B8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border: none;
+  }
+
+  .table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+  }
+
+  .table tbody tr:last-child { border-bottom: none; }
+  .table tbody tr:hover { background: #F8FAFF; }
+
+  .table tbody td {
+    padding: 13px 16px;
+    vertical-align: middle;
+    color: var(--text-primary);
+    border: none;
+  }
+
+  .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  /* ── Notifications ── */
+  .notification {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    padding: 14px 18px;
+    position: fixed;
+    top: 72px; right: 20px;
+    width: 340px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    z-index: 1055;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-left: 4px solid rgba(255,255,255,0.4);
+  }
+
+  .error-notification { background: linear-gradient(135deg, #EF4444, #DC2626); }
+
+  .notification .close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  /* ── Footer ── */
+  footer {
+    background: #0F172A !important;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-left: var(--sidebar-width);
+    padding: 24px 0 12px;
+  }
+  footer h5 { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: #94A3B8 !important; }
+  footer p, footer li { font-size: 0.8rem; color: #64748B !important; }
+  footer a { color: #64748B !important; text-decoration: none; transition: color var(--transition); }
+  footer a:hover { color: #E2E8F0 !important; }
+  footer hr { border-color: rgba(255,255,255,0.07) !important; }
+
+  /* ── Mobile Responsive Overrides ── */
+  @media (max-width: 991.98px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.show { transform: translateX(0); }
+    nav.navbar { padding-left: 15px; }
+    .main-content { margin-left: 0; padding: 20px 16px; }
+    footer { margin-left: 0; }
+  }
 </style>
+</head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container-fluid">
-          <a class="navbar-brand" href="{% url 'custom_admin:dashboard' %}">GeoMaart Admin Panel</a>
-          <ul class="navbar-nav ms-auto">
-              <li class="nav-item">
-                  <a class="nav-link active" href="{% url 'custom_admin:dashboard' %}">
-                      <i class="bi bi-house-door"></i> Dashboard
-                  </a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link active" href="{% url 'custom_admin:order_listing' %}">
-                      <i class="bi bi-card-list"></i> Orders
-                  </a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link active" href="{% url 'custom_admin:product_listing' %}">
-                      <i class="bi bi-box"></i> Products
-                  </a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link active" href="{% url 'custom_admin:logout' %}">
-                      <i class="bi bi-box-arrow-right"></i> Logout
-                  </a>
-              </li>
-          </ul>
+
+  <!-- ── Left Fixed Sidebar ── -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="sidebar-brand" href="{% url 'custom_admin:dashboard' %}">GEOMAART ADMIN</a>
+    </div>
+    <h3>Admin Panel</h3>
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:dashboard' %}"><i class="bi bi-house-door"></i> Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:category_list' %}"><i class="bi bi-cart-plus"></i> Manage Category</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:location_list' %}"><i class="bi bi-geo-alt"></i> Manage Location</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:product_listing' %}"><i class="bi bi-box"></i> Manage Products</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:order_listing' %}"><i class="bi bi-bag-check"></i> Manage Orders</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:user_list' %}"><i class="bi bi-people"></i> Manage Users</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:coupon_list' %}"><i class="bi bi-tags"></i> Manage Coupons</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'custom_admin:sales_report' %}"><i class="bi bi-bar-chart"></i> Sales Report</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'custom_admin:offers' %}"><i class="bi bi-tag"></i> Offer</a>
+      </li>
+    </ul>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <!-- ── Topbar Navbar ── -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold text-white d-inline-block d-lg-none" href="{% url 'custom_admin:dashboard' %}">GEOMAART ADMIN</a>
+      <button class="navbar-toggler border-0 ms-auto me-2" type="button" id="toggle-sidebar" aria-label="Toggle sidebar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto me-3">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'custom_admin:dashboard' %}"><i class="bi bi-house-door"></i> Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'custom_admin:order_listing' %}"><i class="bi bi-card-list"></i> Orders</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'custom_admin:product_listing' %}"><i class="bi bi-box"></i> Products</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="{% url 'custom_admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+          </li>
+        </ul>
       </div>
+    </div>
   </nav>
+
   {% if messages %}
   {% for message in messages %}
-  <div class="{% if error %} notification  error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
+  <div class="{% if error %} notification error-notification {% else %} notification {% endif %}" id="notification" style="color: white; list-style-type: none;">
        {{ message }}
-        <button class="close-btn" onclick="closeNotification()">X</button>
+       <button class="close-btn" onclick="closeNotification()">X</button>
   </div>
   {% endfor %}
   {% endif %}
-  <div class="container my-5">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Sales Report</h1>
-      <a href="{% url 'custom_admin:download_sales_report_pdf' %}"><button class="btn btn-danger">Download Report</button></a>
+
+  <!-- ── Main Content Area ── -->
+  <main class="main-content">
+    
+    <div class="page-header">
+      <h2>Sales Report Matrix</h2>
+      <a href="{% url 'custom_admin:download_sales_report_pdf' %}" class="btn-new">
+        <i class="bi bi-file-earmark-pdf"></i> Download Report
+      </a>
     </div>
 
-    <!-- Filter Section -->
-    <div class="card mb-4">
-      <div class="card-body">
-        <h5 class="card-title mb-3">Filter Sales Report</h5>
-        <form method="POST" class="row g-3">
-            {% csrf_token %}
-          <!-- Preset Filters -->
-          <div class="col-md-3">
-            <label for="presetFilters" class="form-label">Preset Filters</label>
-            <select id="presetFilters" class="form-select" name="timeline">
-              <option value="daily">Last 1 Day</option>
-              <option value="weekly">Last 1 Week</option>
-              <option value="monthly">Last 1 Month</option>
-              <option value="yearly">Last 1 Year</option>
-            </select>
-          </div>
-          <!-- Custom Date Range -->
-          <div class="col-md-3">
-            <label for="startDate" class="form-label">Start Date</label>
-            <input type="date" {% if user_date %} value="{{user_date.start_date}}" {% endif %} class="form-control" id="startDate" name="start_date">
-          </div>
-          <div class="col-md-3">
-            <label for="endDate" class="form-label">End Date</label>
-            <input type="date" {% if user_date %} value="{{user_date.end_date}}" {% endif %} class="form-control" id="endDate" name="end_date">
-          </div>
-
-          <!-- Filter Button -->
-          <div class="col-md-3 align-self-end">
-            <button type="submit" class="btn btn-danger w-100">Generate Report</button>
-          </div>
-        </form>
-      </div>
+    <div class="filter-card">
+      <form method="POST" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-3">
+          <label for="presetFilters" class="form-label">Preset Timelines</label>
+          <select id="presetFilters" class="form-select" name="timeline">
+            <option value="daily">Last 1 Day</option>
+            <option value="weekly">Last 1 Week</option>
+            <option value="monthly" selected>Last 1 Month</option>
+            <option value="yearly">Last 1 Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" {% if user_date %} value="{{user_date.start_date}}" {% endif %} class="form-control" id="startDate" name="start_date">
+        </div>
+        <div class="col-md-3">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" {% if user_date %} value="{{user_date.end_date}}" {% endif %} class="form-control" id="endDate" name="end_date">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-filter w-100">
+            <i class="bi bi-arrow-clockwise me-1"></i> Generate Report
+          </button>
+        </div>
+      </form>
     </div>
 
-    <!-- Sales Summary -->
-    <div class="row mb-4">
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Overall Sales Count</h5>
-            <p class="card-text fs-4 fw-semibold text-success">{{over_sales_count}}</p>
-          </div>
+    <div class="row g-4 mb-4">
+      <div class="col-sm-6 col-xl-3">
+        <div class="metric-card">
+          <h5>Overall Sales Count</h5>
+          <p>{{over_sales_count}}</p>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Overall Order Amount</h5>
-            <p class="card-text fs-4 fw-semibold text-success">{{order_amount}}</p>
-          </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="metric-card">
+          <h5>Overall Order Amount</h5>
+          <p>{{order_amount}}</p>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Conversion rate</h5>
-            <p class="card-text fs-4 fw-semibold text-success">{{conversion_rate|floatformat:2}} %</p>
-          </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="metric-card">
+          <h5>Conversion Rate</h5>
+          <p>{{conversion_rate|floatformat:2}} %</p>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Coupon Deductions</h5>
-            <p class="card-text fs-4 fw-semibold text-success">{{coupon_deduction|floatformat:2}}</p>
-          </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="metric-card">
+          <h5>Coupon Deductions</h5>
+          <p>{{coupon_deduction|floatformat:2}}</p>
         </div>
       </div>
     </div>
 
-    <!-- Sales Chart -->
-    <div class="card mb-4">
-      <div class="card-body">
-        <h5 class="card-title">Sales Trend</h5>
+    <div class="filter-card mb-4">
+      <h5 class="form-label mb-3" style="font-size: 0.85rem;">Performance Line Chart</h5>
+      <div style="position: relative; width: 100%;">
         <canvas id="salesChart" height="100"></canvas>
       </div>
     </div>
 
-    <!-- Sales Table -->
-    <div class="card">
+    <div class="table-card">
       <div class="card-header">
-        Sales Data
+        Historical Statement Logs
       </div>
-      <div class="card-body p-0">
+      <div class="table-responsive">
         <table class="table table-striped mb-0">
           <thead>
             <tr>
@@ -174,130 +533,151 @@
             {% for l in list %}
             <tr>
               <td>{{forloop.counter}}</td>
-              <td>{{l.orderid}}</td>
+              <td class="fw-medium text-dark">{{l.orderid}}</td>
               <td>{{l.customer}}</td>
               <td>{{l.date}}</td>
               <td>{{l.amount}}</td>
               <td>{{l.discount}}</td>
               <td class="fw-semibold text-success">{{l.coupon}}</td>
-              <td>{{l.final_amount}}</td>
+              <td class="fw-bold">{{l.final_amount}}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
-  </div>
-  <footer class="footer bg-black text-white" style="margin-top: -4px;">
+  </main>
+
+  <footer class="footer text-white">
     <div class="container-fluid text-center">
-        <div class="row pt-2">
-            <div class="col-md-4 mb-3">
-                <h5 class="fw-bold">GeoMaart</h5>
-                <p>Your one-stop shop for unique local products.</p>
-            </div>
-            <div class="col-md-4 mb-3">
-                <h5 class="fw-bold">Quick Links</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#" class="text-white text-decoration-none">Home</a></li>
-                    <li><a href="#" class="text-white text-decoration-none">About Us</a></li>
-                    <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
-                    <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
-                </ul>
-            </div>
-            <div class="col-md-4">
-                <h5 class="fw-bold">Follow Us</h5>
-                <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
-                <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
-                <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
-            </div>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <h5>GeoMaart</h5>
+          <p>Your one-stop shop for unique local products.</p>
         </div>
-        <hr class="bg-white">
-        <p class="mb-0">&copy; 2024 GeoMaart. All Rights Reserved.</p>
+        <div class="col-md-4 mb-3">
+          <h5>Quick Links</h5>
+          <ul class="list-unstyled">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About Us</a></li>
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Follow Us</h5>
+          <a href="#" class="me-3"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="me-3"><i class="bi bi-twitter"></i></a>
+        </div>
+      </div>
+      <hr>
+      <p class="mb-0" style="font-size: 0.75rem; color: #475569 !important;">&copy; 2026 GeoMaart. All Rights Reserved.</p>
     </div>
-</footer>
-  <!-- Bootstrap JS -->
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Chart.js Example Script -->
   <script>
-    const labels = {{ labels|safe }};
-    const salesData = {{ sales_data|safe }};
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Sales Amount',
-          data: salesData,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          tension: 0.4,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top',
+    document.addEventListener("DOMContentLoaded", function() {
+      // Sidebar Responsive Toggle Engine Initialization
+      const sidebar = document.getElementById('sidebar');
+      const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+      const toggleSidebar = document.getElementById('toggle-sidebar');
+
+      if (toggleSidebar) {
+        toggleSidebar.addEventListener('click', () => {
+          sidebar.classList.toggle('show');
+          sidebarBackdrop.classList.toggle('show');
+        });
+      }
+      sidebarBackdrop.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        sidebarBackdrop.classList.remove('show');
+      });
+
+      // Chart configuration script processing block
+      const labels = {{ labels|safe }};
+      const salesData = {{ sales_data|safe }};
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Net Volume Dynamics',
+            data: salesData,
+            borderColor: '#6366F1',
+            backgroundColor: 'rgba(99, 102, 241, 0.08)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2,
+            pointBackgroundColor: '#6366F1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: '#F1F5F9' } }
           }
         }
-      }
-    });
-    document.addEventListener("DOMContentLoaded", () => {
-  const presetFilters = document.getElementById("presetFilters");
-  const startDate = document.getElementById("startDate");
-  const endDate = document.getElementById("endDate");
+      });
 
-  // Update Start and End Date based on Preset Filter
-  presetFilters.addEventListener("change", () => {
-    const filterValue = presetFilters.value;
-    const today = new Date();
-    let start, end;
+      // Preset Timeline Auto calculation limits logic
+      const presetFilters = document.getElementById("presetFilters");
+      const startDate = document.getElementById("startDate");
+      const endDate = document.getElementById("endDate");
 
-    if (filterValue === "daily") {
-      start = new Date(today);
-      end = new Date(today);
-    } else if (filterValue === "weekly") {
-      start = new Date(today);
-      start.setDate(today.getDate() - 7);
-      end = new Date(today);
-    } else if (filterValue === "monthly") {
-      start = new Date(today);
-      start.setMonth(today.getMonth() - 1);
-      end = new Date(today);
-    } else if (filterValue === "yearly") {
-      start = new Date(today);
-      start.setFullYear(today.getFullYear() - 1);
-      end = new Date(today);
-    } else {
-      // Custom Range
-      start = null;
-      end = null;
-    }
+      presetFilters.addEventListener("change", () => {
+        const filterValue = presetFilters.value;
+        const today = new Date();
+        let start, end;
 
-    if (start && end) {
-      startDate.value = start.toISOString().split("T")[0];
-      endDate.value = end.toISOString().split("T")[0];
-      startDate.disabled = true;
-      endDate.disabled = true;
-    } else {
-      startDate.value = "";
-      endDate.value = "";
-      startDate.disabled = false;
-      endDate.disabled = false;
-    }
-  });
-});
-function closeNotification() {
-            document.getElementById("notification").style.display = "none";
+        if (filterValue === "daily") {
+          start = new Date(today);
+          end = new Date(today);
+        } else if (filterValue === "weekly") {
+          start = new Date(today);
+          start.setDate(today.getDate() - 7);
+          end = new Date(today);
+        } else if (filterValue === "monthly") {
+          start = new Date(today);
+          start.setMonth(today.getMonth() - 1);
+          end = new Date(today);
+        } else if (filterValue === "yearly") {
+          start = new Date(today);
+          start.setFullYear(today.getFullYear() - 1);
+          end = new Date(today);
+        } else {
+          start = null;
+          end = null;
         }
-        document.querySelectorAll('.notification').forEach(notification => {
-            setTimeout(() => {
-                notification.style.display = "none";
-            }, 5000); // 4000 milliseconds = 4 seconds
-        });
+
+        if (start && end) {
+          startDate.value = start.toISOString().split("T")[0];
+          endDate.value = end.toISOString().split("T")[0];
+          startDate.disabled = true;
+          endDate.disabled = true;
+        } else {
+          startDate.value = "";
+          endDate.value = "";
+          startDate.disabled = false;
+          endDate.disabled = false;
+        }
+      });
+
+      // Automatically handle banner elements visibility limits loop
+      document.querySelectorAll('.notification').forEach(notification => {
+        setTimeout(() => { notification.style.display = "none"; }, 5000);
+      });
+    });
+
+    function closeNotification() {
+      const notification = document.getElementById("notification");
+      if(notification) notification.style.display = "none";
+    }
   </script>
 </body>
 </html>
